@@ -253,7 +253,8 @@
 <main>
     <!-- DASHBOARD -->
     <section id="Dashboard" class="tab-content active">
-        <div style="display:flex;justify-content:flex-end;margin-bottom:10px;">
+        <div style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:10px;">
+            <button class="btn btn-primary" onclick="forceSave()" title="Grava todos os dados no Google Sheets agora">💾 Salvar no Sheets</button>
             <button class="btn btn-success" onclick="exportExcel()">📊 Exportar para Excel</button>
         </div>
         <div class="kpi-grid" id="kpi-grid"></div>
@@ -893,6 +894,14 @@ function applyTheme(){if(localStorage.getItem('theme')==='dark')document.body.se
 // ══════════════════════════════════════════════════════
 //  BACKUP
 // ══════════════════════════════════════════════════════
+async function forceSave() {
+    if (!financialData.length) return toast('Nenhum dado carregado ainda.', 'error');
+    showLoading('Gravando no Google Sheets...');
+    const ok = await saveToSheets();
+    hideLoading();
+    if (ok) toast('Dados gravados com sucesso no Sheets!', 'success');
+}
+
 function exportExcel() {
     if (!financialData.length) return toast('Nenhum dado para exportar.', 'error');
 
