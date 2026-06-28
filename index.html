@@ -438,11 +438,27 @@ async function saveToSheets() {
     isSaving = true;
     setStatus('syncing');
     try {
-        // Envia via GET com payload codificado em base64 para evitar problemas de encoding
-        const payload = btoa(unescape(encodeURIComponent(JSON.stringify({ data: financialData, categories }))));
-        const res = await sheetsRequest({ action: 'write', payload });
-        if (res.status !== 'ok') throw new Error(res.message || 'Erro ao salvar');
+        const u = url();
+        const body = JSON.stringify({ data: financialData, categories });
+        // POST com no-cors — o Apps Script recebe e salva
+        await fetch(u, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'text/plain' },
+            body: body,
+        });
+        // Confirma lendo de volta após breve espera
+        await new Promise(r => setTimeout(r, 1500));
+        const check = await fetch(`${u}?action=read&t=${Date.now()}`, { cache: 'no-store' });
+        if (!check.ok) throw new Error(`HTTP ${check.status}`);
+        const verified = await check.json();
+        if (verified.status !== 'ok') throw new Error(verified.message || 'Erro na verificação');
+        // Atualiza com o que o Sheets confirmou
+        financialData = Array.isArray(verified.data) ? verified.data : financialData;
+        if (verified.categories) categories = { ...categories, ...verified.categories };
         setStatus('online');
+        syncCategories();
+        updateView();
         return true;
     } catch(e) {
         console.error('saveToSheets:', e);
@@ -1009,42 +1025,27 @@ function showScript(){
 const SHEET_DATA = "Dados";
 const SHEET_CAT  = "Categorias";
 
+// Leitura — chamada via GET
 function doGet(e) {
   try {
-    const action = e.parameter.action;
-
-    if (action === "write") {
-      return handleWrite(e.parameter.payload);
-    }
-    return handleRead();
+    const ss   = SpreadsheetApp.getActiveSpreadsheet();
+    const data = readSheet(ss, SHEET_DATA);
+    const cats = readSheet(ss, SHEET_CAT);
+    return respond({ status: "ok", data: data, categories: cats });
   } catch(err) {
     return respond({ status: "error", message: err.toString() });
   }
 }
 
-function handleRead() {
-  const ss   = SpreadsheetApp.getActiveSpreadsheet();
-  const data = readSheet(ss, SHEET_DATA);
-  const cats = readSheet(ss, SHEET_CAT);
-  return respond({ status: "ok", data: data, categories: cats });
-}
-
-function handleWrite(payloadB64) {
+// Gravação — chamada via POST
+function doPost(e) {
   try {
-    const decoded = decodeURIComponent(escape(Utilities.newBlob(
-      Utilities.base64Decode(payloadB64)
-    ).getDataAsString()));
-    const payload = JSON.parse(decoded);
+    const payload = JSON.parse(e.postData.contents);
     const ss = SpreadsheetApp.getActiveSpreadsheet();
-
-    if (payload.data !== undefined) {
-      writeSheet(ss, SHEET_DATA, payload.data);
-    }
-    if (payload.categories !== undefined) {
-      writeSheet(ss, SHEET_CAT, payload.categories);
-    }
+    if (payload.data !== undefined)       writeSheet(ss, SHEET_DATA, payload.data);
+    if (payload.categories !== undefined) writeSheet(ss, SHEET_CAT,  payload.categories);
     return respond({ status: "ok" });
-  } catch (err) {
+  } catch(err) {
     return respond({ status: "error", message: err.toString() });
   }
 }
