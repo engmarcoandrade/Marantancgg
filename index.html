@@ -548,10 +548,14 @@ function changePassword() {
 //  URL / CONFIGURAÇÃO
 // ══════════════════════════════════════════════════════
 function saveUrl() {
-    const u = ($('wizard-url')||$('config-url')).value.trim();
+    // Lê de qualquer campo que tenha valor preenchido
+    const wizardInput = $('wizard-url');
+    const configInput = $('config-url');
+    const u = (wizardInput?.value.trim()) || (configInput?.value.trim()) || '';
     if(!u) return toast('Cole a URL primeiro.','error');
     localStorage.setItem('scriptUrl', u);
-    const ci=$('config-url'); if(ci) ci.value=u;
+    if(wizardInput) wizardInput.value = u;
+    if(configInput) configInput.value = u;
     $('setup-wizard').classList.add('hidden');
     toast('URL salva. Conectando...','info');
     loadFromSheets();
