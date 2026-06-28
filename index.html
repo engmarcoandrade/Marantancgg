@@ -40,15 +40,7 @@
         html { scroll-padding-top: 110px; }
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.5; }
 
-        /* LOGIN */
-        #login-screen { position: fixed; inset: 0; background: var(--bg); display: flex; align-items: center; justify-content: center; z-index: 9999; }
-        #login-screen.hidden { display: none; }
-        .login-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 36px 32px; width: 320px; text-align: center; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
-        .login-logo { font-size: 36px; margin-bottom: 10px; }
-        .login-card h2 { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
-        .login-card p { color: var(--text-muted); font-size: 13px; margin-bottom: 20px; }
-        .login-card input { width: 100%; padding: 9px 12px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--text); font-size: 14px; margin-bottom: 12px; text-align: center; }
-        .login-error { color: var(--danger); font-size: 12px; margin-top: 8px; display: none; }
+
 
         /* LOADING */
         #loading-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 8888; }
@@ -188,17 +180,7 @@
 </head>
 <body>
 
-<!-- LOGIN -->
-<div id="login-screen">
-    <div class="login-card">
-        <div class="login-logo">💰</div>
-        <h2>Controle Financeiro</h2>
-        <p>Insira a senha para acessar</p>
-        <input type="password" id="login-pass" placeholder="Senha" onkeydown="if(event.key==='Enter')checkLogin()">
-        <button class="btn btn-primary" style="width:100%;" onclick="checkLogin()">Entrar</button>
-        <div class="login-error" id="login-error">Senha incorreta.</div>
-    </div>
-</div>
+<!-- Login removido -->
 
 <!-- SETUP WIZARD -->
 <div id="setup-wizard" class="hidden">
@@ -338,13 +320,7 @@
                     <button class="btn btn-warning" onclick="document.getElementById('import-file').click()">📤 Restaurar</button>
                 </div>
             </div>
-            <div class="card flex-col">
-                <h2>Alterar Senha</h2>
-                <div class="form-row">
-                    <div class="form-field"><label>Nova senha</label><input type="password" id="new-pass" placeholder="Nova senha"></div>
-                    <button class="btn btn-ghost" onclick="changePassword()">Salvar</button>
-                </div>
-            </div>
+
             <div class="card flex-col">
                 <h2>Meta de Gastos Diários</h2>
                 <div class="form-row">
@@ -364,7 +340,7 @@ let categories    = { despesa:['Moradia','Alimentação','Transporte','Lazer','S
 let currentDate   = new Date();
 let editModeId    = null;
 let tabFilters    = { despesa:'all', receita:'all', locacao:'all', divida:'all', patrimonio:'all' };
-let appPassword   = localStorage.getItem('appPassword') || '123';
+
 let isSaving      = false;
 
 const TABS = [
@@ -515,7 +491,9 @@ function init() {
     updateMonthDisplay();
     const ci = $('config-url'); if(ci) ci.value = url();
     const di = $('daily-rate'); if(di) di.value = daily();
-    // Conexão acontece APÓS login — ver checkLogin()
+    // Conecta direto ao Sheets ao abrir
+    if (!url()) { $('setup-wizard').classList.remove('hidden'); }
+    else { loadFromSheets(); }
 }
 
 function migrateLegacy() {
@@ -525,29 +503,7 @@ function migrateLegacy() {
 // ══════════════════════════════════════════════════════
 //  LOGIN
 // ══════════════════════════════════════════════════════
-function checkLogin() {
-    if ($('login-pass').value === appPassword) {
-        $('login-screen').classList.add('hidden');
-        $('login-pass').value = '';
-        $('login-error').style.display = 'none';
-        // Conecta ao Sheets DEPOIS do login
-        if (!url()) { $('setup-wizard').classList.remove('hidden'); }
-        else { loadFromSheets(); }
-    } else {
-        $('login-error').style.display = 'block';
-    }
-}
-let _esc = 0;
-document.addEventListener('keydown', e => {
-    if(e.key==='Escape'){const n=Date.now();if(n-_esc<400)$('login-screen').classList.remove('hidden');_esc=n;}
-});
-function changePassword() {
-    const v = $('new-pass').value;
-    if(!v.trim()) return;
-    appPassword = v; localStorage.setItem('appPassword', v);
-    $('new-pass').value = '';
-    toast('Senha alterada.','success');
-}
+// Login removido — conecta direto ao Sheets ao iniciar
 
 // ══════════════════════════════════════════════════════
 //  URL / CONFIGURAÇÃO
