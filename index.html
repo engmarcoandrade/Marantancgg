@@ -835,7 +835,6 @@ function updateView() {
         ${kpi('Receitas',metrics.receita,'Recebido','A Receber','c-success','c-warning','c-primary')}
         ${kpi('Locações',metrics.locacao,'Recebido','A Receber','c-success','c-warning','c-primary')}
         ${kpi('Despesas',metrics.despesa,'Pago','A Pagar','c-success','c-danger','c-danger')}
-        ${kpi('Dívidas',metrics.divida,'Pago','A Pagar','c-success','c-danger','c-danger')}
         <div class="kpi"><div class="kpi-label">💳 Saldos Bancários</div>
             <div class="kpi-value c-primary">${fmt(totalBank)}</div></div>
         <div class="kpi kpi-danger"><div class="kpi-label">📅 Gastos Diários</div>
@@ -843,11 +842,7 @@ function updateView() {
             <div class="kpi-sub">
                 <div class="kpi-sub-row"><span>Dias restantes</span><strong>${dl}</strong></div>
                 <div class="kpi-sub-row"><span>Meta diária</span><strong>${fmt(dr)}</strong></div>
-            </div></div>
-        <div class="kpi kpi-highlight"><div class="kpi-label">⏰ Pendências Anteriores</div>
-            <div class="kpi-value c-danger">${fmt(totPagar)}</div>
-            <div class="kpi-sub"><div class="kpi-sub-row"><span>A Receber</span><strong class="c-success">${fmt(totReceber)}</strong></div></div>
-        </div>`;
+            </div></div>`;
 }
 
 function kpi(label,m,l1,l2,c1,c2,cv){
