@@ -829,6 +829,7 @@ function updateView() {
 
     // KPIs
     const dr=daily(), dl=daysLeft(), prev=dl*dr;
+    const resultado=(metrics.receita.total+metrics.locacao.total)-metrics.despesa.total;
     const saldo=(metrics.receita.total+metrics.locacao.total+totalBank)-(metrics.despesa.total+prev);
     const kg=$('kpi-grid');
     if(kg) kg.innerHTML=`
@@ -842,6 +843,14 @@ function updateView() {
             <div class="kpi-sub">
                 <div class="kpi-sub-row"><span>Dias restantes</span><strong>${dl}</strong></div>
                 <div class="kpi-sub-row"><span>Meta diária</span><strong>${fmt(dr)}</strong></div>
+            </div></div>
+        <div class="kpi kpi-highlight"><div class="kpi-label">📊 Resultado do Mês</div>
+            <div class="kpi-value ${saldo>=0?'c-success':'c-danger'}">${fmt(saldo)}</div>
+            <div class="kpi-sub">
+                <div class="kpi-sub-row"><span>Receitas + Loc.</span><strong class="c-success">${fmt(metrics.receita.total+metrics.locacao.total)}</strong></div>
+                <div class="kpi-sub-row"><span>Saldo Bancário</span><strong class="${totalBank>=0?'c-success':'c-danger'}">${fmt(totalBank)}</strong></div>
+                <div class="kpi-sub-row"><span>Despesas</span><strong class="c-danger">- ${fmt(metrics.despesa.total)}</strong></div>
+                <div class="kpi-sub-row"><span>Gastos Diários</span><strong class="c-danger">- ${fmt(prev)}</strong></div>
             </div></div>`;
 }
 
