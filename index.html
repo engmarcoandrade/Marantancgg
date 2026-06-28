@@ -37,6 +37,7 @@
             --shadow-sm: 0 1px 3px rgba(0,0,0,0.3);
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-padding-top: 110px; }
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.5; }
 
         /* LOGIN */
@@ -95,14 +96,14 @@
         .btn-sm { padding: 3px 8px; font-size: 12px; }
 
         /* NAV */
-        nav { background: var(--surface); border-bottom: 1px solid var(--border); overflow-x: auto; }
+        nav { background: var(--surface); border-bottom: 1px solid var(--border); overflow-x: auto; position: sticky; top: 45px; z-index: 99; }
         .nav-inner { max-width: 1280px; margin: 0 auto; display: flex; }
         nav button { background: none; border: none; color: var(--text-muted); padding: 10px 14px; cursor: pointer; font-size: 13px; border-bottom: 2px solid transparent; white-space: nowrap; }
         nav button:hover { color: var(--text); background: var(--bg); }
         nav button.active { color: var(--primary); border-bottom-color: var(--primary); font-weight: 600; }
 
         /* MAIN */
-        main { max-width: 1280px; margin: 0 auto; padding: 16px; }
+        main { max-width: 1280px; margin: 0 auto; padding: 16px; padding-bottom: 80px; }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
         .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow-sm); margin-bottom: 12px; overflow-x: auto; }
@@ -183,6 +184,7 @@
             .kpi-grid { grid-template-columns: 1fr 1fr; }
         }
     </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body>
 
@@ -269,6 +271,9 @@
 <main>
     <!-- DASHBOARD -->
     <section id="Dashboard" class="tab-content active">
+        <div style="display:flex;justify-content:flex-end;margin-bottom:10px;">
+            <button class="btn btn-success" onclick="exportExcel()">📊 Exportar para Excel</button>
+        </div>
         <div class="kpi-grid" id="kpi-grid"></div>
         <div class="flex-row">
             <div class="card flex-col">
@@ -932,6 +937,91 @@ function applyTheme(){if(localStorage.getItem('theme')==='dark')document.body.se
 // ══════════════════════════════════════════════════════
 //  BACKUP
 // ══════════════════════════════════════════════════════
+function exportExcel() {
+    if (!financialData.length) return toast('Nenhum dado para exportar.', 'error');
+
+    const wb = XLSX.utils.book_new();
+    const meses = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+
+    function mkLabel(baseMonthKey) {
+        if (!baseMonthKey || baseMonthKey === 'global') return '—';
+        const [y, m] = baseMonthKey.split('-').map(Number);
+        return `${meses[m]}/${y}`;
+    }
+
+    function isPaidInMonth(item, mk) {
+        return item.paidMonths && item.paidMonths.includes(mk);
+    }
+
+    // ── Aba por tipo ──
+    const tipos = [
+        { key: 'despesa',    label: 'Despesas'   },
+        { key: 'receita',    label: 'Receitas'   },
+        { key: 'locacao',    label: 'Locações'   },
+        { key: 'divida',     label: 'Dívidas'    },
+        { key: 'patrimonio', label: 'Patrimônio' },
+        { key: 'conta',      label: 'Contas Bancárias' },
+    ];
+
+    tipos.forEach(({ key, label }) => {
+        const items = financialData.filter(i => i.type === key);
+        if (!items.length) return;
+
+        let rows = [];
+        if (key === 'conta') {
+            rows = [['Banco', 'Saldo (R$)']];
+            items.forEach(i => rows.push([i.description, i.value]));
+        } else {
+            rows = [['Mês Base', 'Descrição', 'Categoria', 'Valor (R$)', 'Recorrente', 'Meses Pagos']];
+            items.forEach(i => rows.push([
+                mkLabel(i.baseMonthKey),
+                i.description,
+                i.category,
+                i.value,
+                i.recurring ? 'Sim' : 'Não',
+                (i.paidMonths || []).map(mk => { const [y,m]=mk.split('-').map(Number); return `${meses[m]}/${y}`; }).join(', ') || '—'
+            ]));
+        }
+
+        const ws = XLSX.utils.aoa_to_sheet(rows);
+
+        // Larguras de coluna
+        ws['!cols'] = key === 'conta'
+            ? [{ wch: 28 }, { wch: 16 }]
+            : [{ wch: 12 }, { wch: 36 }, { wch: 20 }, { wch: 14 }, { wch: 12 }, { wch: 30 }];
+
+        XLSX.utils.book_append_sheet(wb, ws, label);
+    });
+
+    // ── Aba Resumo Mensal ──
+    const allMonths = new Set();
+    financialData.forEach(i => { if (i.baseMonthKey && i.baseMonthKey !== 'global') allMonths.add(i.baseMonthKey); });
+    const sortedMonths = [...allMonths].sort();
+
+    const resumoRows = [['Mês', 'Receitas (R$)', 'Locações (R$)', 'Despesas (R$)', 'Resultado (R$)']];
+    sortedMonths.forEach(mk => {
+        const [y, m] = mk.split('-').map(Number);
+        const label = `${meses[m]}/${y}`;
+        let rec = 0, loc = 0, desp = 0;
+        financialData.forEach(i => {
+            const applies = i.recurring ? (parseInt(i.baseMonthKey.split('-')[0]) < y || (parseInt(i.baseMonthKey.split('-')[0]) === y && parseInt(i.baseMonthKey.split('-')[1]) <= m)) : i.baseMonthKey === mk;
+            if (!applies) return;
+            if (i.type === 'receita')  rec  += i.value;
+            if (i.type === 'locacao')  loc  += i.value;
+            if (i.type === 'despesa')  desp += i.value;
+        });
+        resumoRows.push([label, rec, loc, desp, rec + loc - desp]);
+    });
+
+    const wsResumo = XLSX.utils.aoa_to_sheet(resumoRows);
+    wsResumo['!cols'] = [{ wch: 12 }, { wch: 16 }, { wch: 16 }, { wch: 16 }, { wch: 16 }];
+    XLSX.utils.book_append_sheet(wb, wsResumo, 'Resumo Mensal');
+
+    const date = new Date().toLocaleDateString('pt-BR').replace(/\//g, '-');
+    XLSX.writeFile(wb, `Financeiro_${date}.xlsx`);
+    toast('Excel exportado com sucesso!', 'success');
+}
+
 function exportBackup(){
     if(!financialData.length)return toast('Nenhum dado.','error');
     const blob=new Blob([JSON.stringify({financialData,categories,metaDiaria:daily()},null,2)],{type:'application/json'});
