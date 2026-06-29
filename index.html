@@ -598,7 +598,8 @@ async function handleSubmit(e, type) {
         cancelEdit();
         toast('Lançamento atualizado.','success');
     } else {
-        const item = { id:Date.now().toString(), type, description:desc, category:cat, value:val, baseMonthKey:mk, recurring:rec, paidMonths:[] };
+        const isGlobal = type === 'divida' || type === 'patrimonio';
+        const item = { id:Date.now().toString(), type, description:desc, category:cat, value:val, baseMonthKey: isGlobal ? 'global' : mk, recurring:rec, paidMonths:[] };
         await commit(d => d.push(item));
         toast('Lançamento adicionado.','success');
     }
@@ -783,8 +784,11 @@ function updateView() {
                 <td class="${item.isIncome?'c-success':'c-danger'}"><strong>${item.isIncome?'+':'-'} ${fmt(item.value)}</strong></td></tr>`;}).join('');
 
     // MÉTRICAS
+    // Dívidas e Patrimônio não são filtrados por mês — aparecem sempre
+    const GLOBAL_TYPES = ['divida', 'patrimonio'];
     const monthData=financialData.filter(i=>{
-        if(i.type==='conta')return false;
+        if(i.type==='conta') return false;
+        if(GLOBAL_TYPES.includes(i.type)) return true;
         return i.recurring?monthValid(i.baseMonthKey,y,m):i.baseMonthKey===mk;
     });
     let metrics={};
