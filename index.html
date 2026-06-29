@@ -851,9 +851,9 @@ function updateView() {
     const saldo=(metrics.receita.total+metrics.locacao.total+totalBank)-(metrics.despesa.total+prev);
     const kg=$('kpi-grid');
     if(kg) kg.innerHTML=`
-        ${kpi('Receitas',metrics.receita,'Recebido','A Receber','c-success','c-warning','c-primary')}
-        ${kpi('Locações',metrics.locacao,'Recebido','A Receber','c-success','c-warning','c-primary')}
-        ${kpi('Despesas',metrics.despesa,'Pago','A Pagar','c-success','c-danger','c-danger')}
+        ${kpi('Receitas',metrics.receita,'Recebido','A Receber','c-success','c-warning')}
+        ${kpi('Locações',metrics.locacao,'Recebido','A Receber','c-success','c-warning')}
+        ${kpi('Despesas',metrics.despesa,'Pago','A Pagar','c-success','c-danger')}
         <div class="kpi"><div class="kpi-label">💳 Saldos Bancários</div>
             <div class="kpi-value c-primary">${fmt(totalBank)}</div></div>
         <div class="kpi kpi-danger"><div class="kpi-label">📅 Gastos Diários</div>
@@ -863,7 +863,7 @@ function updateView() {
                 <div class="kpi-sub-row"><span>Meta diária</span><strong>${fmt(dr)}</strong></div>
             </div></div>
         <div class="kpi kpi-highlight"><div class="kpi-label">📊 Resultado do Mês</div>
-            <div class="kpi-value ${saldo>=0?'c-success':'c-danger'}">${fmt(saldo)}</div>
+            <div class="kpi-value ${saldo>=0?'c-primary':'c-danger'}">${fmt(saldo)}</div>
             <div class="kpi-sub">
                 <div class="kpi-sub-row"><span>Receitas + Loc.</span><strong class="c-success">${fmt(metrics.receita.total+metrics.locacao.total)}</strong></div>
                 <div class="kpi-sub-row"><span>Saldo Bancário</span><strong class="${totalBank>=0?'c-success':'c-danger'}">${fmt(totalBank)}</strong></div>
@@ -872,12 +872,15 @@ function updateView() {
             </div></div>`;
 }
 
-function kpi(label,m,l1,l2,c1,c2,cv){
+function kpi(label,m,l1,l2,c1,c2){
+    // Valor principal = o que ainda falta (aPagar/A Receber)
+    // Cor: azul se positivo, vermelho se zero ou negativo
+    const mainColor = m.aPagar > 0 ? 'c-primary' : 'c-danger';
     return`<div class="kpi"><div class="kpi-label">${label}</div>
-        <div class="kpi-value ${cv}">${fmt(m.total)}</div>
+        <div class="kpi-value ${mainColor}">${fmt(m.aPagar)}</div>
         <div class="kpi-sub">
             <div class="kpi-sub-row"><span>${l1}</span><strong class="${c1}">${fmt(m.pago)}</strong></div>
-            <div class="kpi-sub-row"><span>${l2}</span><strong class="${c2}">${fmt(m.aPagar)}</strong></div>
+            <div class="kpi-sub-row"><span>Total</span><strong>${fmt(m.total)}</strong></div>
         </div></div>`;
 }
 
