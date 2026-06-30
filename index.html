@@ -306,7 +306,7 @@
             </div>
         </div>
         <div class="card" style="padding:0;">
-            <table><thead><tr><th width="5%">✔</th><th width="14%">Mês</th><th width="22%">Tipo/Cat.</th><th>Descrição</th><th width="16%">Valor</th></tr></thead>
+            <table><thead><tr><th width="5%">✔</th><th width="13%">Mês Original</th><th width="18%">Tipo/Cat.</th><th>Descrição</th><th width="14%">Valor</th><th width="18%">Mover Para</th></tr></thead>
             <tbody id="tbody-atrasadas"></tbody></table>
         </div>
     </section>
@@ -616,6 +616,46 @@ async function togglePaid(id, mk) {
     });
 }
 
+/**
+ * Move um lançamento atrasado para outro mês.
+ * - Item não-recorrente: apenas muda o baseMonthKey.
+ * - Item recorrente: marca o mês antigo como pago (resolve a pendência
+ *   daquele mês específico) e cria uma cópia avulsa (não recorrente)
+ *   no mês de destino, preservando a recorrência original.
+ */
+async function moveOverdueItem(id, pastMonthKey, selId) {
+    const sel = $(selId);
+    if (!sel) return;
+    const targetMk = sel.value; // formato "YYYY-M"
+    if (!targetMk || targetMk === pastMonthKey) return;
+
+    await commit(d => {
+        const item = d.find(x => x.id === id);
+        if (!item) return;
+
+        if (item.recurring) {
+            // Marca o mês antigo como pago/resolvido para não aparecer mais como atrasado
+            if (!item.paidMonths) item.paidMonths = [];
+            if (!item.paidMonths.includes(pastMonthKey)) item.paidMonths.push(pastMonthKey);
+            // Cria uma cópia avulsa no mês de destino
+            d.push({
+                id: Date.now().toString() + '_mv',
+                type: item.type,
+                description: item.description + ' (movido)',
+                category: item.category,
+                value: item.value,
+                baseMonthKey: targetMk,
+                recurring: false,
+                paidMonths: []
+            });
+        } else {
+            // Item avulso: apenas reatribui o mês
+            item.baseMonthKey = targetMk;
+        }
+    });
+    toast('Lançamento movido para o novo mês.', 'success');
+}
+
 async function deleteEntry(id) {
     if(!confirm('Excluir lançamento?')) return;
     await commit(d => { const i=d.findIndex(x=>x.id===id); if(i>-1)d.splice(i,1); });
@@ -773,15 +813,35 @@ function updateView() {
     if(sar)sar.textContent=fmt(totReceber); if(sap)sap.textContent=fmt(totPagar);
     const tba=$('tbody-atrasadas');
     if(tba) tba.innerHTML=atrasadas.length===0
-        ?`<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--success);">Nenhuma pendência! 🎉</td></tr>`
+        ?`<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--success);">Nenhuma pendência! 🎉</td></tr>`
         :atrasadas.map(item=>{
             const[ay,am]=item.pastMonthKey.split('-').map(Number);
             const ms=new Date(ay,am,1).toLocaleDateString('pt-BR',{month:'short',year:'numeric'});
+            const selId = `move-${item.id}-${item.pastMonthKey}`;
             return`<tr><td><input type="checkbox" onchange="togglePaid('${item.id}','${item.pastMonthKey}')"></td>
                 <td style="text-transform:capitalize;">${ms}</td>
                 <td>${item.type}/${item.category}</td>
                 <td>${item.description}${item.recurring?' 🔄':''}</td>
-                <td class="${item.isIncome?'c-success':'c-danger'}"><strong>${item.isIncome?'+':'-'} ${fmt(item.value)}</strong></td></tr>`;}).join('');
+                <td class="${item.isIncome?'c-success':'c-danger'}"><strong>${item.isIncome?'+':'-'} ${fmt(item.value)}</strong></td>
+                <td>
+                    <div style="display:flex;gap:4px;align-items:center;">
+                        <select id="${selId}" style="padding:4px 6px;font-size:11px;"></select>
+                        <button class="btn btn-warning btn-sm" onclick="moveOverdueItem('${item.id}','${item.pastMonthKey}','${selId}')">→</button>
+                    </div>
+                </td></tr>`;}).join('');
+    // Popula os seletores de mês para cada linha (mês atual + 11 seguintes)
+    atrasadas.forEach(item=>{
+        const sel=$(`move-${item.id}-${item.pastMonthKey}`);
+        if(!sel)return;
+        let opts='';
+        for(let i=0;i<12;i++){
+            const oy=y, om=m+i;
+            const realY=oy+Math.floor(om/12), realM=((om%12)+12)%12;
+            const label=new Date(realY,realM,1).toLocaleDateString('pt-BR',{month:'short',year:'numeric'});
+            opts+=`<option value="${realY}-${realM}" ${i===0?'selected':''}>${label}</option>`;
+        }
+        sel.innerHTML=opts;
+    });
 
     // MÉTRICAS
     // Dívidas e Patrimônio não são filtrados por mês — aparecem sempre
