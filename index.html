@@ -388,7 +388,9 @@ const TABS = [
 const fmt     = v => Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
 // Formata sempre mostrando o sinal de menos quando negativo (Intl não soma "-" antes do R$ por padrão em todos os navegadores)
 const fmtSigned = v => { const n=Number(v||0); return n<0 ? `- ${fmt(Math.abs(n))}` : fmt(n); };
-const url     = () => localStorage.getItem('scriptUrl') || '';
+// ⚙️ CONFIGURAÇÃO — altere aqui se mudar o Apps Script
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx5ccP8JL2Wn_szIQai0yOP2900XTOpBwmCdAJzfn_Prxwqnbi1ZqiyKOCXskAcpboNUw/exec';
+const url = () => window._runtimeUrl || SCRIPT_URL;
 const daily   = () => parseFloat(localStorage.getItem('dailyRate')) || 400;
 const $ = id  => document.getElementById(id);
 
@@ -524,9 +526,10 @@ function init() {
     applyTheme();
     renderTabs();
     updateMonthDisplay();
-    const ci = $('config-url'); if(ci) ci.value = url();
+    const ci = $('config-url'); if(ci) ci.value = SCRIPT_URL;
     const di = $('daily-rate'); if(di) di.value = daily();
     // Aguarda login antes de conectar ao Sheets
+    // URL já embutida no código — wizard não é necessário na abertura
 }
 
 function migrateLegacy() {
@@ -542,8 +545,8 @@ function checkLogin() {
         $('login-pass').value = '';
         $('login-error').style.display = 'none';
         // Conecta ao Sheets somente após login bem-sucedido
-        if (!url()) { $('setup-wizard').classList.remove('hidden'); }
-        else { loadFromSheets(); }
+        // URL já embutida no código — conecta direto
+        loadFromSheets();
     } else {
         $('login-error').style.display = 'block';
     }
@@ -569,11 +572,12 @@ function saveUrl() {
     const configInput = $('config-url');
     const u = (wizardInput?.value.trim()) || (configInput?.value.trim()) || '';
     if(!u) return toast('Cole a URL primeiro.','error');
-    localStorage.setItem('scriptUrl', u);
+    // Atualiza a constante em memória para esta sessão
+    window._runtimeUrl = u;
     if(wizardInput) wizardInput.value = u;
     if(configInput) configInput.value = u;
     $('setup-wizard').classList.add('hidden');
-    toast('URL salva. Conectando...','info');
+    toast('URL atualizada. Conectando...','info');
     loadFromSheets();
 }
 function saveDailyRate() {
