@@ -42,6 +42,15 @@
 
 
 
+        /* MODAL RECORRENTE */
+        #modal-recorrente { position: fixed; inset: 0; background: rgba(0,0,0,0.55); display: flex; align-items: center; justify-content: center; z-index: 9995; }
+        #modal-recorrente.hidden { display: none; }
+        .modal-card { background: var(--surface); border-radius: 12px; padding: 28px 28px 24px; width: 380px; max-width: 95vw; box-shadow: 0 8px 32px rgba(0,0,0,0.2); }
+        .modal-card h3 { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+        .modal-card p { font-size: 13px; color: var(--text-muted); margin-bottom: 20px; line-height: 1.6; }
+        .modal-btns { display: flex; flex-direction: column; gap: 8px; }
+        .modal-btns button { width: 100%; padding: 10px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; border: 1px solid var(--border); }
+
         /* LOGIN */
         #login-screen { position: fixed; inset: 0; background: var(--bg); display: flex; align-items: center; justify-content: center; z-index: 9999; }
         #login-screen.hidden { display: none; }
@@ -224,6 +233,19 @@
     </div>
 </div>
 
+<!-- MODAL EDIÇÃO RECORRENTE -->
+<div id="modal-recorrente" class="hidden">
+    <div class="modal-card">
+        <h3>✏️ Editar item recorrente</h3>
+        <p>Este lançamento é recorrente. Como deseja aplicar a alteração?</p>
+        <div class="modal-btns">
+            <button class="btn btn-primary" onclick="confirmEditRecorrente('only')">Alterar só este mês</button>
+            <button class="btn btn-warning" onclick="confirmEditRecorrente('future')">Alterar este e os meses seguintes</button>
+            <button class="btn btn-ghost" onclick="closeModalRecorrente()">Cancelar</button>
+        </div>
+    </div>
+</div>
+
 <!-- LOADING -->
 <div id="loading-overlay" class="hidden">
     <div class="loading-card">
@@ -400,10 +422,18 @@ function daysLeft() {
     if(y<n.getFullYear()||(y===n.getFullYear()&&m<n.getMonth())) return 0;
     return new Date(y,m+1,0).getDate();
 }
-function monthValid(key,ty,tm){
+function monthValid(key,ty,tm,endKey){
     if(!key)return false;
     const[by,bm]=key.split('-').map(Number);
-    return ty>by||(ty===by&&tm>=bm);
+    const starts = ty>by||(ty===by&&tm>=bm);
+    if(!starts) return false;
+    // Verifica se há encerramento (endMonthKey)
+    if(endKey){
+        const[ey,em]=endKey.split('-').map(Number);
+        const ended = ty>ey||(ty===ey&&tm>em);
+        if(ended) return false;
+    }
+    return true;
 }
 
 // ══════════════════════════════════════════════════════
@@ -588,29 +618,130 @@ function saveDailyRate() {
 // ══════════════════════════════════════════════════════
 //  CRUD
 // ══════════════════════════════════════════════════════
+// Mostra/oculta campo de parcelas ao marcar Recorrente
+function toggleParcelas(type) {
+    const checked = $(`rec-${type}`).checked;
+    const wrap = $(`parcelas-wrap-${type}`);
+    if (wrap) wrap.style.display = checked ? '' : 'none';
+    if (!checked && $(`parcelas-${type}`)) $(`parcelas-${type}`).value = '';
+}
+
+// Calcula o endMonthKey a partir do mês base e número de parcelas
+function calcEndMonthKey(baseMk, parcelas) {
+    if (!parcelas || parcelas < 1) return null;
+    const [y, m] = baseMk.split('-').map(Number);
+    const total = m + parcelas - 1;
+    const endY = y + Math.floor(total / 12);
+    const endM = total % 12;
+    return `${endY}-${endM}`;
+}
+
 async function handleSubmit(e, type) {
     e.preventDefault();
-    const desc = $(`desc-${type}`).value.trim();
-    const cat  = $(`cat-${type}`).value;
-    const val  = parseFloat(String($(`val-${type}`).value).replace(',','.'));
-    const rec  = $(`rec-${type}`).checked;
+    const desc     = $(`desc-${type}`).value.trim();
+    const cat      = $(`cat-${type}`).value;
+    const val      = parseFloat(String($(`val-${type}`).value).replace(',','.'));
+    const rec      = $(`rec-${type}`).checked;
+    const parInput = $(`parcelas-${type}`);
+    const parcelas = parInput ? parseInt(parInput.value) || null : null;
     if(!desc||!cat||isNaN(val)) return toast('Preencha todos os campos.','error');
 
     const mk = `${currentDate.getFullYear()}-${currentDate.getMonth()}`;
 
     if(editModeId) {
         const id = editModeId;
-        await commit(d => { const i=d.find(x=>x.id===id); if(i){i.description=desc;i.category=cat;i.value=val;i.recurring=rec;} });
+        const original = financialData.find(x => x.id === id);
+        // Se for recorrente, pergunta como aplicar a alteração
+        if (original && original.recurring) {
+            window._pendingEdit = { id, desc, cat, val, rec, mk, parcelas };
+            $('modal-recorrente').classList.remove('hidden');
+            return;
+        }
+        // Item não-recorrente: edita direto
+        const endKey = rec ? calcEndMonthKey(original.baseMonthKey, parcelas) : null;
+        await commit(d => { const i=d.find(x=>x.id===id); if(i){i.description=desc;i.category=cat;i.value=val;i.recurring=rec;i.endMonthKey=endKey||undefined;} });
         cancelEdit();
         toast('Lançamento atualizado.','success');
     } else {
         const isGlobal = type === 'divida' || type === 'patrimonio';
+        const endKey = rec ? calcEndMonthKey(mk, parcelas) : null;
         const item = { id:Date.now().toString(), type, description:desc, category:cat, value:val, baseMonthKey: isGlobal ? 'global' : mk, recurring:rec, paidMonths:[] };
+        if (endKey) item.endMonthKey = endKey;
         await commit(d => d.push(item));
-        toast('Lançamento adicionado.','success');
+        const label = parcelas ? `Lançamento adicionado (${parcelas}x).` : 'Lançamento adicionado.';
+        toast(label,'success');
     }
 
     $(`desc-${type}`).value=''; $(`val-${type}`).value=''; $(`rec-${type}`).checked=false; $(`cat-${type}`).value='';
+    if(parInput) parInput.value='';
+    toggleParcelas(type);
+}
+
+function closeModalRecorrente() {
+    $('modal-recorrente').classList.add('hidden');
+    window._pendingEdit = null;
+}
+
+async function confirmEditRecorrente(mode) {
+    $('modal-recorrente').classList.add('hidden');
+    const p = window._pendingEdit;
+    if (!p) return;
+    window._pendingEdit = null;
+
+    const { id, desc, cat, val, rec, mk } = p;
+
+    if (mode === 'only') {
+        // Marca o mês atual como "exceção": encerra a recorrência original
+        // neste mês (adicionando aos paidMonths) e cria uma entrada avulsa
+        await commit(d => {
+            const orig = d.find(x => x.id === id);
+            if (!orig) return;
+            // Encerra a recorrência original neste mês marcando como pago
+            if (!orig.paidMonths) orig.paidMonths = [];
+            if (!orig.paidMonths.includes(mk)) orig.paidMonths.push(mk);
+            // Cria entrada avulsa para este mês com o novo valor
+            d.push({
+                id: Date.now().toString() + '_exc',
+                type: orig.type,
+                description: desc,
+                category: cat,
+                value: val,
+                baseMonthKey: mk,
+                recurring: false,
+                paidMonths: []
+            });
+        });
+        toast('Alterado apenas para este mês.', 'success');
+
+    } else if (mode === 'future') {
+        // Encerra a recorrência original no mês anterior e cria
+        // uma nova recorrência a partir deste mês com o novo valor
+        await commit(d => {
+            const orig = d.find(x => x.id === id);
+            if (!orig) return;
+            // Calcula mês anterior ao atual
+            const [y, m] = mk.split('-').map(Number);
+            let prevY = y, prevM = m - 1;
+            if (prevM < 0) { prevY--; prevM = 11; }
+            // Muda o item original para encerrar no mês anterior
+            orig.endMonthKey = `${prevY}-${prevM}`;
+            orig.recurring = false; // vira não-recorrente a partir do encerramento
+            // Cria nova recorrência a partir deste mês
+            d.push({
+                id: Date.now().toString() + '_new',
+                type: orig.type,
+                description: desc,
+                category: cat,
+                value: val,
+                baseMonthKey: mk,
+                recurring: rec,
+                paidMonths: []
+            });
+        });
+        toast('Alterado para este e os meses seguintes.', 'success');
+    }
+
+    cancelEdit();
 }
 
 async function togglePaid(id, mk) {
@@ -677,6 +808,19 @@ function editEntry(id, type) {
     setTimeout(()=>{ $(`cat-${type}`).value=item.category; },10);
     $(`btn-submit-${type}`).textContent='Salvar';
     $(`btn-cancel-${type}`).style.display='inline-flex';
+    // Mostra campo de parcelas se item tiver limite definido
+    const pw=$(`parcelas-wrap-${type}`);
+    const pi=$(`parcelas-${type}`);
+    if(item.recurring && item.endMonthKey && pw && pi) {
+        pw.style.display='';
+        // Calcula quantas parcelas restam do baseMonthKey ao endMonthKey
+        const[by,bm]=item.baseMonthKey.split('-').map(Number);
+        const[ey,em]=item.endMonthKey.split('-').map(Number);
+        const total=(ey*12+em)-(by*12+bm)+1;
+        pi.value=total>0?total:'';
+    } else if(pw) {
+        pw.style.display=item.recurring?'':'none';
+    }
 }
 function cancelEdit() {
     editModeId=null;
@@ -684,6 +828,9 @@ function cancelEdit() {
         const b=$(`btn-submit-${t.type}`); if(b) b.textContent='Lançar';
         const c=$(`btn-cancel-${t.type}`); if(c) c.style.display='none';
         const f=b?.closest('form'); if(f) f.reset();
+        // Oculta campo de parcelas
+        const pw=$(`parcelas-wrap-${t.type}`); if(pw) pw.style.display='none';
+        const pi=$(`parcelas-${t.type}`); if(pi) pi.value='';
     });
 }
 
@@ -855,7 +1002,7 @@ function updateView() {
     const monthData=financialData.filter(i=>{
         if(i.type==='conta') return false;
         if(GLOBAL_TYPES.includes(i.type)) return true;
-        return i.recurring?monthValid(i.baseMonthKey,y,m):i.baseMonthKey===mk;
+        return i.recurring?monthValid(i.baseMonthKey,y,m,i.endMonthKey):i.baseMonthKey===mk;
     });
     let metrics={};
     TABS.forEach(t=>metrics[t.type]={total:0,pago:0,aPagar:0});
@@ -965,7 +1112,11 @@ function renderTabs() {
                         <div class="form-field" style="flex:2;min-width:150px;"><label>Descrição</label><input id="desc-${tab.type}" placeholder="Ex: Conta de luz" required></div>
                         <div class="form-field"><label>Categoria</label><select id="cat-${tab.type}" required></select></div>
                         <div class="form-field"><label>Valor (R$)</label><input id="val-${tab.type}" placeholder="0,00" required></div>
-                        <label class="check-field"><input type="checkbox" id="rec-${tab.type}"> Recorrente</label>
+                        <label class="check-field"><input type="checkbox" id="rec-${tab.type}" onchange="toggleParcelas('${tab.type}')"> Recorrente</label>
+                        <div class="form-field" id="parcelas-wrap-${tab.type}" style="display:none;min-width:90px;max-width:120px;">
+                            <label>Parcelas</label>
+                            <input type="number" id="parcelas-${tab.type}" placeholder="Ex: 12" min="1" step="1">
+                        </div>
                         <button type="submit" class="btn btn-primary" id="btn-submit-${tab.type}">Lançar</button>
                         <button type="button" class="btn btn-ghost" id="btn-cancel-${tab.type}" style="display:none;" onclick="cancelEdit()">Cancelar</button>
                     </div>
