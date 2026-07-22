@@ -286,9 +286,9 @@
         <button class="tab-link" onclick="openTab(event,'Despesas')">Despesas</button>
         <button class="tab-link" onclick="openTab(event,'Receitas')">Receitas</button>
         <button class="tab-link" onclick="openTab(event,'Locacoes')">Locações</button>
-        <button class="tab-link" onclick="openTab(event,'Dividas')">Dívidas</button>
+        <button class="tab-link" id="nav-Dividas" onclick="openTab(event,'Dividas')">Dívidas</button>
         <button class="tab-link" onclick="openTab(event,'Atrasadas')">Atrasadas <span id="badge-atrasadas" class="pending-badge" style="display:none">!</span></button>
-        <button class="tab-link" onclick="openTab(event,'Patrimonio')">Patrimônio</button>
+        <button class="tab-link" id="nav-Patrimonio" onclick="openTab(event,'Patrimonio')">Patrimônio</button>
         <button class="tab-link" onclick="openTab(event,'Configuracoes')">⚙ Config.</button>
     </div>
 </nav>
@@ -347,6 +347,19 @@
             </div>
             <div style="margin-top:10px;">
                 <button class="btn btn-ghost" onclick="showScript()">📋 Ver script do Apps Script</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Visibilidade das Abas</h2>
+            <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">Escolha quais abas aparecem na navegação. Os dados continuam intactos mesmo com a aba oculta.</p>
+            <div style="display:flex;flex-wrap:wrap;gap:12px;">
+                <label class="check-field" style="font-size:13px;font-weight:600;">
+                    <input type="checkbox" id="vis-Dividas" checked onchange="toggleTabVisibility('Dividas',this.checked)"> Dívidas
+                </label>
+                <label class="check-field" style="font-size:13px;font-weight:600;">
+                    <input type="checkbox" id="vis-Patrimonio" checked onchange="toggleTabVisibility('Patrimonio',this.checked)"> Patrimônio
+                </label>
             </div>
         </div>
 
@@ -558,6 +571,7 @@ function init() {
     updateMonthDisplay();
     const ci = $('config-url'); if(ci) ci.value = SCRIPT_URL;
     const di = $('daily-rate'); if(di) di.value = daily();
+    applyTabVisibility(); // Restaura preferência de abas visíveis
     // Aguarda login antes de conectar ao Sheets
     // URL já embutida no código — wizard não é necessário na abertura
 }
@@ -1168,6 +1182,37 @@ function toggleRows(cls){document.querySelectorAll(`.${cls}`).forEach(r=>{r.styl
 // ══════════════════════════════════════════════════════
 function toggleTheme(){const d=document.body.getAttribute('data-theme')==='dark';document.body.setAttribute('data-theme',d?'':'dark');localStorage.setItem('theme',d?'light':'dark');}
 function applyTheme(){if(localStorage.getItem('theme')==='dark')document.body.setAttribute('data-theme','dark');}
+
+// ── VISIBILIDADE DAS ABAS ──
+// Usa localStorage apenas para preferência de UI (não dados financeiros)
+function toggleTabVisibility(tabId, visible) {
+    const navBtn = $(`nav-${tabId}`);
+    if (navBtn) navBtn.style.display = visible ? '' : 'none';
+    // Se a aba oculta está ativa, redireciona para Dashboard
+    if (!visible) {
+        const section = $(tabId);
+        if (section && section.classList.contains('active')) {
+            section.classList.remove('active');
+            $('Dashboard')?.classList.add('active');
+            document.querySelector('.tab-link')?.classList.add('active');
+        }
+    }
+    // Salva preferência no localStorage (só preferência de UI, não dados)
+    const prefs = JSON.parse(localStorage.getItem('tabVisibility') || '{}');
+    prefs[tabId] = visible;
+    localStorage.setItem('tabVisibility', JSON.stringify(prefs));
+}
+
+function applyTabVisibility() {
+    const prefs = JSON.parse(localStorage.getItem('tabVisibility') || '{}');
+    ['Dividas','Patrimonio'].forEach(tabId => {
+        const visible = prefs[tabId] !== false; // padrão: visível
+        const navBtn  = $(`nav-${tabId}`);
+        const checkbox = $(`vis-${tabId}`);
+        if (navBtn)   navBtn.style.display   = visible ? '' : 'none';
+        if (checkbox) checkbox.checked        = visible;
+    });
+}
 
 // ══════════════════════════════════════════════════════
 //  BACKUP
