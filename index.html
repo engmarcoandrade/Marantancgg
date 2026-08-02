@@ -1089,8 +1089,9 @@ function updateView() {
                 <td><strong>${fmt(g.pago)}</strong></td>
                 <td></td></tr>`;
             g.items.forEach(item=>{
-                if(filter==='paid'&&!item.paid)return;
-                if(filter==='open'&&item.paid)return;
+                if(filter==='paid'    && !item.paid)   return;
+                if(filter==='open'    &&  item.paid)   return;
+                if(filter==='starred' && !item.starred) return;
                 const starred = item.starred ? 'row-starred' : '';
                 const rowClass = [item.paid?`row-paid ${cc}`:cc, starred].filter(Boolean).join(' ');
                 tbody.innerHTML+=`<tr class="${rowClass}">
@@ -1181,9 +1182,10 @@ function renderTabs() {
                     <span>Em Aberto: <strong id="sum-aberto-${tab.type}" class="c-warning">R$ 0,00</strong></span>
                 </div>
                 <div class="filter-group">
-                    <button id="btn-filter-${tab.type}-all"  class="filter-btn active" onclick="setFilter('${tab.type}','all')">Todos</button>
-                    <button id="btn-filter-${tab.type}-paid" class="filter-btn" onclick="setFilter('${tab.type}','paid')">Pagos</button>
-                    <button id="btn-filter-${tab.type}-open" class="filter-btn" onclick="setFilter('${tab.type}','open')">Em Aberto</button>
+                    <button id="btn-filter-${tab.type}-all"      class="filter-btn active" onclick="setFilter('${tab.type}','all')">Todos</button>
+                    <button id="btn-filter-${tab.type}-paid"     class="filter-btn" onclick="setFilter('${tab.type}','paid')">Pagos</button>
+                    <button id="btn-filter-${tab.type}-open"     class="filter-btn" onclick="setFilter('${tab.type}','open')">Em Aberto</button>
+                    <button id="btn-filter-${tab.type}-starred"  class="filter-btn" onclick="setFilter('${tab.type}','starred')" style="border-color:var(--primary);color:var(--primary);">◈ Destacados</button>
                 </div>
             </div>
             <div class="card" style="padding:0;">
@@ -1209,7 +1211,7 @@ function changeMonth(o){currentDate.setMonth(currentDate.getMonth()+o);updateMon
 function updateMonthDisplay(){$('current-month').textContent=currentDate.toLocaleDateString('pt-BR',{month:'long',year:'numeric'});updateView();}
 function setFilter(type,f){
     tabFilters[type]=f;
-    document.querySelectorAll(`#btn-filter-${type}-all,#btn-filter-${type}-paid,#btn-filter-${type}-open`).forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll(`#btn-filter-${type}-all,#btn-filter-${type}-paid,#btn-filter-${type}-open,#btn-filter-${type}-starred`).forEach(b=>b.classList.remove('active'));
     $(`btn-filter-${type}-${f}`)?.classList.add('active');
     updateView();
 }
