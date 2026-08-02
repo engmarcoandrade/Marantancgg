@@ -139,6 +139,22 @@
         table { width: 100%; border-collapse: collapse; font-size: 13px; }
         th { text-align: left; padding: 7px 10px; font-size: 11px; font-weight: 700; color: var(--text); text-transform: uppercase; letter-spacing: 0.04em; background: var(--surface-2); border-bottom: 1px solid var(--border); }
         td { padding: 7px 10px; border-bottom: 1px solid var(--border); vertical-align: middle; color: var(--text); font-weight: 500; }
+        /* Dígitos de largura fixa: alinha casas decimais entre linhas */
+        td:nth-child(n+3):nth-child(-n+5), .kpi-value, .kpi-sub-row strong,
+        .summary-strip strong, .bank-row input, .num { font-variant-numeric: tabular-nums; font-feature-settings: "tnum"; }
+        td:nth-child(n+3):nth-child(-n+5) { text-align: right; }
+        #table-despesa th:nth-child(n+3):nth-child(-n+5),
+        #table-receita th:nth-child(n+3):nth-child(-n+5),
+        #table-locacao th:nth-child(n+3):nth-child(-n+5),
+        #table-divida th:nth-child(n+3):nth-child(-n+5),
+        #table-patrimonio th:nth-child(n+3):nth-child(-n+5) { text-align: right; }
+        /* Marcador de status: forma além da cor */
+        .status-mark { display:inline-block; width:16px; font-weight:700; font-size:13px; }
+        .mark-paid { color: var(--primary); }
+        .mark-open { color: var(--text-muted); }
+        /* Barra de proporção da categoria */
+        .cat-bar { height:5px; background:var(--border); border-radius:3px; overflow:hidden; margin-top:4px; width:100%; }
+        .cat-bar span { display:block; height:100%; background:var(--primary); border-radius:3px; }
         tr:last-child td { border-bottom: none; }
         tr:hover td { background: var(--surface-2); }
         .cat-row { background: var(--surface-2); cursor: pointer; }
@@ -256,6 +272,12 @@
     </div>
 </div>
 
+<!-- BANNER DE BLOQUEIO -->
+<div id="blocked-banner" style="display:none;background:#7f1d1d;color:#fff;padding:10px 20px;font-size:13px;font-weight:700;text-align:center;position:sticky;top:0;z-index:200;">
+    ⛔ MODO SOMENTE LEITURA — os dados não foram carregados do Sheets. Nenhuma alteração será gravada.
+    <button onclick="forceSync()" style="margin-left:10px;padding:4px 12px;border:none;border-radius:5px;background:#fff;color:#7f1d1d;font-weight:700;cursor:pointer;">Tentar novamente</button>
+</div>
+
 <!-- LOADING -->
 <div id="loading-overlay" class="hidden">
     <div class="loading-card">
@@ -312,6 +334,18 @@
             <button class="btn btn-success" onclick="exportExcel()">📊 Exportar para Excel</button>
         </div>
         <div class="kpi-grid" id="kpi-grid"></div>
+
+        <div class="flex-row">
+            <div class="card flex-col">
+                <h2>Evolução — Últimos 6 Meses</h2>
+                <div id="chart-evolucao"></div>
+            </div>
+            <div class="card flex-col">
+                <h2>Despesas por Categoria — Mês Atual</h2>
+                <div id="chart-categorias"></div>
+            </div>
+        </div>
+
         <div class="flex-row">
             <div class="card flex-col">
                 <h2>Contas Bancárias</h2>
@@ -417,6 +451,10 @@ let editModeId    = null;
 let tabFilters    = { despesa:'all', receita:'all', locacao:'all', divida:'all', patrimonio:'all' };
 
 let isSaving      = false;
+// Trava de segurança: só permite gravar depois de uma leitura confirmada.
+// Sem isso, uma falha de leitura deixa financialData vazia e o primeiro
+// lançamento sobrescreve toda a planilha.
+let dataLoaded    = false;
 let appPassword   = localStorage.getItem('appPassword') || '123';
 
 const TABS = [
@@ -515,20 +553,29 @@ async function loadFromSheets() {
         financialData = Array.isArray(res.data) ? res.data : [];
         if (res.categories) categories = { ...categories, ...res.categories };
         migrateLegacy();
+        dataLoaded = true;   // libera gravações
+        showBlockedBanner(false);
         setStatus('online');
         syncCategories();
         updateView();
         toast('Dados carregados.', 'success');
     } catch(e) {
         console.error('loadFromSheets:', e);
+        dataLoaded = false;  // mantém gravações bloqueadas
         setStatus('offline');
         updateView();
-        toast('Falha ao conectar ao Sheets: ' + e.message, 'error', 7000);
+        showBlockedBanner(true);
+        toast('Falha ao ler o Sheets. Gravação BLOQUEADA para proteger seus dados.', 'error', 10000);
     } finally { hideLoading(); }
 }
 
 async function saveToSheets() {
     if (!url()) { toast('URL não configurada!', 'error'); return false; }
+    // Proteção principal: nunca grava sem ter lido a planilha com sucesso antes
+    if (!dataLoaded) {
+        toast('Gravação bloqueada: os dados não foram carregados do Sheets. Sincronize antes de alterar.', 'error', 10000);
+        return false;
+    }
     if (isSaving) return false;
     isSaving = true;
     setStatus('syncing');
@@ -563,12 +610,24 @@ async function saveToSheets() {
     } finally { isSaving = false; }
 }
 
-async function forceSync() { await loadFromSheets(); }
+function showBlockedBanner(show) {
+    const b = document.getElementById('blocked-banner');
+    if (b) b.style.display = show ? 'block' : 'none';
+}
+
+async function forceSync() {
+    await loadFromSheets();
+    showBlockedBanner(!dataLoaded);
+}
 
 // ══════════════════════════════════════════════════════
 //  COMMIT COM ROLLBACK
 // ══════════════════════════════════════════════════════
 async function commit(mutateFn) {
+    if (!dataLoaded) {
+        toast('Não é possível alterar: os dados ainda não foram carregados do Sheets.', 'error', 8000);
+        return;
+    }
     const snapshot = JSON.parse(JSON.stringify(financialData));
     mutateFn(financialData);
     updateView();
@@ -1064,6 +1123,7 @@ function updateView() {
     let metrics={};
     TABS.forEach(t=>metrics[t.type]={total:0,pago:0,aPagar:0});
 
+    let groupsDespesa = {};   // reaproveitado pelo gráfico de categorias
     TABS.forEach(tab=>{
         const tbody=document.querySelector(`#table-${tab.type} tbody`); if(!tbody)return;
         tbody.innerHTML='';
@@ -1091,6 +1151,7 @@ function updateView() {
                 visible.aPagar+=vOpen;
             }
         });
+        if(tab.type==='despesa') groupsDespesa = groups;
         const el=id=>document.getElementById(id);
         if(el(`sum-total-${tab.type}`)) el(`sum-total-${tab.type}`).textContent=fmt(visible.total);
         if(el(`sum-pago-${tab.type}`))  el(`sum-pago-${tab.type}`).textContent=fmt(visible.pago);
@@ -1101,8 +1162,13 @@ function updateView() {
             const hasVisible=g.items.some(i=>matchesFilter(i,filter));
             if(!hasVisible)continue;
             const cc=`cat-${tab.type}-${cat.replace(/[^a-zA-Z0-9]/g,'')}`;
+            const pct = g.total > 0 ? Math.round((g.pago / g.total) * 100) : 0;
             tbody.innerHTML+=`<tr class="cat-row" onclick="toggleRows('${cc}')">
-                <td colspan="2"><strong>▾ ${cat}</strong></td>
+                <td colspan="2">
+                    <strong>▾ ${cat}</strong>
+                    <span style="font-weight:600;font-size:11px;color:var(--text-muted);margin-left:6px;">${pct}% quitado</span>
+                    <div class="cat-bar"><span style="width:${pct}%"></span></div>
+                </td>
                 <td><strong>${fmt(g.total)}</strong></td>
                 <td><strong>${fmt(g.aPagar)}</strong></td>
                 <td><strong>${fmt(g.pago)}</strong></td>
@@ -1114,6 +1180,7 @@ function updateView() {
                 tbody.innerHTML+=`<tr class="${rowClass}">
                     <td><input type="checkbox" ${item.paid?'checked':''} onchange="togglePaid('${item.id}','${mk}')"></td>
                     <td>
+                        <span class="status-mark ${item.paid?'mark-paid':'mark-open'}" title="${item.paid?'Quitado':'Em aberto'}">${item.paid?'✓':'○'}</span>
                         <button class="star-btn ${item.starred?'active':''}" onclick="toggleStar('${item.id}')" title="${item.starred?'Remover destaque':'Destacar'}">◈</button>
                         ${item.description}${item.recurring?' 🔄':''}
                     </td>
@@ -1133,6 +1200,9 @@ function updateView() {
     // Resultado do Mês usa o que AINDA FALTA (aPagar), não os totais
     const resultado=(metrics.receita.aPagar+metrics.locacao.aPagar)-metrics.despesa.aPagar;
     const saldo=(metrics.receita.aPagar+metrics.locacao.aPagar+totalBank)-(metrics.despesa.aPagar+prev);
+    renderEvolucao();
+    renderCategorias(groupsDespesa);
+
     const kg=$('kpi-grid');
     if(kg) kg.innerHTML=`
         ${kpi('Receitas',metrics.receita,'Recebido','A Receber','c-success','c-warning','c-primary')}
@@ -1155,6 +1225,91 @@ function updateView() {
                 <div class="kpi-sub-row"><span>Saldos Bancários</span><strong class="${totalBank>=0?'c-success':'c-danger'}">${fmtSigned(totalBank)}</strong></div>
                 <div class="kpi-sub-row"><span>Gastos Diários</span><strong class="c-danger">- ${fmt(prev)}</strong></div>
             </div></div>`;
+}
+
+// ── Soma um tipo num mês específico (respeita recorrência e encerramento) ──
+function sumTypeInMonth(type, y, m) {
+    const mk = `${y}-${m}`;
+    let total = 0;
+    financialData.forEach(i => {
+        if (i.type !== type) return;
+        if (i.baseMonthKey === 'global') return;
+        const applies = i.recurring
+            ? monthValid(i.baseMonthKey, y, m, i.endMonthKey)
+            : i.baseMonthKey === mk;
+        if (applies) total += i.value;
+    });
+    return total;
+}
+
+// ── Gráfico: evolução dos últimos 6 meses ──
+function renderEvolucao() {
+    const box = document.getElementById('chart-evolucao');
+    if (!box) return;
+    const meses = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+    const y = currentDate.getFullYear(), m = currentDate.getMonth();
+
+    const dados = [];
+    for (let k = 5; k >= 0; k--) {
+        const t = m - k;
+        const ry = y + Math.floor(t / 12);
+        const rm = ((t % 12) + 12) % 12;
+        dados.push({
+            label: meses[rm],
+            entrada: sumTypeInMonth('receita', ry, rm) + sumTypeInMonth('locacao', ry, rm),
+            saida:   sumTypeInMonth('despesa', ry, rm)
+        });
+    }
+
+    const max = Math.max(...dados.map(d => Math.max(d.entrada, d.saida)), 1);
+
+    box.innerHTML = `
+        <div style="display:flex;gap:14px;font-size:11px;font-weight:600;margin-bottom:10px;">
+            <span><span style="display:inline-block;width:10px;height:10px;background:var(--primary);border-radius:2px;margin-right:4px;"></span>Entradas</span>
+            <span><span style="display:inline-block;width:10px;height:10px;background:var(--text-muted);border-radius:2px;margin-right:4px;"></span>Despesas</span>
+        </div>
+        <div style="display:flex;align-items:flex-end;gap:10px;height:150px;">
+            ${dados.map(d => `
+                <div style="flex:1;display:flex;flex-direction:column;align-items:center;height:100%;">
+                    <div style="flex:1;display:flex;align-items:flex-end;gap:3px;width:100%;justify-content:center;">
+                        <div title="Entradas: ${fmt(d.entrada)}"
+                             style="width:42%;height:${(d.entrada/max*100).toFixed(1)}%;background:var(--primary);border-radius:3px 3px 0 0;min-height:2px;"></div>
+                        <div title="Despesas: ${fmt(d.saida)}"
+                             style="width:42%;height:${(d.saida/max*100).toFixed(1)}%;background:var(--text-muted);border-radius:3px 3px 0 0;min-height:2px;"></div>
+                    </div>
+                    <div style="font-size:11px;font-weight:700;margin-top:6px;">${d.label}</div>
+                </div>`).join('')}
+        </div>`;
+}
+
+// ── Gráfico: despesas por categoria (barras horizontais ordenadas) ──
+function renderCategorias(groupsDespesa) {
+    const box = document.getElementById('chart-categorias');
+    if (!box) return;
+
+    const linhas = Object.keys(groupsDespesa)
+        .map(cat => ({ cat, total: groupsDespesa[cat].total }))
+        .filter(l => l.total > 0)
+        .sort((a, b) => b.total - a.total);
+
+    if (!linhas.length) {
+        box.innerHTML = '<p style="font-size:12px;color:var(--text-muted);">Sem despesas lançadas neste mês.</p>';
+        return;
+    }
+
+    const max = linhas[0].total;
+    const soma = linhas.reduce((s, l) => s + l.total, 0);
+
+    box.innerHTML = linhas.map(l => `
+        <div style="margin-bottom:9px;">
+            <div style="display:flex;justify-content:space-between;font-size:12px;font-weight:600;margin-bottom:3px;">
+                <span>${l.cat}</span>
+                <span class="num">${fmt(l.total)} <span style="color:var(--text-muted);font-weight:500;">(${Math.round(l.total/soma*100)}%)</span></span>
+            </div>
+            <div style="height:9px;background:var(--border);border-radius:4px;overflow:hidden;">
+                <div style="height:100%;width:${(l.total/max*100).toFixed(1)}%;background:var(--primary);border-radius:4px;"></div>
+            </div>
+        </div>`).join('');
 }
 
 function kpi(label,m,l1,l2,c1,c2,mainColor,isExpense){
