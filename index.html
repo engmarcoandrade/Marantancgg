@@ -1079,7 +1079,7 @@ function updateView() {
         const filter=tabFilters[tab.type];
         for(const cat in groups){
             const g=groups[cat];
-            const hasVisible=g.items.some(i=>filter==='all'||(filter==='paid'&&i.paid)||(filter==='open'&&!i.paid));
+            const hasVisible=g.items.some(i=>filter==='all'||(filter==='paid'&&i.paid)||(filter==='open'&&!i.paid)||(filter==='starred'&&i.starred));
             if(!hasVisible)continue;
             const cc=`cat-${tab.type}-${cat.replace(/[^a-zA-Z0-9]/g,'')}`;
             tbody.innerHTML+=`<tr class="cat-row" onclick="toggleRows('${cc}')">
