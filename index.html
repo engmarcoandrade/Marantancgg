@@ -169,6 +169,8 @@
         .filter-group { display: flex; gap: 4px; }
         .filter-btn { background: var(--surface-2); color: var(--text-muted); border: 1px solid var(--border); padding: 4px 10px; border-radius: 20px; font-size: 12px; cursor: pointer; }
         .filter-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+        .filter-btn-star { border-color: var(--primary); color: var(--primary); font-weight: 600; }
+        .filter-btn-star.active { color: #fff; }
 
         /* BANK */
         .bank-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 4px; border-bottom: 1px solid var(--border); }
@@ -443,6 +445,14 @@ function daysLeft() {
     if(y<n.getFullYear()||(y===n.getFullYear()&&m<n.getMonth())) return 0;
     return new Date(y,m+1,0).getDate();
 }
+// Decide se um item aparece sob o filtro atual (usada pelo somatorio e pela tabela)
+function matchesFilter(item, filter){
+    if(filter==='paid')    return !!item.paid;
+    if(filter==='open')    return !item.paid;
+    if(filter==='starred') return !!item.starred;
+    return true; // 'all'
+}
+
 function monthValid(key,ty,tm,endKey){
     if(!key)return false;
     const[by,bm]=key.split('-').map(Number);
@@ -1058,6 +1068,9 @@ function updateView() {
         const tbody=document.querySelector(`#table-${tab.type} tbody`); if(!tbody)return;
         tbody.innerHTML='';
         const typeData=monthData.filter(i=>i.type===tab.type);
+        const filter=tabFilters[tab.type];
+        // Somatório da faixa de resumo: considera apenas o que o filtro exibe
+        const visible={total:0,pago:0,aPagar:0};
         const groups={};
         typeData.forEach(item=>{
             if(!groups[item.category]) groups[item.category]={total:0,aPagar:0,pago:0,items:[]};
@@ -1067,19 +1080,25 @@ function updateView() {
             groups[item.category].total+=item.value;
             groups[item.category].aPagar+=vOpen;
             groups[item.category].pago+=vPaid;
+            // metrics = totais do mês (usado pelo Dashboard, nunca filtrado)
             metrics[tab.type].total+=item.value;
             metrics[tab.type].pago+=vPaid;
             metrics[tab.type].aPagar+=vOpen;
+            // visible = somente os itens que o filtro atual exibe
+            if(matchesFilter({...item,paid},filter)){
+                visible.total+=item.value;
+                visible.pago+=vPaid;
+                visible.aPagar+=vOpen;
+            }
         });
         const el=id=>document.getElementById(id);
-        if(el(`sum-total-${tab.type}`)) el(`sum-total-${tab.type}`).textContent=fmt(metrics[tab.type].total);
-        if(el(`sum-pago-${tab.type}`))  el(`sum-pago-${tab.type}`).textContent=fmt(metrics[tab.type].pago);
-        if(el(`sum-aberto-${tab.type}`))el(`sum-aberto-${tab.type}`).textContent=fmt(metrics[tab.type].aPagar);
+        if(el(`sum-total-${tab.type}`)) el(`sum-total-${tab.type}`).textContent=fmt(visible.total);
+        if(el(`sum-pago-${tab.type}`))  el(`sum-pago-${tab.type}`).textContent=fmt(visible.pago);
+        if(el(`sum-aberto-${tab.type}`))el(`sum-aberto-${tab.type}`).textContent=fmt(visible.aPagar);
 
-        const filter=tabFilters[tab.type];
         for(const cat in groups){
             const g=groups[cat];
-            const hasVisible=g.items.some(i=>filter==='all'||(filter==='paid'&&i.paid)||(filter==='open'&&!i.paid)||(filter==='starred'&&i.starred));
+            const hasVisible=g.items.some(i=>matchesFilter(i,filter));
             if(!hasVisible)continue;
             const cc=`cat-${tab.type}-${cat.replace(/[^a-zA-Z0-9]/g,'')}`;
             tbody.innerHTML+=`<tr class="cat-row" onclick="toggleRows('${cc}')">
@@ -1089,9 +1108,7 @@ function updateView() {
                 <td><strong>${fmt(g.pago)}</strong></td>
                 <td></td></tr>`;
             g.items.forEach(item=>{
-                if(filter==='paid'    && !item.paid)   return;
-                if(filter==='open'    &&  item.paid)   return;
-                if(filter==='starred' && !item.starred) return;
+                if(!matchesFilter(item,filter)) return;
                 const starred = item.starred ? 'row-starred' : '';
                 const rowClass = [item.paid?`row-paid ${cc}`:cc, starred].filter(Boolean).join(' ');
                 tbody.innerHTML+=`<tr class="${rowClass}">
@@ -1185,7 +1202,7 @@ function renderTabs() {
                     <button id="btn-filter-${tab.type}-all"      class="filter-btn active" onclick="setFilter('${tab.type}','all')">Todos</button>
                     <button id="btn-filter-${tab.type}-paid"     class="filter-btn" onclick="setFilter('${tab.type}','paid')">Pagos</button>
                     <button id="btn-filter-${tab.type}-open"     class="filter-btn" onclick="setFilter('${tab.type}','open')">Em Aberto</button>
-                    <button id="btn-filter-${tab.type}-starred"  class="filter-btn" onclick="setFilter('${tab.type}','starred')" style="border-color:var(--primary);color:var(--primary);">◈ Destacados</button>
+                    <button id="btn-filter-${tab.type}-starred"  class="filter-btn filter-btn-star" onclick="setFilter('${tab.type}','starred')">◈ Destacados</button>
                 </div>
             </div>
             <div class="card" style="padding:0;">
