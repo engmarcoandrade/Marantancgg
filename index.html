@@ -144,6 +144,14 @@
         .cat-row { background: var(--surface-2); cursor: pointer; }
         .cat-row td { font-weight: 700; font-size: 12px; color: var(--text-muted); border-top: 2px solid var(--border); text-transform: uppercase; letter-spacing: 0.03em; }
         .row-paid td { color: var(--text-muted); background: var(--row-paid); opacity: 0.7; }
+        /* Destaque otimizado para deuteranopia — azul forte, sem depender de verde/vermelho/amarelo */
+        .row-starred td { background: #e8f0fe; font-weight: 700; }
+        .row-starred td:first-child { border-left: 4px solid #1a56db; }
+        [data-theme="dark"] .row-starred td { background: #1a2540; font-weight: 700; }
+        [data-theme="dark"] .row-starred td:first-child { border-left: 4px solid #4d90fe; }
+        .star-btn { background: none; border: none; cursor: pointer; font-size: 14px; color: var(--border); padding: 0 2px; transition: 0.15s; line-height: 1; }
+        .star-btn:hover { color: #1a56db; }
+        .star-btn.active { color: #1a56db; }
 
         /* FORMS */
         .form-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-end; }
@@ -673,9 +681,10 @@ async function handleSubmit(e, type) {
         }
         // Item não-recorrente: edita direto
         const endKey = rec ? calcEndMonthKey(original.baseMonthKey, parcelas) : null;
-        await commit(d => { const i=d.find(x=>x.id===id); if(i){i.description=desc;i.category=cat;i.value=val;i.recurring=rec;i.endMonthKey=endKey||undefined;} });
+        await commit(d => { const i=d.find(x=>x.id===id); if(i){i.description=desc;i.category=cat;i.value=val;i.recurring=rec;if(endKey)i.endMonthKey=endKey;else delete i.endMonthKey;} });
         cancelEdit();
         toast('Lançamento atualizado.','success');
+        return; // Garante que não cai no bloco de criação abaixo
     } else {
         const isGlobal = type === 'divida' || type === 'patrimonio';
         const endKey = rec ? calcEndMonthKey(mk, parcelas) : null;
@@ -686,9 +695,11 @@ async function handleSubmit(e, type) {
         toast(label,'success');
     }
 
-    $(`desc-${type}`).value=''; $(`val-${type}`).value=''; $(`rec-${type}`).checked=false; $(`cat-${type}`).value='';
-    if(parInput) parInput.value='';
-    toggleParcelas(type);
+    if(!editModeId) { // Só limpa se não for edição (edição já limpou via cancelEdit)
+        $(`desc-${type}`).value=''; $(`val-${type}`).value=''; $(`rec-${type}`).checked=false; $(`cat-${type}`).value='';
+        if(parInput) parInput.value='';
+        toggleParcelas(type);
+    }
 }
 
 function closeModalRecorrente() {
@@ -756,6 +767,13 @@ async function confirmEditRecorrente(mode) {
     }
 
     cancelEdit();
+}
+
+async function toggleStar(id) {
+    await commit(d => {
+        const i = d.find(x => x.id === id);
+        if (i) i.starred = !i.starred;
+    });
 }
 
 async function togglePaid(id, mk) {
@@ -1073,9 +1091,14 @@ function updateView() {
             g.items.forEach(item=>{
                 if(filter==='paid'&&!item.paid)return;
                 if(filter==='open'&&item.paid)return;
-                tbody.innerHTML+=`<tr class="${item.paid?`row-paid ${cc}`:cc}">
+                const starred = item.starred ? 'row-starred' : '';
+                const rowClass = [item.paid?`row-paid ${cc}`:cc, starred].filter(Boolean).join(' ');
+                tbody.innerHTML+=`<tr class="${rowClass}">
                     <td><input type="checkbox" ${item.paid?'checked':''} onchange="togglePaid('${item.id}','${mk}')"></td>
-                    <td>${item.description}${item.recurring?' 🔄':''}</td>
+                    <td>
+                        <button class="star-btn ${item.starred?'active':''}" onclick="toggleStar('${item.id}')" title="${item.starred?'Remover destaque':'Destacar'}">◈</button>
+                        ${item.description}${item.recurring?' 🔄':''}
+                    </td>
                     <td>${fmt(item.value)}</td>
                     <td>${fmt(item.vOpen)}</td>
                     <td>${fmt(item.vPaid)}</td>
