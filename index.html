@@ -152,9 +152,7 @@
         .status-mark { display:inline-block; width:16px; font-weight:700; font-size:13px; }
         .mark-paid { color: var(--primary); }
         .mark-open { color: var(--text-muted); }
-        /* Barra de proporção da categoria */
-        .cat-bar { height:5px; background:var(--border); border-radius:3px; overflow:hidden; margin-top:4px; width:100%; }
-        .cat-bar span { display:block; height:100%; background:var(--primary); border-radius:3px; }
+
         tr:last-child td { border-bottom: none; }
         tr:hover td { background: var(--surface-2); }
         .cat-row { background: var(--surface-2); cursor: pointer; }
@@ -1162,13 +1160,8 @@ function updateView() {
             const hasVisible=g.items.some(i=>matchesFilter(i,filter));
             if(!hasVisible)continue;
             const cc=`cat-${tab.type}-${cat.replace(/[^a-zA-Z0-9]/g,'')}`;
-            const pct = g.total > 0 ? Math.round((g.pago / g.total) * 100) : 0;
             tbody.innerHTML+=`<tr class="cat-row" onclick="toggleRows('${cc}')">
-                <td colspan="2">
-                    <strong>▾ ${cat}</strong>
-                    <span style="font-weight:600;font-size:11px;color:var(--text-muted);margin-left:6px;">${pct}% quitado</span>
-                    <div class="cat-bar"><span style="width:${pct}%"></span></div>
-                </td>
+                <td colspan="2"><strong>▾ ${cat}</strong></td>
                 <td><strong>${fmt(g.total)}</strong></td>
                 <td><strong>${fmt(g.aPagar)}</strong></td>
                 <td><strong>${fmt(g.pago)}</strong></td>
