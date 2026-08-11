@@ -183,6 +183,9 @@
         .filter-group { display: flex; gap: 4px; }
         .filter-btn { background: var(--surface-2); color: var(--text-muted); border: 1px solid var(--border); padding: 4px 10px; border-radius: 20px; font-size: 12px; cursor: pointer; }
         .filter-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+        .filter-divider { width:1px; background:var(--border); margin:2px 4px; align-self:stretch; }
+        .filter-btn-group { font-weight: 600; }
+        .filter-btn-group.active { background: var(--primary); color: #fff; border-color: var(--primary); }
         .filter-btn-star { border-color: var(--primary); color: var(--primary); font-weight: 600; }
         .filter-btn-star.active { color: #fff; }
 
@@ -447,6 +450,8 @@ let categories    = { despesa:['Moradia','Alimentação','Transporte','Lazer','S
 let currentDate   = new Date();
 let editModeId    = null;
 let tabFilters    = { despesa:'all', receita:'all', locacao:'all', divida:'all', patrimonio:'all' };
+// Exibição agrupada por categoria (true) ou lista simples (false)
+let tabGrouping   = { despesa:true, receita:true, locacao:true, divida:true, patrimonio:true };
 
 let isSaving      = false;
 // Trava de segurança: só permite gravar depois de uma leitura confirmada.
@@ -482,6 +487,27 @@ function daysLeft() {
     return new Date(y,m+1,0).getDate();
 }
 // Decide se um item aparece sob o filtro atual (usada pelo somatorio e pela tabela)
+// Monta a linha de um lançamento. cc = classe da categoria (vazia na lista simples)
+function itemRow(item, cc, mk, tipo){
+    const starred  = item.starred ? 'row-starred' : '';
+    const base     = item.paid ? `row-paid ${cc}` : cc;
+    const rowClass = [base, starred].filter(Boolean).join(' ').trim();
+    return `<tr class="${rowClass}">
+        <td><input type="checkbox" ${item.paid?'checked':''} onchange="togglePaid('${item.id}','${mk}')"></td>
+        <td>
+            <span class="status-mark ${item.paid?'mark-paid':'mark-open'}" title="${item.paid?'Quitado':'Em aberto'}">${item.paid?'✓':'○'}</span>
+            <button class="star-btn ${item.starred?'active':''}" onclick="toggleStar('${item.id}')" title="${item.starred?'Remover destaque':'Destacar'}">◈</button>
+            ${item.description}${item.recurring?' 🔄':''}
+        </td>
+        <td>${fmt(item.value)}</td>
+        <td>${fmt(item.vOpen)}</td>
+        <td>${fmt(item.vPaid)}</td>
+        <td><div style="display:flex;gap:4px;">
+            <button class="btn btn-warning btn-sm" onclick="editEntry('${item.id}','${tipo}')">✎</button>
+            <button class="btn btn-danger btn-sm"  onclick="deleteEntry('${item.id}')">×</button>
+        </div></td></tr>`;
+}
+
 function matchesFilter(item, filter){
     if(filter==='paid')    return !!item.paid;
     if(filter==='open')    return !item.paid;
@@ -783,14 +809,14 @@ async function confirmEditRecorrente(mode) {
     const { id, desc, cat, val, rec, mk } = p;
 
     if (mode === 'only') {
-        // Marca o mês atual como "exceção": encerra a recorrência original
-        // neste mês (adicionando aos paidMonths) e cria uma entrada avulsa
+        // Oculta o recorrente APENAS neste mês e cria uma entrada avulsa
+        // no lugar dele. Usa skipMonths (exceção) e não paidMonths, senão
+        // o original continuaria visível como "pago" e duplicaria a linha.
         await commit(d => {
             const orig = d.find(x => x.id === id);
             if (!orig) return;
-            // Encerra a recorrência original neste mês marcando como pago
-            if (!orig.paidMonths) orig.paidMonths = [];
-            if (!orig.paidMonths.includes(mk)) orig.paidMonths.push(mk);
+            if (!orig.skipMonths) orig.skipMonths = [];
+            if (!orig.skipMonths.includes(mk)) orig.skipMonths.push(mk);
             // Cria entrada avulsa para este mês com o novo valor
             d.push({
                 id: Date.now().toString() + '_exc',
@@ -815,9 +841,10 @@ async function confirmEditRecorrente(mode) {
             const [y, m] = mk.split('-').map(Number);
             let prevY = y, prevM = m - 1;
             if (prevM < 0) { prevY--; prevM = 11; }
-            // Muda o item original para encerrar no mês anterior
+            // Encerra a recorrência original no mês anterior.
+            // Mantém recurring=true: o item precisa continuar aparecendo
+            // em todos os meses entre o início e o encerramento.
             orig.endMonthKey = `${prevY}-${prevM}`;
-            orig.recurring = false; // vira não-recorrente a partir do encerramento
             // Cria nova recorrência a partir deste mês
             d.push({
                 id: Date.now().toString() + '_new',
@@ -870,9 +897,10 @@ async function moveOverdueItem(id, pastMonthKey, selId) {
         if (!item) return;
 
         if (item.recurring) {
-            // Marca o mês antigo como pago/resolvido para não aparecer mais como atrasado
-            if (!item.paidMonths) item.paidMonths = [];
-            if (!item.paidMonths.includes(pastMonthKey)) item.paidMonths.push(pastMonthKey);
+            // Remove o mês de origem (foi transferido, não pago).
+            // skipMonths evita que ele continue aparecendo lá como quitado.
+            if (!item.skipMonths) item.skipMonths = [];
+            if (!item.skipMonths.includes(pastMonthKey)) item.skipMonths.push(pastMonthKey);
             // Cria uma cópia avulsa no mês de destino
             d.push({
                 id: Date.now().toString() + '_mv',
@@ -1061,14 +1089,14 @@ function updateView() {
             let cy=by,cm=bm;
             while(cy<y||(cy===y&&cm<m)){
                 const pmk=`${cy}-${cm}`;
-                if(!item.paidMonths?.includes(pmk)){
+                if(!item.paidMonths?.includes(pmk) && !item.skipMonths?.includes(pmk)){
                     atrasadas.push({...item,pastMonthKey:pmk,isIncome});
                     isIncome?totReceber+=item.value:totPagar+=item.value;
                 }
                 cm++;if(cm>11){cy++;cm=0;}
             }
         } else if(by<y||(by===y&&bm<m)){
-            if(!item.paidMonths?.includes(item.baseMonthKey)){
+            if(!item.paidMonths?.includes(item.baseMonthKey) && !item.skipMonths?.includes(item.baseMonthKey)){
                 atrasadas.push({...item,pastMonthKey:item.baseMonthKey,isIncome});
                 isIncome?totReceber+=item.value:totPagar+=item.value;
             }
@@ -1116,6 +1144,8 @@ function updateView() {
     const monthData=financialData.filter(i=>{
         if(i.type==='conta') return false;
         if(GLOBAL_TYPES.includes(i.type)) return true;
+        // skipMonths: meses substituídos por uma edição pontual — não devem aparecer
+        if(i.skipMonths && i.skipMonths.includes(mk)) return false;
         return i.recurring?monthValid(i.baseMonthKey,y,m,i.endMonthKey):i.baseMonthKey===mk;
     });
     let metrics={};
@@ -1155,35 +1185,34 @@ function updateView() {
         if(el(`sum-pago-${tab.type}`))  el(`sum-pago-${tab.type}`).textContent=fmt(visible.pago);
         if(el(`sum-aberto-${tab.type}`))el(`sum-aberto-${tab.type}`).textContent=fmt(visible.aPagar);
 
-        for(const cat in groups){
-            const g=groups[cat];
-            const hasVisible=g.items.some(i=>matchesFilter(i,filter));
-            if(!hasVisible)continue;
-            const cc=`cat-${tab.type}-${cat.replace(/[^a-zA-Z0-9]/g,'')}`;
-            tbody.innerHTML+=`<tr class="cat-row" onclick="toggleRows('${cc}')">
-                <td colspan="2"><strong>▾ ${cat}</strong></td>
-                <td><strong>${fmt(g.total)}</strong></td>
-                <td><strong>${fmt(g.aPagar)}</strong></td>
-                <td><strong>${fmt(g.pago)}</strong></td>
-                <td></td></tr>`;
-            g.items.forEach(item=>{
-                if(!matchesFilter(item,filter)) return;
-                const starred = item.starred ? 'row-starred' : '';
-                const rowClass = [item.paid?`row-paid ${cc}`:cc, starred].filter(Boolean).join(' ');
-                tbody.innerHTML+=`<tr class="${rowClass}">
-                    <td><input type="checkbox" ${item.paid?'checked':''} onchange="togglePaid('${item.id}','${mk}')"></td>
-                    <td>
-                        <span class="status-mark ${item.paid?'mark-paid':'mark-open'}" title="${item.paid?'Quitado':'Em aberto'}">${item.paid?'✓':'○'}</span>
-                        <button class="star-btn ${item.starred?'active':''}" onclick="toggleStar('${item.id}')" title="${item.starred?'Remover destaque':'Destacar'}">◈</button>
-                        ${item.description}${item.recurring?' 🔄':''}
-                    </td>
-                    <td>${fmt(item.value)}</td>
-                    <td>${fmt(item.vOpen)}</td>
-                    <td>${fmt(item.vPaid)}</td>
-                    <td><div style="display:flex;gap:4px;">
-                        <button class="btn btn-warning btn-sm" onclick="editEntry('${item.id}','${tab.type}')">✎</button>
-                        <button class="btn btn-danger btn-sm"  onclick="deleteEntry('${item.id}')">×</button>
-                    </div></td></tr>`;
+        const agrupado = tabGrouping[tab.type];
+
+        if (agrupado) {
+            // Modo agrupado: cabeçalho de categoria + itens
+            for(const cat in groups){
+                const g=groups[cat];
+                const hasVisible=g.items.some(i=>matchesFilter(i,filter));
+                if(!hasVisible)continue;
+                const cc=`cat-${tab.type}-${cat.replace(/[^a-zA-Z0-9]/g,'')}`;
+                tbody.innerHTML+=`<tr class="cat-row" onclick="toggleRows('${cc}')">
+                    <td colspan="2"><strong>▾ ${cat}</strong></td>
+                    <td><strong>${fmt(g.total)}</strong></td>
+                    <td><strong>${fmt(g.aPagar)}</strong></td>
+                    <td><strong>${fmt(g.pago)}</strong></td>
+                    <td></td></tr>`;
+                g.items.forEach(item=>{
+                    if(!matchesFilter(item,filter)) return;
+                    tbody.innerHTML += itemRow(item, cc, mk, tab.type);
+                });
+            }
+        } else {
+            // Modo lista simples: só os lançamentos, sem linhas de categoria
+            typeData.forEach(item=>{
+                const paid  = item.paidMonths?.includes(mk);
+                const vOpen = paid?0:item.value, vPaid = paid?item.value:0;
+                const full  = {...item, paid, vOpen, vPaid};
+                if(!matchesFilter(full,filter)) return;
+                tbody.innerHTML += itemRow(full, '', mk, tab.type);
             });
         }
     });
@@ -1227,6 +1256,7 @@ function sumTypeInMonth(type, y, m) {
     financialData.forEach(i => {
         if (i.type !== type) return;
         if (i.baseMonthKey === 'global') return;
+        if (i.skipMonths && i.skipMonths.includes(mk)) return; // mês substituído
         const applies = i.recurring
             ? monthValid(i.baseMonthKey, y, m, i.endMonthKey)
             : i.baseMonthKey === mk;
@@ -1351,6 +1381,8 @@ function renderTabs() {
                     <button id="btn-filter-${tab.type}-paid"     class="filter-btn" onclick="setFilter('${tab.type}','paid')">Pagos</button>
                     <button id="btn-filter-${tab.type}-open"     class="filter-btn" onclick="setFilter('${tab.type}','open')">Em Aberto</button>
                     <button id="btn-filter-${tab.type}-starred"  class="filter-btn filter-btn-star" onclick="setFilter('${tab.type}','starred')">◈ Destacados</button>
+                    <span class="filter-divider"></span>
+                    <button id="btn-group-${tab.type}" class="filter-btn filter-btn-group active" onclick="toggleGrouping('${tab.type}')" title="Alternar entre agrupado por categoria e lista simples">▤ Categorias</button>
                 </div>
             </div>
             <div class="card" style="padding:0;">
@@ -1380,6 +1412,17 @@ function setFilter(type,f){
     $(`btn-filter-${type}-${f}`)?.classList.add('active');
     updateView();
 }
+function toggleGrouping(type){
+    tabGrouping[type] = !tabGrouping[type];
+    const btn = $(`btn-group-${type}`);
+    if (btn) {
+        // Ativo = agrupado por categoria
+        btn.classList.toggle('active', tabGrouping[type]);
+        btn.textContent = tabGrouping[type] ? '▤ Categorias' : '☰ Lista simples';
+    }
+    updateView();
+}
+
 function toggleRows(cls){document.querySelectorAll(`.${cls}`).forEach(r=>{r.style.display=r.style.display==='none'?'table-row':'none';});}
 
 // ══════════════════════════════════════════════════════
