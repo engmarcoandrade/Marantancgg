@@ -140,14 +140,10 @@
         th { text-align: left; padding: 7px 10px; font-size: 11px; font-weight: 700; color: var(--text); text-transform: uppercase; letter-spacing: 0.04em; background: var(--surface-2); border-bottom: 1px solid var(--border); }
         td { padding: 7px 10px; border-bottom: 1px solid var(--border); vertical-align: middle; color: var(--text); font-weight: 500; }
         /* Dígitos de largura fixa: alinha casas decimais entre linhas */
-        td:nth-child(n+3):nth-child(-n+5), .kpi-value, .kpi-sub-row strong,
+        /* Colunas de valor: alinhadas por classe (posição quebra com colspan) */
+        td.num-cell, th.num-cell, .kpi-value, .kpi-sub-row strong,
         .summary-strip strong, .bank-row input, .num { font-variant-numeric: tabular-nums; font-feature-settings: "tnum"; }
-        td:nth-child(n+3):nth-child(-n+5) { text-align: right; }
-        #table-despesa th:nth-child(n+3):nth-child(-n+5),
-        #table-receita th:nth-child(n+3):nth-child(-n+5),
-        #table-locacao th:nth-child(n+3):nth-child(-n+5),
-        #table-divida th:nth-child(n+3):nth-child(-n+5),
-        #table-patrimonio th:nth-child(n+3):nth-child(-n+5) { text-align: right; }
+        td.num-cell, th.num-cell { text-align: right; }
         /* Marcador de status: forma além da cor */
         .status-mark { display:inline-block; width:16px; font-weight:700; font-size:13px; }
         .mark-paid { color: var(--primary); }
@@ -373,7 +369,7 @@
             </div>
         </div>
         <div class="card" style="padding:0;">
-            <table><thead><tr><th width="5%">✔</th><th width="13%">Mês Original</th><th width="18%">Tipo/Cat.</th><th>Descrição</th><th width="14%">Valor</th><th width="18%">Mover Para</th></tr></thead>
+            <table><thead><tr><th width="5%">✔</th><th width="13%">Mês Original</th><th width="18%">Tipo/Cat.</th><th>Descrição</th><th width="14%" class="num-cell">Valor</th><th width="18%">Mover Para</th></tr></thead>
             <tbody id="tbody-atrasadas"></tbody></table>
         </div>
     </section>
@@ -499,9 +495,9 @@ function itemRow(item, cc, mk, tipo){
             <button class="star-btn ${item.starred?'active':''}" onclick="toggleStar('${item.id}')" title="${item.starred?'Remover destaque':'Destacar'}">◈</button>
             ${item.description}${item.recurring?' 🔄':''}
         </td>
-        <td>${fmt(item.value)}</td>
-        <td>${fmt(item.vOpen)}</td>
-        <td>${fmt(item.vPaid)}</td>
+        <td class="num-cell">${fmt(item.value)}</td>
+        <td class="num-cell">${fmt(item.vOpen)}</td>
+        <td class="num-cell">${fmt(item.vPaid)}</td>
         <td><div style="display:flex;gap:4px;">
             <button class="btn btn-warning btn-sm" onclick="editEntry('${item.id}','${tipo}')">✎</button>
             <button class="btn btn-danger btn-sm"  onclick="deleteEntry('${item.id}')">×</button>
@@ -1117,7 +1113,7 @@ function updateView() {
                 <td style="text-transform:capitalize;">${ms}</td>
                 <td>${item.type}/${item.category}</td>
                 <td>${item.description}${item.recurring?' 🔄':''}</td>
-                <td class="${item.isIncome?'c-success':'c-danger'}"><strong>${item.isIncome?'+':'-'} ${fmt(item.value)}</strong></td>
+                <td class="num-cell ${item.isIncome?'c-success':'c-danger'}"><strong>${item.isIncome?'+':'-'} ${fmt(item.value)}</strong></td>
                 <td>
                     <div style="display:flex;gap:4px;align-items:center;">
                         <select id="${selId}" style="padding:4px 6px;font-size:11px;"></select>
@@ -1196,9 +1192,9 @@ function updateView() {
                 const cc=`cat-${tab.type}-${cat.replace(/[^a-zA-Z0-9]/g,'')}`;
                 tbody.innerHTML+=`<tr class="cat-row" onclick="toggleRows('${cc}')">
                     <td colspan="2"><strong>▾ ${cat}</strong></td>
-                    <td><strong>${fmt(g.total)}</strong></td>
-                    <td><strong>${fmt(g.aPagar)}</strong></td>
-                    <td><strong>${fmt(g.pago)}</strong></td>
+                    <td class="num-cell"><strong>${fmt(g.total)}</strong></td>
+                    <td class="num-cell"><strong>${fmt(g.aPagar)}</strong></td>
+                    <td class="num-cell"><strong>${fmt(g.pago)}</strong></td>
                     <td></td></tr>`;
                 g.items.forEach(item=>{
                     if(!matchesFilter(item,filter)) return;
@@ -1387,7 +1383,7 @@ function renderTabs() {
             </div>
             <div class="card" style="padding:0;">
                 <table id="table-${tab.type}">
-                    <thead><tr><th width="5%">✔</th><th width="35%">Descrição</th><th>Total</th><th>A Pagar/Rec.</th><th>Pago/Rec.</th><th width="10%">Ações</th></tr></thead>
+                    <thead><tr><th width="5%">✔</th><th width="35%">Descrição</th><th class="num-cell">Total</th><th class="num-cell">A Pagar/Rec.</th><th class="num-cell">Pago/Rec.</th><th width="10%">Ações</th></tr></thead>
                     <tbody></tbody>
                 </table>
             </div>
