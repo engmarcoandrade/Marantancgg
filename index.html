@@ -318,6 +318,7 @@
         <button class="tab-link" id="nav-Dividas" onclick="openTab(event,'Dividas')">Dívidas</button>
         <button class="tab-link" onclick="openTab(event,'Atrasadas')">Atrasadas <span id="badge-atrasadas" class="pending-badge" style="display:none">!</span></button>
         <button class="tab-link" id="nav-Patrimonio" onclick="openTab(event,'Patrimonio')">Patrimônio</button>
+        <button class="tab-link" onclick="openTab(event,'Notas')">📝 Anotações</button>
         <button class="tab-link" onclick="openTab(event,'Configuracoes')">⚙ Config.</button>
     </div>
 </nav>
@@ -376,6 +377,27 @@
 
     <!-- TABS DINÂMICAS -->
     <div id="dynamic-tabs"></div>
+
+    <!-- NOTAS -->
+    <section id="Notas" class="tab-content">
+        <div class="card">
+            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
+                <h2 style="margin:0;">Anotações de <span id="notas-mes" style="text-transform:capitalize;">—</span></h2>
+                <div style="display:flex;align-items:center;gap:10px;">
+                    <span id="notas-status" style="font-size:12px;font-weight:600;color:var(--text-muted);"></span>
+                    <button class="btn btn-primary" onclick="salvarNota()">Salvar anotações</button>
+                </div>
+            </div>
+            <p style="font-size:12px;color:var(--text-muted);margin-bottom:10px;">
+                Cada mês tem suas próprias anotações. Ao mudar de mês na barra superior, o conteúdo acompanha.
+            </p>
+            <textarea id="notas-texto"
+                placeholder="Escreva aqui o que precisar lembrar sobre este mês..."
+                oninput="marcarNotaAlterada()"
+                onblur="salvarNota(true)"
+                style="width:100%;min-height:320px;padding:12px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:14px;line-height:1.7;font-family:inherit;resize:vertical;"></textarea>
+        </div>
+    </section>
 
     <!-- CONFIG -->
     <section id="Configuracoes" class="tab-content">
@@ -502,6 +524,85 @@ function itemRow(item, cc, mk, tipo){
             <button class="btn btn-warning btn-sm" onclick="editEntry('${item.id}','${tipo}')">✎</button>
             <button class="btn btn-danger btn-sm"  onclick="deleteEntry('${item.id}')">×</button>
         </div></td></tr>`;
+}
+
+// ══════════════════════════════════════════════════════
+//  ANOTAÇÕES POR MÊS
+//  Guardadas junto aos demais dados (type:'nota'), portanto
+//  vão para o Sheets com a mesma proteção contra perda.
+// ══════════════════════════════════════════════════════
+let notaMesCarregado = null;   // mês atualmente exibido na caixa
+let notaAlterada     = false;  // há texto não salvo?
+
+function chaveMesAtual(){
+    return `${currentDate.getFullYear()}-${currentDate.getMonth()}`;
+}
+
+function buscarNota(mk){
+    return financialData.find(i => i.type === 'nota' && i.baseMonthKey === mk);
+}
+
+function marcarNotaAlterada(){
+    notaAlterada = true;
+    const s = $('notas-status');
+    if (s) { s.textContent = '● alterações não salvas'; s.style.color = 'var(--danger)'; }
+}
+
+function renderNota(){
+    const ta = $('notas-texto');
+    if (!ta) return;
+    const mk = chaveMesAtual();
+
+    const rotulo = $('notas-mes');
+    if (rotulo) rotulo.textContent = currentDate.toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
+
+    // Não sobrescreve enquanto o usuário digita no mesmo mês
+    if (notaMesCarregado === mk && (notaAlterada || document.activeElement === ta)) return;
+
+    const nota = buscarNota(mk);
+    ta.value = nota ? (nota.text || '') : '';
+    notaMesCarregado = mk;
+    notaAlterada = false;
+
+    const s = $('notas-status');
+    if (s) { s.textContent = ''; s.style.color = 'var(--text-muted)'; }
+}
+
+async function salvarNota(silencioso){
+    const ta = $('notas-texto');
+    if (!ta) return;
+    if (!notaAlterada) return;              // nada mudou
+    if (!dataLoaded) {                      // respeita a trava de segurança
+        toast('Não é possível salvar: os dados não foram carregados do Sheets.', 'error', 8000);
+        return;
+    }
+
+    const mk    = notaMesCarregado || chaveMesAtual();
+    const texto = ta.value;
+
+    await commit(d => {
+        const nota = d.find(i => i.type === 'nota' && i.baseMonthKey === mk);
+        if (texto.trim() === '') {
+            // Texto vazio: remove o registro em vez de guardar vazio
+            if (nota) d.splice(d.indexOf(nota), 1);
+        } else if (nota) {
+            nota.text = texto;
+        } else {
+            d.push({
+                id: Date.now().toString() + '_nota',
+                type: 'nota',
+                baseMonthKey: mk,
+                text: texto,
+                recurring: false,
+                paidMonths: []
+            });
+        }
+    });
+
+    notaAlterada = false;
+    const s = $('notas-status');
+    if (s) { s.textContent = '✓ salvo'; s.style.color = 'var(--success)'; }
+    if (!silencioso) toast('Anotações salvas.', 'success');
 }
 
 function matchesFilter(item, filter){
@@ -992,7 +1093,7 @@ async function deleteBank(id) {
 // ══════════════════════════════════════════════════════
 function syncCategories() {
     financialData.forEach(i => {
-        if(i.type&&i.category&&i.type!=='conta'){
+        if(i.type&&i.category&&i.type!=='conta'&&i.type!=='nota'){
             if(!categories[i.type]) categories[i.type]=[];
             if(!categories[i.type].includes(i.category)) categories[i.type].push(i.category);
         }
@@ -1078,7 +1179,7 @@ function updateView() {
     // ATRASADAS
     let atrasadas=[], totReceber=0, totPagar=0;
     financialData.forEach(item=>{
-        if(item.type==='conta'||item.type==='patrimonio'||!item.baseMonthKey)return;
+        if(item.type==='conta'||item.type==='patrimonio'||item.type==='nota'||!item.baseMonthKey)return;
         const isIncome=item.type==='receita'||item.type==='locacao';
         const[by,bm]=item.baseMonthKey.split('-').map(Number);
         if(item.recurring){
@@ -1138,7 +1239,7 @@ function updateView() {
     // Dívidas e Patrimônio não são filtrados por mês — aparecem sempre
     const GLOBAL_TYPES = ['divida', 'patrimonio'];
     const monthData=financialData.filter(i=>{
-        if(i.type==='conta') return false;
+        if(i.type==='conta' || i.type==='nota') return false;
         if(GLOBAL_TYPES.includes(i.type)) return true;
         // skipMonths: meses substituídos por uma edição pontual — não devem aparecer
         if(i.skipMonths && i.skipMonths.includes(mk)) return false;
@@ -1218,6 +1319,7 @@ function updateView() {
     // Resultado do Mês usa o que AINDA FALTA (aPagar), não os totais
     const resultado=(metrics.receita.aPagar+metrics.locacao.aPagar)-metrics.despesa.aPagar;
     const saldo=(metrics.receita.aPagar+metrics.locacao.aPagar+totalBank)-(metrics.despesa.aPagar+prev);
+    renderNota();
     renderEvolucao();
     renderCategorias(groupsDespesa);
 
@@ -1400,7 +1502,12 @@ function openTab(e, name) {
     e.currentTarget.classList.add('active');
     if(editModeId) cancelEdit();
 }
-function changeMonth(o){currentDate.setMonth(currentDate.getMonth()+o);updateMonthDisplay();}
+async function changeMonth(o){
+    // Não perde o que estiver digitado ao navegar entre meses
+    if (notaAlterada) await salvarNota(true);
+    currentDate.setMonth(currentDate.getMonth()+o);
+    updateMonthDisplay();
+}
 function updateMonthDisplay(){$('current-month').textContent=currentDate.toLocaleDateString('pt-BR',{month:'long',year:'numeric'});updateView();}
 function setFilter(type,f){
     tabFilters[type]=f;
@@ -1408,6 +1515,10 @@ function setFilter(type,f){
     $(`btn-filter-${type}-${f}`)?.classList.add('active');
     updateView();
 }
+window.addEventListener('beforeunload', e => {
+    if (notaAlterada) { e.preventDefault(); e.returnValue = ''; }
+});
+
 function toggleGrouping(type){
     tabGrouping[type] = !tabGrouping[type];
     const btn = $(`btn-group-${type}`);
@@ -1524,6 +1635,22 @@ function exportExcel() {
 
         XLSX.utils.book_append_sheet(wb, ws, label);
     });
+
+    // ── Aba Anotações ──
+    const notas = financialData.filter(i => i.type === 'nota' && i.text);
+    if (notas.length) {
+        const notasRows = [['Mês', 'Anotações']];
+        notas.slice()
+            .sort((a,b) => {
+                const [ay,am]=a.baseMonthKey.split('-').map(Number);
+                const [by,bm]=b.baseMonthKey.split('-').map(Number);
+                return (ay-by)||(am-bm);
+            })
+            .forEach(n => notasRows.push([mkLabel(n.baseMonthKey), n.text]));
+        const wsNotas = XLSX.utils.aoa_to_sheet(notasRows);
+        wsNotas['!cols'] = [{ wch: 12 }, { wch: 90 }];
+        XLSX.utils.book_append_sheet(wb, wsNotas, 'Anotações');
+    }
 
     // ── Aba Resumo Mensal ──
     const allMonths = new Set();
