@@ -633,7 +633,12 @@ function aplicarVencPadraoTodas(){
 // Vencimento do item no mês exibido.
 // Recorrente: mantém o dia, troca o mês. Avulso: usa a data gravada.
 function vencNoMes(item, y, m){
-    if (!item.dueDate) return '';
+    // Lançamentos anteriores ao campo de vencimento assumem o dia padrão
+    if (!item.dueDate) {
+        const ultimo = new Date(y, m+1, 0).getDate();
+        const dia    = Math.min(DIA_VENC_PADRAO, ultimo);
+        return `${y}-${String(m+1).padStart(2,'0')}-${String(dia).padStart(2,'0')}`;
+    }
     const dia = Number(item.dueDate.split('-')[2]);
     if (!item.recurring) return item.dueDate;
     // Dia 31 em mês de 30 dias cai no último dia disponível
