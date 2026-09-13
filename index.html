@@ -507,6 +507,8 @@ function daysLeft() {
 // Decide se um item aparece sob o filtro atual (usada pelo somatorio e pela tabela)
 // Monta a linha de um lançamento. cc = classe da categoria (vazia na lista simples)
 function itemRow(item, cc, mk, tipo){
+    const [vy, vm] = mk.split('-').map(Number);
+    const venc = vencNoMes(item, vy, vm);
     const starred  = item.starred ? 'row-starred' : '';
     const base     = item.paid ? `row-paid ${cc}` : cc;
     const rowClass = [base, starred].filter(Boolean).join(' ').trim();
@@ -517,6 +519,7 @@ function itemRow(item, cc, mk, tipo){
             <button class="star-btn ${item.starred?'active':''}" onclick="toggleStar('${item.id}')" title="${item.starred?'Remover destaque':'Destacar'}">◈</button>
             ${item.description}${item.recurring?' 🔄':''}
         </td>
+        <td style="white-space:nowrap;">${fmtVenc(venc)}</td>
         <td class="num-cell">${fmt(item.value)}</td>
         <td class="num-cell">${fmt(item.vOpen)}</td>
         <td class="num-cell">${fmt(item.vPaid)}</td>
@@ -603,6 +606,47 @@ async function salvarNota(silencioso){
     const s = $('notas-status');
     if (s) { s.textContent = '✓ salvo'; s.style.color = 'var(--success)'; }
     if (!silencioso) toast('Anotações salvas.', 'success');
+}
+
+// ══════════════════════════════════════════════════════
+//  VENCIMENTO
+// ══════════════════════════════════════════════════════
+const DIA_VENC_PADRAO = 10;
+
+// Data padrão: dia 10 do mês que está sendo exibido
+function vencPadrao(){
+    const y = currentDate.getFullYear();
+    const m = String(currentDate.getMonth()+1).padStart(2,'0');
+    return `${y}-${m}-${String(DIA_VENC_PADRAO).padStart(2,'0')}`;
+}
+
+// Preenche o campo de data de uma aba com o padrão do mês atual
+function aplicarVencPadrao(type){
+    const el = $(`venc-${type}`);
+    if (el) el.value = vencPadrao();
+}
+
+function aplicarVencPadraoTodas(){
+    TABS.forEach(t => { if (!editModeId) aplicarVencPadrao(t.type); });
+}
+
+// Vencimento do item no mês exibido.
+// Recorrente: mantém o dia, troca o mês. Avulso: usa a data gravada.
+function vencNoMes(item, y, m){
+    if (!item.dueDate) return '';
+    const dia = Number(item.dueDate.split('-')[2]);
+    if (!item.recurring) return item.dueDate;
+    // Dia 31 em mês de 30 dias cai no último dia disponível
+    const ultimoDia = new Date(y, m+1, 0).getDate();
+    const diaReal   = Math.min(dia, ultimoDia);
+    return `${y}-${String(m+1).padStart(2,'0')}-${String(diaReal).padStart(2,'0')}`;
+}
+
+// Exibe como DD/MM
+function fmtVenc(iso){
+    if (!iso) return '—';
+    const [, mm, dd] = iso.split('-');
+    return `${dd}/${mm}`;
 }
 
 function matchesFilter(item, filter){
@@ -856,6 +900,8 @@ async function handleSubmit(e, type) {
     const rec      = $(`rec-${type}`).checked;
     const parInput = $(`parcelas-${type}`);
     const parcelas = parInput ? parseInt(parInput.value) || null : null;
+    const vencEl   = $(`venc-${type}`);
+    const venc     = vencEl && vencEl.value ? vencEl.value : vencPadrao();
     if(!desc||!cat||isNaN(val)) return toast('Preencha todos os campos.','error');
 
     const mk = `${currentDate.getFullYear()}-${currentDate.getMonth()}`;
@@ -879,6 +925,7 @@ async function handleSubmit(e, type) {
         const isGlobal = type === 'divida' || type === 'patrimonio';
         const endKey = rec ? calcEndMonthKey(mk, parcelas) : null;
         const item = { id:Date.now().toString(), type, description:desc, category:cat, value:val, baseMonthKey: isGlobal ? 'global' : mk, recurring:rec, paidMonths:[] };
+        if (venc) item.dueDate = venc;
         if (endKey) item.endMonthKey = endKey;
         await commit(d => d.push(item));
         const label = parcelas ? `Lançamento adicionado (${parcelas}x).` : 'Lançamento adicionado.';
@@ -887,6 +934,7 @@ async function handleSubmit(e, type) {
 
     if(!editModeId) { // Só limpa se não for edição (edição já limpou via cancelEdit)
         $(`desc-${type}`).value=''; $(`val-${type}`).value=''; $(`rec-${type}`).checked=false; $(`cat-${type}`).value='';
+        aplicarVencPadrao(type);
         if(parInput) parInput.value='';
         toggleParcelas(type);
     }
@@ -903,7 +951,7 @@ async function confirmEditRecorrente(mode) {
     if (!p) return;
     window._pendingEdit = null;
 
-    const { id, desc, cat, val, rec, mk } = p;
+    const { id, desc, cat, val, rec, mk, venc } = p;
 
     if (mode === 'only') {
         // Oculta o recorrente APENAS neste mês e cria uma entrada avulsa
@@ -923,7 +971,8 @@ async function confirmEditRecorrente(mode) {
                 value: val,
                 baseMonthKey: mk,
                 recurring: false,
-                paidMonths: []
+                paidMonths: [],
+                dueDate: venc
             });
         });
         toast('Alterado apenas para este mês.', 'success');
@@ -951,7 +1000,8 @@ async function confirmEditRecorrente(mode) {
                 value: val,
                 baseMonthKey: mk,
                 recurring: rec,
-                paidMonths: []
+                paidMonths: [],
+                dueDate: venc
             });
         });
         toast('Alterado para este e os meses seguintes.', 'success');
@@ -1029,6 +1079,8 @@ function editEntry(id, type) {
     $(`desc-${type}`).value=item.description;
     $(`val-${type}`).value=item.value;
     $(`rec-${type}`).checked=item.recurring;
+    const vEl=$(`venc-${type}`);
+    if(vEl) vEl.value = item.dueDate || vencPadrao();
     setTimeout(()=>{ $(`cat-${type}`).value=item.category; },10);
     $(`btn-submit-${type}`).textContent='Salvar';
     $(`btn-cancel-${type}`).style.display='inline-flex';
@@ -1055,6 +1107,7 @@ function cancelEdit() {
         // Oculta campo de parcelas
         const pw=$(`parcelas-wrap-${t.type}`); if(pw) pw.style.display='none';
         const pi=$(`parcelas-${t.type}`); if(pi) pi.value='';
+        aplicarVencPadrao(t.type);
     });
 }
 
@@ -1292,7 +1345,7 @@ function updateView() {
                 if(!hasVisible)continue;
                 const cc=`cat-${tab.type}-${cat.replace(/[^a-zA-Z0-9]/g,'')}`;
                 tbody.innerHTML+=`<tr class="cat-row" onclick="toggleRows('${cc}')">
-                    <td colspan="2"><strong>▾ ${cat}</strong></td>
+                    <td colspan="3"><strong>▾ ${cat}</strong></td>
                     <td class="num-cell"><strong>${fmt(g.total)}</strong></td>
                     <td class="num-cell"><strong>${fmt(g.aPagar)}</strong></td>
                     <td class="num-cell"><strong>${fmt(g.pago)}</strong></td>
@@ -1320,6 +1373,7 @@ function updateView() {
     const resultado=(metrics.receita.aPagar+metrics.locacao.aPagar)-metrics.despesa.aPagar;
     const saldo=(metrics.receita.aPagar+metrics.locacao.aPagar+totalBank)-(metrics.despesa.aPagar+prev);
     renderNota();
+    aplicarVencPadraoTodas();
     renderEvolucao();
     renderCategorias(groupsDespesa);
 
@@ -1456,6 +1510,7 @@ function renderTabs() {
                 <form onsubmit="handleSubmit(event,'${tab.type}')">
                     <div class="form-row">
                         <div class="form-field" style="flex:2;min-width:150px;"><label>Descrição</label><input id="desc-${tab.type}" placeholder="Ex: Conta de luz" required></div>
+                        <div class="form-field" style="max-width:150px;min-width:130px;"><label>Vencimento</label><input type="date" id="venc-${tab.type}"></div>
                         <div class="form-field"><label>Categoria</label><select id="cat-${tab.type}" required></select></div>
                         <div class="form-field"><label>Valor (R$)</label><input id="val-${tab.type}" placeholder="0,00" required></div>
                         <label class="check-field"><input type="checkbox" id="rec-${tab.type}" onchange="toggleParcelas('${tab.type}')"> Recorrente</label>
@@ -1485,7 +1540,7 @@ function renderTabs() {
             </div>
             <div class="card" style="padding:0;">
                 <table id="table-${tab.type}">
-                    <thead><tr><th width="5%">✔</th><th width="35%">Descrição</th><th class="num-cell">Total</th><th class="num-cell">A Pagar/Rec.</th><th class="num-cell">Pago/Rec.</th><th width="10%">Ações</th></tr></thead>
+                    <thead><tr><th width="5%">✔</th><th width="30%">Descrição</th><th width="10%">Venc.</th><th class="num-cell">Total</th><th class="num-cell">A Pagar/Rec.</th><th class="num-cell">Pago/Rec.</th><th width="10%">Ações</th></tr></thead>
                     <tbody></tbody>
                 </table>
             </div>
@@ -1615,10 +1670,11 @@ function exportExcel() {
             rows = [['Banco', 'Saldo (R$)']];
             items.forEach(i => rows.push([i.description, i.value]));
         } else {
-            rows = [['Mês Base', 'Descrição', 'Categoria', 'Valor (R$)', 'Recorrente', 'Meses Pagos']];
+            rows = [['Mês Base', 'Descrição', 'Vencimento', 'Categoria', 'Valor (R$)', 'Recorrente', 'Meses Pagos']];
             items.forEach(i => rows.push([
                 mkLabel(i.baseMonthKey),
                 i.description,
+                i.dueDate ? i.dueDate.split('-').reverse().join('/') : '—',
                 i.category,
                 i.value,
                 i.recurring ? 'Sim' : 'Não',
@@ -1631,7 +1687,7 @@ function exportExcel() {
         // Larguras de coluna
         ws['!cols'] = key === 'conta'
             ? [{ wch: 28 }, { wch: 16 }]
-            : [{ wch: 12 }, { wch: 36 }, { wch: 20 }, { wch: 14 }, { wch: 12 }, { wch: 30 }];
+            : [{ wch: 12 }, { wch: 36 }, { wch: 12 }, { wch: 20 }, { wch: 14 }, { wch: 12 }, { wch: 30 }];
 
         XLSX.utils.book_append_sheet(wb, ws, label);
     });
