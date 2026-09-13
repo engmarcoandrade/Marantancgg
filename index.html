@@ -1164,12 +1164,15 @@ function renderCategories() {
     c.innerHTML=Object.keys(names).map(type=>`
         <div class="cat-card">
             <h4>${names[type]}</h4>
-            <ul class="cat-list">${(categories[type]||[]).map(cat=>`
+            <ul class="cat-list">${(categories[type]||[]).map((cat,idx,arr)=>`
                 <li><span>${cat}</span><div style="display:flex;gap:3px;">
+                    <button class="btn btn-ghost btn-sm" onclick="moveCategory('${type}',${idx},-1)" ${idx===0?'disabled style="opacity:.3;cursor:default;"':''} title="Mover para cima">▲</button>
+                    <button class="btn btn-ghost btn-sm" onclick="moveCategory('${type}',${idx},1)" ${idx===arr.length-1?'disabled style="opacity:.3;cursor:default;"':''} title="Mover para baixo">▼</button>
                     <button class="btn btn-warning btn-sm" onclick="renameCategory('${type}','${cat.replace(/'/g,"\\'")}')">✎</button>
                     <button class="btn btn-danger btn-sm" onclick="removeCategory('${type}','${cat.replace(/'/g,"\\'")}')">×</button>
                 </div></li>`).join('')}
             </ul>
+            <p style="font-size:11px;color:var(--text-muted);margin:-4px 0 8px;">A ordem acima define como as categorias aparecem nas abas.</p>
             <div class="form-row" style="gap:4px;">
                 <input type="text" id="newcat-${type}" placeholder="Nova..." style="flex:1;">
                 <button class="btn btn-primary btn-sm" onclick="addCategory('${type}')">+</button>
@@ -1184,6 +1187,17 @@ function updateDropdowns() {
         (categories[t.type]||[]).forEach(c=>s.innerHTML+=`<option value="${c}">${c}</option>`);
     });
 }
+// Move uma categoria na lista de ordenação e grava no Sheets
+async function moveCategory(type, idx, dir) {
+    const lista = categories[type];
+    if (!lista) return;
+    const destino = idx + dir;
+    if (destino < 0 || destino >= lista.length) return;
+    [lista[idx], lista[destino]] = [lista[destino], lista[idx]];
+    renderCategories();
+    await commit(d => d);   // persiste a nova ordem junto aos dados
+}
+
 function addCategory(type) {
     const inp=$(`newcat-${type}`), name=inp.value.trim(); if(!name)return;
     if(!categories[type]) categories[type]=[];
@@ -1343,8 +1357,15 @@ function updateView() {
         const agrupado = tabGrouping[tab.type];
 
         if (agrupado) {
+            // Ordem definida pelo usuário em Configurações.
+            // Categorias sem posição definida (ex: vindas de dados antigos)
+            // entram ao final, em ordem alfabética.
+            const definidas = (categories[tab.type] || []).filter(cat => groups[cat]);
+            const restantes = Object.keys(groups).filter(cat => !definidas.includes(cat)).sort();
+            const ordem     = [...definidas, ...restantes];
+
             // Modo agrupado: cabeçalho de categoria + itens
-            for(const cat in groups){
+            for(const cat of ordem){
                 const g=groups[cat];
                 const hasVisible=g.items.some(i=>matchesFilter(i,filter));
                 if(!hasVisible)continue;
