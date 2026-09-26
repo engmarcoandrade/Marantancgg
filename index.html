@@ -231,6 +231,54 @@ td select{padding:3px 6px;font-size:12px}
 .modal-btns{display:flex;flex-direction:column;gap:8px}
 .modal-btns .btn{width:100%}
 
+/* ── Missão R$ 10 mil ──
+   Mesmo cuidado de deuteranopia: plano x realizado se distinguem por
+   traço (tracejado x contínuo) e marcador, não só pela cor; acima/abaixo
+   do plano sempre com ▲/▼ e sinal. */
+.mis-hero{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-end;justify-content:space-between;margin-bottom:12px}
+.mis-hero .big{font-size:30px;font-weight:700;letter-spacing:-.02em;line-height:1.1}
+.mis-hero .sub{font-size:13px;color:var(--mut);margin-top:4px}
+.mis-fase{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:999px;background:var(--acc-soft);color:var(--tit);font-weight:700;font-size:12.5px;border:1.5px solid var(--acc)}
+.prog{position:relative;height:16px;background:var(--bor);border-radius:999px;margin:22px 0 26px}
+.prog>i{position:absolute;left:0;top:0;bottom:0;background:var(--acc);border-radius:999px;min-width:3px}
+.prog .mk{position:absolute;top:-6px;bottom:-6px;width:2px;background:var(--txt)}
+.prog .mk span{position:absolute;top:22px;left:50%;transform:translateX(-50%);font-size:10.5px;font-weight:700;color:var(--mut);white-space:nowrap}
+.prog .mk.top span{top:-18px}
+.mis-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px}
+.mis-total{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:12px;padding:10px 14px;border-radius:10px;background:var(--sup2);border:1px solid var(--bor);font-size:14px}
+.mis-total strong{font-size:18px;font-variant-numeric:tabular-nums}
+.alert-list{list-style:none;display:flex;flex-direction:column;gap:8px}
+.alert-list li{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border-radius:10px;border:1.5px solid var(--bor);background:var(--sup2);font-size:13.5px;line-height:1.45}
+.alert-list li b.ic{flex:none;width:18px;text-align:center;font-size:14px}
+.alert-list li.forte{border-color:var(--prio);background:var(--prio-soft);font-weight:600}
+.alert-list li.bom{border-color:var(--acc);background:var(--acc-soft)}
+.aloc-row{display:grid;grid-template-columns:minmax(140px,1.4fr) 2fr 150px;gap:12px;align-items:center;padding:7px 0;border-bottom:1px solid var(--bor);font-size:13px}
+.aloc-row:last-child{border-bottom:none}
+.aloc-bar{position:relative;height:12px;background:var(--bor);border-radius:6px}
+.aloc-bar>i{position:absolute;left:0;top:0;bottom:0;background:var(--acc);border-radius:6px}
+.aloc-bar>b{position:absolute;top:-4px;bottom:-4px;width:3px;background:var(--txt);border-radius:2px}
+.aloc-num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.check-list{list-style:none}
+.check-list li{display:flex;gap:10px;align-items:flex-start;padding:8px 2px;border-bottom:1px solid var(--bor);font-size:13.5px}
+.check-list li:last-child{border-bottom:none}
+.check-list li.done span{color:var(--mut);text-decoration:line-through}
+.mis-chart svg{width:100%;height:auto;display:block}
+.mis-legend{display:flex;flex-wrap:wrap;gap:16px;font-size:12px;font-weight:600;margin-bottom:8px;color:var(--mut)}
+.mis-legend svg{vertical-align:middle;margin-right:5px}
+.mis-note{font-size:12px;color:var(--mut);margin-top:8px;line-height:1.5}
+.uso-bar{height:12px;background:var(--bor);border-radius:6px;overflow:hidden;margin:8px 0 6px}
+.uso-bar>i{display:block;height:100%;background:var(--acc)}
+.uso-bar.alto>i{background:var(--prio)}
+details.mis-cfg summary{cursor:pointer;font-weight:700;color:var(--tit);font-size:15px;list-style:none}
+details.mis-cfg summary::before{content:'▸ ';}
+details.mis-cfg[open] summary::before{content:'▾ ';}
+@media (max-width:680px){
+  .aloc-row{grid-template-columns:1fr 110px;}
+  .aloc-row .aloc-bar{grid-column:1 / -1;grid-row:2}
+  .mis-hero .big{font-size:24px}
+  .mis-chart svg{min-width:620px}   /* legível no celular; o card rola na horizontal */
+}
+
 @media (max-width:680px){
   .header-inner,.nav-inner,main{padding-left:16px;padding-right:16px}
   .nav-inner{padding-left:8px;padding-right:8px}
@@ -349,6 +397,7 @@ td select{padding:3px 6px;font-size:12px}
         <button class="tab-link" id="nav-Dividas" onclick="openTab(event,'Dividas')">Dívidas</button>
         <button class="tab-link" onclick="openTab(event,'Atrasadas')">Atrasadas <span id="badge-atrasadas" class="pending-badge" style="display:none">!</span></button>
         <button class="tab-link" id="nav-Patrimonio" onclick="openTab(event,'Patrimonio')">Patrimônio</button>
+        <button class="tab-link" id="nav-Missao" onclick="openTab(event,'Missao')">🎯 Missão</button>
         <button class="tab-link" onclick="openTab(event,'Notas')">📝 Anotações</button>
         <button class="tab-link" onclick="openTab(event,'Configuracoes')">⚙ Config.</button>
     </div>
@@ -410,6 +459,148 @@ td select{padding:3px 6px;font-size:12px}
     <!-- TABS DINÂMICAS -->
     <div id="dynamic-tabs"></div>
 
+    <!-- MISSÃO R$ 10 MIL -->
+    <section id="Missao" class="tab-content">
+        <!-- Resumo / progresso -->
+        <div class="card">
+            <div class="mis-hero">
+                <div>
+                    <div class="kpi-label">🎯 Missão: renda de <span id="mis-renda-alvo">R$ 10.000</span>/mês em valores de hoje</div>
+                    <div class="big" id="mis-pct">—</div>
+                    <div class="sub" id="mis-hero-sub">—</div>
+                </div>
+                <div style="text-align:right;">
+                    <span class="mis-fase" id="mis-fase">—</span>
+                    <div class="sub" id="mis-chegada">—</div>
+                </div>
+            </div>
+            <div class="prog" id="mis-prog"></div>
+            <p class="mis-note" id="mis-prog-nota"></p>
+        </div>
+
+        <div class="kpi-grid" id="mis-kpis"></div>
+
+        <!-- Registro do mês -->
+        <div class="card">
+            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:6px;">
+                <h2 style="margin:0;">Registro de <span id="mis-reg-mes">—</span></h2>
+                <span id="mis-reg-status" style="font-size:12px;font-weight:600;color:var(--text-muted);"></span>
+            </div>
+            <p class="mis-note" style="margin:0 0 12px;">Informe o <strong>saldo de fechamento</strong> de cada classe no fim do mês e quanto você <strong>aportou</strong> no mês. O rendimento é calculado sozinho: saldo final − saldo anterior − aporte. Use a navegação de meses do topo para registrar outros meses.</p>
+            <div id="mis-form-wrap">
+                <div class="mis-grid" id="mis-form"></div>
+                <div class="mis-total">
+                    <span>Patrimônio da missão no fim do mês</span>
+                    <strong id="mis-form-total">R$ 0,00</strong>
+                </div>
+                <div class="form-row" style="margin-top:12px;justify-content:flex-end;">
+                    <button class="btn btn-ghost" onclick="misCopiarAnterior()" title="Preenche os saldos com os do último mês registrado">↺ Copiar mês anterior</button>
+                    <button class="btn btn-ghost" id="mis-btn-excluir" onclick="misExcluirRegistro()">Excluir registro</button>
+                    <button class="btn btn-primary" onclick="misSalvarRegistro()">Salvar registro</button>
+                </div>
+            </div>
+            <p class="mis-note" id="mis-form-bloqueado" style="display:none;"></p>
+        </div>
+
+        <!-- Plano x realizado -->
+        <div class="card">
+            <h2>Plano × Realizado</h2>
+            <div class="mis-legend">
+                <span><svg width="26" height="10"><line x1="0" y1="5" x2="26" y2="5" stroke="var(--acc)" stroke-width="3"/><circle cx="13" cy="5" r="3.5" fill="var(--acc)"/></svg>Realizado</span>
+                <span><svg width="26" height="10"><line x1="0" y1="5" x2="26" y2="5" stroke="var(--mut)" stroke-width="2" stroke-dasharray="6 4"/></svg>Plano</span>
+                <span><svg width="26" height="10"><line x1="0" y1="5" x2="26" y2="5" stroke="var(--txt)" stroke-width="1.5" stroke-dasharray="2 3"/></svg>Meta corrigida pela inflação</span>
+            </div>
+            <div class="mis-chart" id="mis-chart"></div>
+        </div>
+
+        <div class="flex-row">
+            <!-- Gatilhos -->
+            <div class="card flex-col">
+                <h2>Gatilhos e alertas</h2>
+                <ul class="alert-list" id="mis-alertas"></ul>
+            </div>
+            <!-- Alocação -->
+            <div class="card flex-col">
+                <h2>Alocação atual × alvo</h2>
+                <div id="mis-aloc"></div>
+                <h2 style="margin-top:18px;">Próximo aporte sugerido</h2>
+                <div id="mis-sugestao"></div>
+                <p class="mis-note">Direciona o aporte para as classes mais abaixo do alvo, rebalanceando sem vender nada. Limite do FGC: R$ 250 mil por CPF por instituição em CDB, LCI e LCA.</p>
+            </div>
+        </div>
+
+        <!-- Índices de mercado -->
+        <div class="card">
+            <h2>Índices de mercado</h2>
+            <div class="form-row">
+                <div class="form-field"><label>Selic meta (% a.a.)</label><input id="mis-idx-selic" inputmode="decimal"></div>
+                <div class="form-field"><label>CDI (% a.a.)</label><input id="mis-idx-cdi" inputmode="decimal"></div>
+                <div class="form-field"><label>IPCA 12 meses (%)</label><input id="mis-idx-ipca12" inputmode="decimal"></div>
+                <div class="form-field"><label>Tesouro IPCA+ (taxa real % a.a.)</label><input id="mis-idx-ipcaplus" inputmode="decimal"></div>
+                <div class="form-field" style="max-width:170px;"><label>Atualizado em</label><input type="date" id="mis-idx-data"></div>
+            </div>
+            <div class="form-row" style="margin-top:12px;justify-content:flex-end;">
+                <button class="btn btn-ghost" onclick="misBuscarBCB()" title="Tenta buscar Selic, CDI e IPCA na API pública do Banco Central">🏦 Buscar no Banco Central</button>
+                <button class="btn btn-primary" onclick="misSalvarIndices()">Salvar índices</button>
+            </div>
+            <div id="mis-idx-leitura" style="margin-top:14px;"></div>
+            <p class="mis-note">Selic, CDI e IPCA podem vir da API do Banco Central. A taxa do Tesouro IPCA+ precisa ser digitada: consulte em tesourodireto.com.br, título IPCA+ com vencimento mais longo que você usa.</p>
+        </div>
+
+        <!-- Histórico -->
+        <div class="card" style="padding:0;">
+            <div style="padding:18px 22px 4px;"><h2 style="margin:0;">Histórico mensal</h2></div>
+            <table>
+                <thead><tr>
+                    <th>Mês</th><th class="num-cell">Aporte</th><th class="num-cell">Rendimento</th><th class="num-cell">Rend. %</th>
+                    <th class="num-cell">Patrimônio</th><th class="num-cell">Plano</th><th class="num-cell">Desvio</th><th class="num-cell">Rend. ÷ aporte</th>
+                </tr></thead>
+                <tbody id="mis-hist"></tbody>
+            </table>
+        </div>
+
+        <div class="flex-row">
+            <!-- Fase 0 -->
+            <div class="card flex-col">
+                <h2>Fase 0 · Fundação</h2>
+                <ul class="check-list" id="mis-check"></ul>
+            </div>
+            <!-- Roteiro -->
+            <div class="card flex-col">
+                <h2>Roteiro das fases</h2>
+                <table><tbody id="mis-fases"></tbody></table>
+            </div>
+        </div>
+
+        <!-- Parâmetros -->
+        <div class="card">
+            <details class="mis-cfg" id="mis-cfg">
+                <summary>Parâmetros do plano</summary>
+                <p class="mis-note" style="margin:10px 0 14px;">Mudar um parâmetro recalcula o plano, a meta e a previsão de chegada. O ponto de partida é o patrimônio no fechamento do mês-base.</p>
+                <div class="form-row">
+                    <div class="form-field"><label>Mês-base (ponto de partida)</label><input type="month" id="mis-cfg-base"></div>
+                    <div class="form-field"><label>Patrimônio no mês-base (R$)</label><input id="mis-cfg-p0" inputmode="decimal"></div>
+                    <div class="form-field"><label>Aporte mensal meta (R$)</label><input id="mis-cfg-aporte" inputmode="decimal"></div>
+                    <div class="form-field"><label>Renda alvo (R$ de hoje)</label><input id="mis-cfg-renda" inputmode="decimal"></div>
+                </div>
+                <div class="form-row" style="margin-top:10px;">
+                    <div class="form-field"><label>Inflação esperada (% a.a.)</label><input id="mis-cfg-ipca" inputmode="decimal"></div>
+                    <div class="form-field"><label>Saque sustentável (% a.m. real)</label><input id="mis-cfg-saque" inputmode="decimal"></div>
+                    <div class="form-field"><label>IR sobre rendimento (%)</label><input id="mis-cfg-ir" inputmode="decimal"></div>
+                    <div class="form-field" style="flex:2;min-width:240px;"><label>Selic projetada por ano (ano:taxa; …)</label><input id="mis-cfg-selic"></div>
+                </div>
+                <div style="margin-top:14px;">
+                    <label style="font-size:11px;font-weight:700;color:var(--mut);text-transform:uppercase;letter-spacing:.06em;">Alocação-alvo (% — deve somar 100)</label>
+                    <div class="mis-grid" id="mis-cfg-alvo" style="margin-top:6px;"></div>
+                </div>
+                <div class="form-row" style="margin-top:14px;justify-content:flex-end;">
+                    <button class="btn btn-ghost" onclick="misRestaurarPadrao()">Restaurar padrão</button>
+                    <button class="btn btn-primary" onclick="misSalvarCfg()">Salvar parâmetros</button>
+                </div>
+            </details>
+        </div>
+    </section>
+
     <!-- NOTAS -->
     <section id="Notas" class="tab-content">
         <div class="card">
@@ -455,7 +646,21 @@ td select{padding:3px 6px;font-size:12px}
                 <label class="check-field" style="font-size:13px;font-weight:600;">
                     <input type="checkbox" id="vis-Patrimonio" checked onchange="toggleTabVisibility('Patrimonio',this.checked)"> Patrimônio
                 </label>
+                <label class="check-field" style="font-size:13px;font-weight:600;">
+                    <input type="checkbox" id="vis-Missao" checked onchange="toggleTabVisibility('Missao',this.checked)"> 🎯 Missão
+                </label>
             </div>
+        </div>
+
+        <div class="card">
+            <h2>Uso do armazenamento</h2>
+            <p style="font-size:12px;color:var(--text-muted);">Todos os lançamentos ficam num único bloco de texto na célula A1 da aba "Dados". O Google Sheets aceita no máximo <strong>50.000 caracteres por célula</strong>. Acima disso a gravação falha.</p>
+            <div class="uso-bar" id="uso-bar"><i style="width:0%"></i></div>
+            <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:13px;">
+                <span id="uso-txt">—</span>
+                <strong id="uso-pct">—</strong>
+            </div>
+            <p class="mis-note" id="uso-nota"></p>
         </div>
 
         <div class="card">
@@ -527,6 +732,7 @@ const fmtSigned = v => { const n=Number(v||0); return n<0 ? `- ${fmt(Math.abs(n)
 // ⚙️ CONFIGURAÇÃO — altere aqui se mudar o Apps Script
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx5ccP8JL2Wn_szIQai0yOP2900XTOpBwmCdAJzfn_Prxwqnbi1ZqiyKOCXskAcpboNUw/exec';
 const url = () => window._runtimeUrl || SCRIPT_URL;
+const LIMITE_CELULA = 50000;   // máximo de caracteres numa célula do Google Sheets
 const daily   = () => parseFloat(localStorage.getItem('dailyRate')) || 400;
 const $ = id  => document.getElementById(id);
 
@@ -779,6 +985,14 @@ async function saveToSheets() {
         return false;
     }
     if (isSaving) return false;
+    // Limite físico do Google Sheets: 50.000 caracteres por célula.
+    // Acima disso o Apps Script falha ao gravar e, como o POST é no-cors,
+    // o app não enxergaria o erro — o lançamento sumiria em silêncio.
+    const enviado = JSON.stringify(financialData);
+    if (enviado.length > LIMITE_CELULA) {
+        toast(`Gravação bloqueada: os dados ocupam ${enviado.length.toLocaleString('pt-BR')} caracteres e a célula do Sheets aceita no máximo 50.000. Nada foi perdido; é preciso dividir o armazenamento no Apps Script.`, 'error', 15000);
+        return false;
+    }
     isSaving = true;
     setStatus('syncing');
     try {
@@ -791,12 +1005,22 @@ async function saveToSheets() {
             headers: { 'Content-Type': 'text/plain' },
             body: body,
         });
-        // Confirma lendo de volta após breve espera
-        await new Promise(r => setTimeout(r, 1500));
-        const check = await fetch(`${u}?action=read&t=${Date.now()}`, { cache: 'no-store' });
-        if (!check.ok) throw new Error(`HTTP ${check.status}`);
-        const verified = await check.json();
-        if (verified.status !== 'ok') throw new Error(verified.message || 'Erro na verificação');
+        // Confirma lendo de volta. Só aceita a gravação se o Sheets devolver
+        // exatamente o que foi enviado; tenta 3 vezes antes de desistir
+        // (a gravação às vezes demora alguns segundos para aparecer).
+        let verified = null;
+        for (const espera of [1500, 2500, 4000]) {
+            await new Promise(r => setTimeout(r, espera));
+            const check = await fetch(`${u}?action=read&t=${Date.now()}`, { cache: 'no-store' });
+            if (!check.ok) throw new Error(`HTTP ${check.status}`);
+            verified = await check.json();
+            if (verified.status !== 'ok') throw new Error(verified.message || 'Erro na verificação');
+            if (JSON.stringify(Array.isArray(verified.data) ? verified.data : []) === enviado) break;
+            verified.divergente = true;
+        }
+        if (verified.divergente && JSON.stringify(verified.data || []) !== enviado) {
+            throw new Error('o Sheets não confirmou a gravação (o que foi lido é diferente do que foi enviado)');
+        }
         // Atualiza com o que o Sheets confirmou
         financialData = Array.isArray(verified.data) ? verified.data : financialData;
         if (verified.categories) categories = { ...categories, ...verified.categories };
@@ -828,7 +1052,7 @@ async function forceSync() {
 async function commit(mutateFn) {
     if (!dataLoaded) {
         toast('Não é possível alterar: os dados ainda não foram carregados do Sheets.', 'error', 8000);
-        return;
+        return false;
     }
     const snapshot = JSON.parse(JSON.stringify(financialData));
     mutateFn(financialData);
@@ -839,6 +1063,7 @@ async function commit(mutateFn) {
         updateView();
         toast('Alteração desfeita por falha no Sheets.', 'error', 6000);
     }
+    return ok;
 }
 
 // ══════════════════════════════════════════════════════
@@ -1434,6 +1659,9 @@ function updateView() {
     aplicarVencPadraoTodas();
     renderEvolucao();
     renderCategorias(groupsDespesa);
+    renderUso();
+    const mis = misCalc();
+    renderMissao(mis);
 
     const kg=$('kpi-grid');
     if(kg) kg.innerHTML=`
@@ -1456,7 +1684,8 @@ function updateView() {
                 <div class="kpi-sub-row"><span>Despesas</span><strong class="c-danger">- ${fmt(metrics.despesa.aPagar)}</strong></div>
                 <div class="kpi-sub-row"><span>Saldos Bancários</span><strong class="${totalBank>=0?'c-success':'c-danger'}">${fmtSigned(totalBank)}</strong></div>
                 <div class="kpi-sub-row"><span>Gastos Diários</span><strong class="c-danger">- ${fmt(prev)}</strong></div>
-            </div></div>`;
+            </div></div>
+        ${misKpiDashboard(mis)}`;
 }
 
 // ── Soma um tipo num mês específico (respeita recorrência e encerramento) ──
@@ -1558,6 +1787,644 @@ function kpi(label,m,l1,l2,c1,c2,mainColor,isExpense){
 }
 
 // ══════════════════════════════════════════════════════
+//  MISSÃO R$ 10 MIL
+//  Um único registro (type:'missao') guardado junto aos demais
+//  dados — passa pela mesma trava dataLoaded e pelo rollback do
+//  commit. Não tem baseMonthKey, então nenhum filtro de mês,
+//  atrasadas ou categorias o enxerga.
+// ══════════════════════════════════════════════════════
+const MIS_CLASSES = [
+    { k:'ipca', n:'Tesouro IPCA+' },
+    { k:'pos',  n:'Pós-fixado isento (LCI/LCA)' },
+    { k:'pre',  n:'Prefixado' },
+    { k:'liq',  n:'Liquidez (Tesouro Selic/CDB)' },
+    { k:'fii',  n:'FIIs' },
+    { k:'out',  n:'Outros' },
+];
+const MIS_CHECK = [
+    'Levantar o custo de vida real dos últimos 6 meses',
+    'Separar a reserva de emergência (6 meses de custo) fora do plano',
+    'Confirmar o aporte mensal como piso garantido',
+    'Abrir conta exclusiva para o plano numa corretora',
+    'Automatizar o aporte no dia do recebimento',
+    'Registrar o primeiro mês nesta aba',
+    'Revisar seguros de vida e invalidez',
+];
+const MESES_ABREV = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+
+let misDirty = false, misFormMk = null;   // registro do mês
+let misIdxDirty = false, misCfgDirty = false;
+
+function misPadrao(){
+    return {
+        id:'missao', type:'missao',
+        cfg:{ baseMk:'2026-8', p0:180000, aporte:30000, renda:10000, ipca:4.5, saque:0.45, ir:15,
+              selic:'2026:13.75; 2027:12; 2028:10.5; 2029:10',
+              alvo:{ ipca:50, pos:25, pre:15, liq:10, fii:0, out:0 } },
+        idx:{ selic:13.75, cdi:null, ipca12:null, ipcaPlus:7.61, data:'2026-09-26' },
+        meses:{},
+        check:[]
+    };
+}
+const misGet = () => financialData.find(i => i.type === 'missao');
+// Leitura sempre completa: registro salvo por cima dos padrões
+function misObj(){
+    const d = misPadrao(), m = misGet();
+    if (!m) return d;
+    return { ...d, ...m,
+        cfg:{ ...d.cfg, ...(m.cfg||{}), alvo:{ ...d.cfg.alvo, ...((m.cfg||{}).alvo||{}) } },
+        idx:{ ...d.idx, ...(m.idx||{}) },
+        meses: m.meses || {}, check: m.check || [] };
+}
+async function misSalvar(mut){
+    if (!dataLoaded) { toast('Não é possível salvar: os dados não foram carregados do Sheets.', 'error', 8000); return false; }
+    return await commit(d => {
+        let m = d.find(i => i.type === 'missao');
+        if (!m) { m = misPadrao(); d.push(m); }
+        const p = misPadrao();
+        m.cfg = { ...p.cfg, ...(m.cfg||{}) };
+        m.idx = { ...p.idx, ...(m.idx||{}) };
+        if (!m.meses) m.meses = {};
+        if (!m.check) m.check = [];
+        mut(m);
+    });
+}
+
+// ── utilitários ──
+const mkI   = mk => { const [y,m] = String(mk).split('-').map(Number); return y*12 + m; };
+const iMk   = i  => `${Math.floor(i/12)}-${i%12}`;
+const iLbl  = i  => `${MESES_ABREV[i%12]}/${Math.floor(i/12)}`;
+const fmtN  = (v,d=2) => Number(v).toLocaleString('pt-BR',{minimumFractionDigits:d,maximumFractionDigits:d});
+const fmtP  = (v,d=2) => (v==null || !isFinite(v)) ? '—' : `${fmtN(v*100,d)}%`;          // v em fração
+const fmtPs = (v,d=2) => (v==null || !isFinite(v)) ? '—' : `${v<0?'- ':'+ '}${fmtN(Math.abs(v)*100,d)}%`;
+const fmtMi = v => Math.abs(v) >= 1e6 ? `R$ ${fmtN(v/1e6,2)} mi` : `R$ ${fmtN(v/1e3,0)} mil`;
+const seta  = v => v > 0 ? '▲' : (v < 0 ? '▼' : '●');
+const hojeISO = () => { const d=new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; };
+// Aceita "1.234,56", "1234,56", "1234.56" e "R$ 1.234"
+function parseBR(v){
+    if (typeof v === 'number') return v;
+    let s = String(v ?? '').replace(/[R$\s%]/g,'');
+    if (!s) return NaN;
+    if (s.includes(',')) s = s.replace(/\./g,'').replace(',','.');
+    else if (/^-?\d{1,3}(\.\d{3})+$/.test(s)) s = s.replace(/\./g,'');   // "47.000" = 47 mil (padrão brasileiro)
+    return Number(s);
+}
+const numOuNull = v => { const n = parseBR(v); return isNaN(n) ? null : n; };
+// "2026:13.75; 2027:12" → [[2026,13.75],[2027,12]]
+function misSelicPares(txt){
+    return String(txt||'').split(/[;\n]/).map(p => p.split(':').map(s => parseBR(s.trim())))
+        .filter(p => p.length === 2 && !isNaN(p[0]) && !isNaN(p[1])).sort((a,b) => a[0]-b[0]);
+}
+function misSelicAno(cfg, ano){
+    const pares = misSelicPares(cfg.selic);
+    if (!pares.length) return 10;
+    let v = pares[0][1];
+    pares.forEach(([a,t]) => { if (a <= ano) v = t; });
+    return v;
+}
+// Rendimento líquido mensal de um pós-fixado a 100% da Selic, descontado o IR
+const misTaxaMes = (selicPct, irPct) => Math.pow(1 + selicPct/100 * (1 - irPct/100), 1/12) - 1;
+
+// ── cálculo central: tudo que a aba e o dashboard mostram ──
+function misCalc(){
+    const m = misObj(), c = m.cfg;
+    const baseI = mkI(c.baseMk);
+    const selI  = currentDate.getFullYear()*12 + currentDate.getMonth();
+    const agora = new Date(), hojeI = agora.getFullYear()*12 + agora.getMonth();
+    const ipcaM = Math.pow(1 + c.ipca/100, 1/12) - 1;
+    const metaHoje = c.renda / (c.saque/100);                 // em valores de hoje
+    const metaNom  = k => metaHoje * Math.pow(1 + ipcaM, k);   // corrigida k meses após o mês-base
+    const taxaI    = i => misTaxaMes(misSelicAno(c, Math.floor(i/12)), c.ir);
+
+    // Curva do plano: aporte constante, rendimento pela Selic projetada
+    const plano = [c.p0];
+    for (let k = 1, v = c.p0; k <= 240; k++) { v = v*(1 + taxaI(baseI+k)) + c.aporte; plano.push(v); }
+    const planoChegK = plano.findIndex((p,k) => k > 0 && p >= metaNom(k));
+    const plano1miK  = plano.findIndex(p => p >= 1e6);
+    const plano2miK  = plano.findIndex(p => p >= 2e6);
+
+    // Histórico registrado
+    const regs = Object.keys(m.meses).map(mk => ({ mk, i:mkI(mk), ...m.meses[mk] }))
+        .filter(r => r.i > baseI).sort((a,b) => a.i - b.i);
+    let prevTot = c.p0, prevI = baseI, acumAp = 0, fator = 1;
+    const hist = regs.map(r => {
+        const tot  = MIS_CLASSES.reduce((s,cl) => s + (Number(r[cl.k])||0), 0);
+        const ap   = Number(r.ap) || 0;
+        const rend = tot - prevTot - ap;
+        const rendPct = prevTot > 0 ? rend/prevTot : null;
+        if (rendPct != null) fator *= 1 + rendPct;
+        acumAp += ap;
+        const k  = r.i - baseI;
+        const pl = plano[k] ?? null;
+        const row = { ...r, tot, ap, rend, rendPct, k, plano:pl,
+            desvio: pl!=null ? tot-pl : null, desvioPct: pl ? (tot-pl)/pl : null,
+            rendAp: c.aporte > 0 ? rend/c.aporte : null,
+            esperado: taxaI(r.i), acumAp, rentAcum: fator-1, salto: r.i - prevI > 1 };
+        prevTot = tot; prevI = r.i;
+        return row;
+    });
+
+    const atual  = hist.filter(h => h.i <= selI).pop() || null;
+    const regSel = hist.find(h => h.i === selI) || null;
+    const tot    = atual ? atual.tot : c.p0;
+    const kAt    = atual ? atual.k : 0;
+    const iAt    = atual ? atual.i : baseI;
+    const patrReal  = tot / Math.pow(1 + ipcaM, kAt);
+    const pctMeta   = patrReal / metaHoje;
+    const rendaSust = patrReal * c.saque/100;
+    const selicAtual = Number(m.idx.selic) || misSelicAno(c, Math.floor(hojeI/12));
+    const rPot   = misTaxaMes(selicAtual, c.ir);
+    const rendPot = tot * rPot;
+
+    // Previsão de chegada a partir do último registro, mantendo o aporte meta
+    let chegI = null;
+    if (tot >= metaNom(kAt)) chegI = iAt;
+    else for (let n = 1, v = tot; n <= 600; n++) {
+        const i = iAt + n; v = v*(1 + taxaI(i)) + c.aporte;
+        if (v >= metaNom(i - baseI)) { chegI = i; break; }
+    }
+    const planoChegI = planoChegK > 0 ? baseI + planoChegK : null;
+
+    // Alocação no último registro
+    const aloc = MIS_CLASSES.map(cl => {
+        const v = atual ? (Number(atual[cl.k])||0) : 0;
+        return { ...cl, v, pct: atual && tot > 0 ? v/tot : null, alvo: (Number(c.alvo[cl.k])||0)/100 };
+    });
+
+    // Aporte sobre a renda do mês selecionado (usa as abas Receitas e Locações)
+    const y = currentDate.getFullYear(), mm = currentDate.getMonth();
+    const entradas = sumTypeInMonth('receita', y, mm) + sumTypeInMonth('locacao', y, mm);
+
+    const feitos = MIS_CHECK.filter((_,i) => m.check[i]).length;
+    let fase;
+    if (tot >= metaNom(kAt)) fase = 3;
+    else if (tot >= 1e6) fase = 2;
+    else if (feitos < MIS_CHECK.length && kAt <= 3) fase = 0;
+    else fase = 1;
+
+    return { m, c, baseI, selI, hojeI, ipcaM, metaHoje, metaNom, taxaI, plano, planoChegK, plano1miK, plano2miK,
+             hist, atual, regSel, tot, kAt, iAt, patrReal, pctMeta, rendaSust, selicAtual, rPot, rendPot,
+             chegI, planoChegI, aloc, entradas, feitos, fase };
+}
+
+// ── render principal da aba ──
+function renderMissao(x){
+    if (!$('Missao')) return;
+    const { c, m } = x;
+    const FASES = ['Fase 0 · Fundação','Fase 1 · Acumulação','Fase 2 · Blindagem','Fase 3 · Renda'];
+
+    // Topo
+    $('mis-renda-alvo').textContent = fmt(c.renda);
+    $('mis-pct').textContent = `${fmtN(x.pctMeta*100,1)}% da meta`;
+    $('mis-hero-sub').innerHTML = x.atual
+        ? `${fmt(x.tot)} no fim de ${iLbl(x.iAt)} · <strong>${fmt(x.patrReal)}</strong> em valores de hoje · meta ${fmtMi(x.metaHoje)} de hoje`
+        : `Ponto de partida: ${fmt(c.p0)} em ${iLbl(x.baseI)} · nenhum mês registrado até ${iLbl(x.selI)}`;
+    $('mis-fase').textContent = FASES[x.fase];
+    let cheg = '—';
+    if (x.chegI != null) {
+        const faltam = x.chegI - x.hojeI;
+        cheg = x.chegI <= x.iAt ? '✓ Meta atingida' : `Chegada prevista: <strong>${iLbl(x.chegI)}</strong> (${faltam > 0 ? faltam + ' meses' : 'já'})`;
+        if (x.planoChegI != null && x.chegI > x.iAt) {
+            const dif = x.planoChegI - x.chegI;   // positivo = adiantado
+            cheg += dif === 0 ? ' · no prazo do plano' : ` · ${seta(dif)} ${Math.abs(dif)} ${Math.abs(dif)===1?'mês':'meses'} ${dif>0?'adiantado':'atrasado'} vs plano (${iLbl(x.planoChegI)})`;
+        }
+    }
+    $('mis-chegada').innerHTML = cheg;
+
+    // Barra de progresso (em poder de compra de hoje)
+    const pos = v => Math.max(0, Math.min(100, v*100)).toFixed(1);
+    const marcos = [];
+    if (x.plano1miK > 0) marcos.push({ p: 1e6 / Math.pow(1+x.ipcaM, x.plano1miK) / x.metaHoje, t:'R$ 1 mi' });
+    if (x.plano2miK > 0) marcos.push({ p: 2e6 / Math.pow(1+x.ipcaM, x.plano2miK) / x.metaHoje, t:'R$ 2 mi' });
+    $('mis-prog').innerHTML = `<i style="width:${pos(x.pctMeta)}%"></i>` +
+        marcos.map((mk,j) => `<div class="mk ${j%2?'top':''}" style="left:${pos(mk.p)}%"><span>${mk.t}</span></div>`).join('');
+    $('mis-prog-nota').textContent = `A barra compara o patrimônio em poder de compra de hoje com a meta de ${fmtMi(x.metaHoje)} (renda alvo ÷ saque sustentável de ${fmtN(c.saque,2)}% a.m.). Os marcadores mostram R$ 1 mi e R$ 2 mi nominais descontada a inflação até a data prevista no plano.`;
+
+    // KPIs
+    const a = x.atual;
+    const planoMes = x.plano[x.kAt];
+    const desvio = x.tot - planoMes, desvioPct = planoMes ? desvio/planoMes : 0;
+    const metadeI = c.aporte/2 / x.rPot, viradaP = c.aporte / x.rPot;
+    const apSel = x.regSel ? x.regSel.ap : null;
+    const kp = (label, val, cls, rows, extra='') => `<div class="kpi ${extra}"><div class="kpi-label">${label}</div>
+        <div class="kpi-value ${cls}">${val}</div><div class="kpi-sub">${rows.map(r =>
+        `<div class="kpi-sub-row"><span>${r[0]}</span><strong>${r[1]}</strong></div>`).join('')}</div></div>`;
+    $('mis-kpis').innerHTML = [
+        kp(`🏦 Patrimônio ${a ? '· ' + iLbl(x.iAt) : '· partida'}`, fmt(x.tot), 'c-primary', [
+            ['Plano para o mês', fmt(planoMes)],
+            ['Desvio', `${seta(desvio)} ${fmtSigned(desvio)}`],
+            ['Desvio %', fmtPs(desvioPct)] ], 'kpi-highlight'),
+        kp('💰 Aporte do mês', apSel != null ? fmt(apSel) : '—', '', [
+            ['Meta mensal', fmt(c.aporte)],
+            ['Acumulado', fmt(a ? a.acumAp : 0)],
+            ['Meta acumulada', fmt(c.aporte * x.kAt)] ]),
+        kp('📈 Rendimento do mês', a ? `${seta(a.rend)} ${fmtSigned(a.rend)}` : '—', '', [
+            ['Rend. no mês', a ? fmtP(a.rendPct) : '—'],
+            ['Esperado no plano', fmtP(x.taxaI(x.iAt))],
+            ['Rentab. acumulada', a ? fmtP(a.rentAcum) : '—'] ]),
+        kp('🌱 Renda sustentável hoje', `${fmt(x.rendaSust)}/mês`, '', [
+            ['% da renda alvo', fmtP(x.rendaSust / c.renda, 1)],
+            ['Saque real usado', `${fmtN(c.saque,2)}% a.m.`],
+            ['Juros nominais (Selic atual)', fmt(x.rendPot)] ]),
+        kp('🔄 Ponto de virada', fmtP(x.rendPot / c.aporte, 0), '', [
+            ['Juros ÷ aporte meta', 'hoje'],
+            ['Juros = ½ aporte com', fmtMi(metadeI)],
+            ['Juros = aporte com', fmtMi(viradaP)] ]),
+        kp('🧾 Aporte ÷ renda do mês', (apSel != null && x.entradas > 0) ? fmtP(apSel / x.entradas, 0) : '—', '', [
+            ['Receitas + locações', fmt(x.entradas)],
+            ['Mês', iLbl(x.selI)] ]),
+        kp('🎯 Meta', fmtMi(x.metaHoje), '', [
+            ['Em valores de hoje', 'sim'],
+            ['Nominal na chegada', x.chegI != null ? fmtMi(x.metaNom(x.chegI - x.baseI)) : '—'],
+            ['Falta (valores de hoje)', fmt(Math.max(0, x.metaHoje - x.patrReal))] ]),
+    ].join('');
+
+    misRenderForm(x);
+    misChart(x);
+    misRenderAlertas(x);
+    misRenderAloc(x);
+    misRenderIndices(x);
+    misRenderHist(x);
+    misRenderCheck(x);
+    misRenderFases(x);
+    misRenderCfg(x);
+}
+
+// ── registro do mês ──
+function misRenderForm(x){
+    const mk = iMk(x.selI);
+    $('mis-reg-mes').textContent = mesExtenso();
+    const bloqueado = x.selI <= x.baseI;
+    $('mis-form-wrap').style.display = bloqueado ? 'none' : '';
+    const nb = $('mis-form-bloqueado');
+    nb.style.display = bloqueado ? '' : 'none';
+    if (bloqueado) {
+        nb.innerHTML = `${iLbl(x.baseI)} é o <strong>ponto de partida</strong> (${fmt(x.c.p0)}). Os registros começam em ${iLbl(x.baseI+1)}: use ▶ no topo para avançar o mês.`;
+        $('mis-reg-status').textContent = '';
+        return;
+    }
+    const form = $('mis-form');
+    if (!form.dataset.pronto) {
+        form.innerHTML = MIS_CLASSES.map(cl => `<div class="form-field"><label>${cl.n} (R$)</label>
+            <input id="mis-f-${cl.k}" inputmode="decimal" placeholder="0,00" oninput="misMarcarForm()"></div>`).join('') +
+            `<div class="form-field"><label>Aporte feito no mês (R$)</label>
+            <input id="mis-f-ap" inputmode="decimal" placeholder="0,00" oninput="misMarcarForm()"></div>`;
+        form.dataset.pronto = '1';
+    }
+    // Não sobrescreve o que está sendo digitado no mesmo mês
+    if (misFormMk !== mk || !misDirty) {
+        const r = x.regSel;
+        MIS_CLASSES.forEach(cl => { $(`mis-f-${cl.k}`).value = r && r[cl.k] ? fmtN(r[cl.k]) : ''; });
+        $('mis-f-ap').value = r && r.ap != null ? fmtN(r.ap) : '';
+        misFormMk = mk; misDirty = false;
+    }
+    misAtualizaTotal();
+    const st = $('mis-reg-status');
+    st.textContent = misDirty ? '● alterações não salvas' : (x.regSel ? '✓ mês registrado' : '○ mês sem registro');
+    $('mis-btn-excluir').style.display = x.regSel ? '' : 'none';
+}
+function misMarcarForm(){
+    misDirty = true;
+    const st = $('mis-reg-status'); if (st) st.textContent = '● alterações não salvas';
+    misAtualizaTotal();
+}
+function misAtualizaTotal(){
+    const t = MIS_CLASSES.reduce((s,cl) => s + (numOuNull($(`mis-f-${cl.k}`)?.value) || 0), 0);
+    const el = $('mis-form-total'); if (el) el.textContent = fmt(t);
+}
+function misCopiarAnterior(){
+    const x = misCalc();
+    const ant = x.hist.filter(h => h.i < x.selI).pop();
+    if (!ant) return toast('Não há mês anterior registrado para copiar.', 'info');
+    MIS_CLASSES.forEach(cl => { $(`mis-f-${cl.k}`).value = ant[cl.k] ? fmtN(ant[cl.k]) : ''; });
+    misMarcarForm();
+    toast(`Saldos copiados de ${iLbl(ant.i)}. Ajuste o que mudou e salve.`, 'info');
+}
+async function misSalvarRegistro(){
+    const x = misCalc();
+    if (x.selI <= x.baseI) return;
+    const reg = {};
+    for (const cl of MIS_CLASSES) {
+        const raw = $(`mis-f-${cl.k}`).value.trim();
+        if (!raw) continue;
+        const v = parseBR(raw);
+        if (isNaN(v) || v < 0) return toast(`Valor inválido em "${cl.n}".`, 'error');
+        if (v > 0) reg[cl.k] = Math.round(v*100)/100;
+    }
+    const apRaw = $('mis-f-ap').value.trim();
+    const ap = apRaw ? parseBR(apRaw) : 0;
+    if (isNaN(ap)) return toast('Aporte inválido.', 'error');
+    reg.ap = Math.round(ap*100)/100;
+    if (!MIS_CLASSES.some(cl => reg[cl.k])) return toast('Informe o saldo de pelo menos uma classe.', 'error');
+    const mk = iMk(x.selI);
+    const ok = await misSalvar(m => { m.meses[mk] = reg; });
+    if (ok) {
+        misDirty = false; misFormMk = null;
+        updateView();
+        toast(`Registro de ${iLbl(x.selI)} salvo.`, 'success');
+    }
+}
+async function misExcluirRegistro(){
+    const x = misCalc();
+    if (!x.regSel) return;
+    if (!confirm(`Excluir o registro de ${iLbl(x.selI)}?`)) return;
+    const mk = iMk(x.selI);
+    const ok = await misSalvar(m => { delete m.meses[mk]; });
+    if (ok) { misDirty = false; misFormMk = null; updateView(); toast('Registro excluído.', 'success'); }
+}
+
+// ── gráfico plano x realizado (SVG) ──
+function misChart(x){
+    const box = $('mis-chart'); if (!box) return;
+    const W = 760, H = 290, L = 64, R = 16, T = 14, B = 32;
+    const lastK = x.hist.length ? x.hist[x.hist.length-1].k : 0;
+    const chegK = x.chegI != null ? x.chegI - x.baseI : 0;
+    const N = Math.min(240, Math.max(x.planoChegK > 0 ? x.planoChegK : 60, chegK, lastK) + 4);
+    const plano = x.plano.slice(0, N+1);
+    const meta  = [...Array(N+1)].map((_,k) => x.metaNom(k));
+    const real  = [{ k:0, v:x.c.p0, i:x.baseI }, ...x.hist.map(h => ({ k:h.k, v:h.tot, i:h.i }))];
+    const ymax  = Math.max(...plano, ...meta, ...real.map(p => p.v)) * 1.06;
+    const X = k => L + (W-L-R) * k / N;
+    const Y = v => T + (H-T-B) * (1 - v/ymax);
+    const passo = ymax > 6e6 ? 1e6 : ymax > 2.5e6 ? 5e5 : 2.5e5;
+    let g = '';
+    for (let v = 0; v <= ymax; v += passo) {
+        g += `<line x1="${L}" x2="${W-R}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--bor)" stroke-width="1"/>
+              <text x="${L-8}" y="${Y(v)+4}" text-anchor="end" font-size="11" fill="var(--mut)">${v===0?'0':fmtMi(v).replace('R$ ','')}</text>`;
+    }
+    for (let k = 0; k <= N; k++) {
+        const i = x.baseI + k;
+        if (i % 12 === 0) g += `<line x1="${X(k)}" x2="${X(k)}" y1="${T}" y2="${H-B}" stroke="var(--bor)" stroke-width="1" stroke-dasharray="2 3"/>
+            <text x="${X(k)}" y="${H-B+18}" text-anchor="middle" font-size="11" fill="var(--mut)" font-weight="600">${i/12}</text>`;
+    }
+    const linha = arr => arr.map((v,k) => `${k?'L':'M'}${X(k).toFixed(1)},${Y(v).toFixed(1)}`).join(' ');
+    const selK = x.selI - x.baseI;
+    const sel = selK >= 0 && selK <= N
+        ? `<line x1="${X(selK)}" x2="${X(selK)}" y1="${T}" y2="${H-B}" stroke="var(--acc)" stroke-width="1.5" opacity=".45"/>` : '';
+    const pReal = real.map((p,j) => `${j?'L':'M'}${X(p.k).toFixed(1)},${Y(p.v).toFixed(1)}`).join(' ');
+    const pontos = real.map(p => `<circle cx="${X(p.k)}" cy="${Y(p.v)}" r="4" fill="var(--acc)" stroke="var(--sup)" stroke-width="1.5">
+        <title>${iLbl(p.i)}: ${fmt(p.v)} (plano ${fmt(x.plano[p.k])})</title></circle>`).join('');
+    const fim = x.planoChegK > 0 && x.planoChegK <= N
+        ? `<circle cx="${X(x.planoChegK)}" cy="${Y(x.plano[x.planoChegK])}" r="5" fill="none" stroke="var(--txt)" stroke-width="2"><title>Plano atinge a meta em ${iLbl(x.baseI+x.planoChegK)}</title></circle>` : '';
+    box.innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Patrimônio realizado versus plano">
+        ${g}${sel}
+        <path d="${linha(meta)}" fill="none" stroke="var(--txt)" stroke-width="1.5" stroke-dasharray="2 3"/>
+        <path d="${linha(plano)}" fill="none" stroke="var(--mut)" stroke-width="2" stroke-dasharray="6 4"/>
+        <path d="${pReal}" fill="none" stroke="var(--acc)" stroke-width="3" stroke-linejoin="round"/>
+        ${pontos}${fim}
+    </svg>`;
+}
+
+// ── gatilhos ──
+function misRenderAlertas(x){
+    const el = $('mis-alertas'); if (!el) return;
+    const { c, m } = x, out = [];
+    const add = (ic, txt, cls='') => out.push(`<li class="${cls}"><b class="ic">${ic}</b><span>${txt}</span></li>`);
+    if (x.atual) {
+        const pl = x.plano[x.kAt], dp = (x.tot - pl) / pl;
+        if (dp < -0.05) add('▼', `<strong>Patrimônio ${fmtN(Math.abs(dp)*100,1)}% abaixo do plano</strong> em ${iLbl(x.iAt)}. Gatilho de revisão: confira o aporte e a rentabilidade dos últimos meses.`, 'forte');
+        else if (dp > 0.05) add('▲', `Patrimônio ${fmtN(dp*100,1)}% acima do plano. Mantenha o ritmo; não aumente o risco por isso.`, 'bom');
+    }
+    const ultimoFechado = Math.min(x.hojeI - 1, x.selI);
+    if (x.selI > x.baseI && !x.regSel && x.selI <= x.hojeI)
+        add('○', `${iLbl(x.selI)} ainda não tem registro. Lance os saldos de fechamento quando o mês terminar.`);
+    if (x.regSel && x.regSel.ap < c.aporte)
+        add('▼', `<strong>Aporte de ${iLbl(x.selI)} abaixo da meta:</strong> ${fmt(x.regSel.ap)} de ${fmt(c.aporte)}. Cada mês sem o aporte cheio atrasa a meta em quase um mês.`, 'forte');
+    const falhas = x.hist.filter(h => h.i > ultimoFechado - 12 && h.i <= ultimoFechado && h.ap < c.aporte).length;
+    if (falhas >= 2) add('▼', `${falhas} meses com aporte abaixo da meta nos últimos 12. Gatilho de revisão do plano.`, 'forte');
+    const tp = Number(m.idx.ipcaPlus);
+    if (tp) {
+        if (tp >= 7) add('▲', `Tesouro IPCA+ a IPCA + ${fmtN(tp,2)}%: taxa real alta. Vale concentrar os aportes em IPCA+, até 60% da carteira.`, 'bom');
+        if (tp < 5) add('▼', `Tesouro IPCA+ abaixo de IPCA + 5%: a renda sustentável futura cai. Gatilho de revisão.`, 'forte');
+        if (tp > 8) add('▲', `Tesouro IPCA+ acima de IPCA + 8%: taxa excepcional. Gatilho de revisão para aumentar a fatia travada.`, 'bom');
+    }
+    if (x.atual) {
+        const desal = x.aloc.filter(a => a.pct != null && Math.abs(a.pct - a.alvo) > 0.10);
+        if (desal.length) add('◆', `Alocação fora do alvo em mais de 10 pontos: ${desal.map(a => `${a.n} (${fmtP(a.pct,0)} × ${fmtP(a.alvo,0)})`).join(', ')}. Rebalanceie pelos próximos aportes.`);
+    }
+    const mes = x.selI % 12;
+    if (mes === 0 || mes === 6) add('●', `${iLbl(x.selI)} é mês de <strong>revisão semestral</strong>: marcos, alocação e gatilhos (1 hora).`);
+    if (x.feitos < MIS_CHECK.length) add('○', `Fase 0: ${MIS_CHECK.length - x.feitos} de ${MIS_CHECK.length} tarefas pendentes.`);
+    const dIdx = m.idx.data ? (Date.now() - new Date(m.idx.data + 'T12:00').getTime()) / 864e5 : 999;
+    if (dIdx > 45) add('○', `Índices de mercado sem atualização há ${Math.round(dIdx)} dias.`);
+    const somaAlvo = Object.values(c.alvo).reduce((s,v) => s + (Number(v)||0), 0);
+    if (Math.abs(somaAlvo - 100) > 0.01) add('▼', `A alocação-alvo soma ${fmtN(somaAlvo,0)}%, e não 100%. Ajuste em Parâmetros do plano.`, 'forte');
+    if (!out.length) add('✓', 'Nenhum gatilho acionado. Siga o plano.', 'bom');
+    el.innerHTML = out.join('');
+}
+
+// ── alocação e sugestão de aporte ──
+function misRenderAloc(x){
+    const el = $('mis-aloc'), sg = $('mis-sugestao'); if (!el) return;
+    const { c } = x;
+    if (!x.atual) {
+        el.innerHTML = '<p class="mis-note" style="margin:0;">Registre um mês para comparar a alocação real com o alvo.</p>';
+    } else {
+        el.innerHTML = x.aloc.filter(a => a.v > 0 || a.alvo > 0).map(a => `<div class="aloc-row">
+            <span>${a.n}</span>
+            <div class="aloc-bar" title="Atual ${fmtP(a.pct,1)} · alvo ${fmtP(a.alvo,0)}"><i style="width:${Math.min(100,(a.pct||0)*100).toFixed(1)}%"></i><b style="left:calc(${(a.alvo*100).toFixed(1)}% - 1px)"></b></div>
+            <span class="aloc-num"><strong>${fmtP(a.pct,1)}</strong> · alvo ${fmtP(a.alvo,0)}</span></div>`).join('') +
+            '<p class="mis-note">Barra = alocação atual · traço vertical = alvo.</p>';
+    }
+    // Sugestão: cobre primeiro os déficits em relação ao alvo
+    const base = x.atual ? x.aloc.map(a => a.v) : x.aloc.map(() => 0);
+    const total = x.atual ? x.tot : 0;
+    const aporte = x.atual ? c.aporte : c.p0 + c.aporte;
+    const novo = total + aporte;
+    const def = x.aloc.map((a,j) => Math.max(0, a.alvo*novo - base[j]));
+    const soma = def.reduce((s,v) => s+v, 0);
+    const dist = def.map((d,j) => soma >= aporte ? d*aporte/soma : d + (aporte - soma)*x.aloc[j].alvo);
+    const linhas = x.aloc.map((a,j) => ({ n:a.n, v:dist[j] })).filter(l => l.v >= 1).sort((a,b) => b.v - a.v);
+    sg.innerHTML = (x.atual ? '' : `<p class="mis-note" style="margin:0 0 8px;">Sem registro ainda: distribuição inicial de ${fmt(c.p0)} + o primeiro aporte de ${fmt(c.aporte)}.</p>`) +
+        `<table><tbody>${linhas.map(l => `<tr><td>${l.n}</td><td class="num-cell"><strong>${fmt(l.v)}</strong></td></tr>`).join('')}
+        <tr><td style="color:var(--mut);">Total</td><td class="num-cell">${fmt(aporte)}</td></tr></tbody></table>`;
+}
+
+// ── índices de mercado ──
+function misRenderIndices(x){
+    const { m, c } = x, ix = m.idx;
+    const campos = { selic:'mis-idx-selic', cdi:'mis-idx-cdi', ipca12:'mis-idx-ipca12', ipcaPlus:'mis-idx-ipcaplus' };
+    const foco = document.activeElement && document.activeElement.id?.startsWith('mis-idx-');
+    if (!misIdxDirty && !foco) {
+        Object.entries(campos).forEach(([k,id]) => { $(id).value = ix[k] != null ? fmtN(ix[k]) : ''; });
+        $('mis-idx-data').value = ix.data || '';
+    }
+    const ipca = ix.ipca12 != null ? ix.ipca12 : c.ipca;
+    const jurReal = ix.selic ? (1 + ix.selic/100)/(1 + ipca/100) - 1 : null;
+    let realLiqIpca = null, saqueIpca = null;
+    if (ix.ipcaPlus) {
+        const nomBruto = (1 + ix.ipcaPlus/100)*(1 + ipca/100) - 1;
+        const nomLiq = nomBruto * (1 - c.ir/100);
+        realLiqIpca = (1 + nomLiq)/(1 + ipca/100) - 1;
+        saqueIpca = Math.pow(1 + realLiqIpca, 1/12) - 1;
+    }
+    const row = (a,b) => `<div class="kpi-sub-row"><span>${a}</span><strong>${b}</strong></div>`;
+    $('mis-idx-leitura').innerHTML = `<div class="kpi-sub" style="margin:0;">
+        ${row('Pós-fixado 100% Selic, líquido de IR', ix.selic ? `${fmtP(misTaxaMes(ix.selic, c.ir))} a.m.` : '—')}
+        ${row('Juro real da Selic (Selic ÷ IPCA 12m)', jurReal != null ? `${fmtP(jurReal)} a.a.` : '—')}
+        ${row('IPCA+ real líquido de IR', realLiqIpca != null ? `${fmtP(realLiqIpca)} a.a. · ${fmtP(saqueIpca, 3)} a.m.` : '—')}
+        ${row('Renda que essa taxa real sustenta hoje', saqueIpca != null ? `${fmt(x.patrReal * saqueIpca)}/mês` : '—')}
+        ${row('Saque usado no plano', `${fmtN(c.saque,2)}% a.m.`)}
+    </div>`;
+}
+document.addEventListener('input', e => { if (e.target.id?.startsWith('mis-idx-')) misIdxDirty = true; });
+async function misSalvarIndices(){
+    const idx = {
+        selic: numOuNull($('mis-idx-selic').value), cdi: numOuNull($('mis-idx-cdi').value),
+        ipca12: numOuNull($('mis-idx-ipca12').value), ipcaPlus: numOuNull($('mis-idx-ipcaplus').value),
+        data: $('mis-idx-data').value || hojeISO()
+    };
+    const ok = await misSalvar(m => { m.idx = idx; });
+    if (ok) { misIdxDirty = false; updateView(); toast('Índices salvos.', 'success'); }
+}
+async function misBuscarBCB(){
+    const serie = async cod => {
+        const r = await fetch(`https://api.bcb.gov.br/dados/serie/bcdata.sgs.${cod}/dados/ultimos/1?formato=json`, { cache:'no-store' });
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        const j = await r.json();
+        return parseFloat(j[0].valor);
+    };
+    showLoading('Consultando o Banco Central...');
+    // 432 = Selic meta · 4389 = CDI anualizado · 13522 = IPCA acumulado 12 meses
+    const res = await Promise.allSettled([serie(432), serie(4389), serie(13522)]);
+    hideLoading();
+    const ids = ['mis-idx-selic','mis-idx-cdi','mis-idx-ipca12'];
+    let n = 0;
+    res.forEach((r,j) => { if (r.status === 'fulfilled' && !isNaN(r.value)) { $(ids[j]).value = fmtN(r.value); n++; } });
+    if (n) {
+        $('mis-idx-data').value = hojeISO();
+        misIdxDirty = true;
+        toast(`${n} de 3 índices carregados do Banco Central. Confira, digite a taxa do IPCA+ e clique em Salvar índices.`, 'success', 8000);
+    } else {
+        toast('Não foi possível consultar o Banco Central a partir do navegador. Digite os valores manualmente.', 'error', 8000);
+    }
+}
+
+// ── histórico ──
+function misRenderHist(x){
+    const tb = $('mis-hist'); if (!tb) return;
+    const linhas = x.hist.slice().reverse().map(h => `<tr class="${h.i === x.selI ? 'row-starred' : ''}">
+        <td style="white-space:nowrap;">${iLbl(h.i)}${h.salto ? ' <span title="Houve meses sem registro antes deste; o rendimento cobre o período todo">*</span>' : ''}</td>
+        <td class="num-cell">${fmt(h.ap)}${h.ap < x.c.aporte ? ' ▼' : ''}</td>
+        <td class="num-cell">${fmtSigned(h.rend)}</td>
+        <td class="num-cell">${fmtP(h.rendPct)}</td>
+        <td class="num-cell"><strong>${fmt(h.tot)}</strong></td>
+        <td class="num-cell">${h.plano != null ? fmt(h.plano) : '—'}</td>
+        <td class="num-cell">${h.desvio != null ? `${seta(h.desvio)} ${fmtPs(h.desvioPct,1)}` : '—'}</td>
+        <td class="num-cell">${fmtP(h.rendAp,0)}</td></tr>`);
+    linhas.push(`<tr class="row-paid"><td>${iLbl(x.baseI)}</td><td class="num-cell">—</td><td class="num-cell">—</td><td class="num-cell">—</td>
+        <td class="num-cell"><strong>${fmt(x.c.p0)}</strong></td><td class="num-cell">${fmt(x.c.p0)}</td><td class="num-cell">ponto de partida</td><td class="num-cell">—</td></tr>`);
+    tb.innerHTML = linhas.join('');
+}
+
+// ── Fase 0 e roteiro ──
+function misRenderCheck(x){
+    const el = $('mis-check'); if (!el) return;
+    el.innerHTML = MIS_CHECK.map((t,i) => `<li class="${x.m.check[i] ? 'done' : ''}">
+        <input type="checkbox" ${x.m.check[i] ? 'checked' : ''} onchange="misToggleCheck(${i}, this.checked)">
+        <span>${t}</span></li>`).join('');
+}
+async function misToggleCheck(i, v){
+    await misSalvar(m => { m.check[i] = v; });
+}
+function misRenderFases(x){
+    const el = $('mis-fases'); if (!el) return;
+    const p = k => k > 0 ? iLbl(x.baseI + k) : '—';
+    const fases = [
+        ['Fase 0 · Fundação', `${x.feitos}/${MIS_CHECK.length} tarefas`],
+        ['Fase 1 · Acumulação', `até R$ 1 mi · plano ${p(x.plano1miK)}`],
+        ['Fase 2 · Blindagem', `até ${fmtMi(x.metaNom(x.planoChegK > 0 ? x.planoChegK : 0))} · plano ${p(x.planoChegK)}`],
+        ['Fase 3 · Renda', `saque de até ${fmtN(x.c.saque,2)}% a.m. real`],
+    ];
+    el.innerHTML = fases.map((f,j) => {
+        const st = j < x.fase ? '✓' : (j === x.fase ? '●' : '○');
+        return `<tr class="${j === x.fase ? 'row-starred' : (j < x.fase ? 'row-paid' : '')}">
+            <td style="width:28px;font-weight:700;">${st}</td><td><strong>${f[0]}</strong></td><td style="color:var(--mut);">${f[1]}</td></tr>`;
+    }).join('');
+}
+
+// ── parâmetros ──
+function misRenderCfg(x){
+    const c = x.c;
+    const box = $('mis-cfg-alvo'); if (!box) return;
+    if (!box.dataset.pronto) {
+        box.innerHTML = MIS_CLASSES.map(cl => `<div class="form-field"><label>${cl.n}</label>
+            <input id="mis-cfg-alvo-${cl.k}" inputmode="decimal" oninput="misCfgDirty=true"></div>`).join('');
+        ['base','p0','aporte','renda','ipca','saque','ir','selic'].forEach(k =>
+            $(`mis-cfg-${k}`).addEventListener('input', () => { misCfgDirty = true; }));
+        box.dataset.pronto = '1';
+    }
+    if (misCfgDirty) return;
+    const [by, bm] = c.baseMk.split('-').map(Number);
+    $('mis-cfg-base').value = `${by}-${String(bm+1).padStart(2,'0')}`;
+    $('mis-cfg-p0').value = fmtN(c.p0); $('mis-cfg-aporte').value = fmtN(c.aporte); $('mis-cfg-renda').value = fmtN(c.renda);
+    $('mis-cfg-ipca').value = fmtN(c.ipca); $('mis-cfg-saque').value = fmtN(c.saque); $('mis-cfg-ir').value = fmtN(c.ir,0);
+    $('mis-cfg-selic').value = c.selic;
+    MIS_CLASSES.forEach(cl => { $(`mis-cfg-alvo-${cl.k}`).value = fmtN(Number(c.alvo[cl.k])||0, 0); });
+}
+async function misSalvarCfg(){
+    const base = $('mis-cfg-base').value;
+    if (!/^\d{4}-\d{2}$/.test(base)) return toast('Mês-base inválido.', 'error');
+    const [y, mo] = base.split('-').map(Number);
+    const cfg = {
+        baseMk: `${y}-${mo-1}`, p0: parseBR($('mis-cfg-p0').value), aporte: parseBR($('mis-cfg-aporte').value),
+        renda: parseBR($('mis-cfg-renda').value), ipca: parseBR($('mis-cfg-ipca').value), saque: parseBR($('mis-cfg-saque').value),
+        ir: parseBR($('mis-cfg-ir').value), selic: $('mis-cfg-selic').value.trim(), alvo: {}
+    };
+    for (const k of ['p0','aporte','renda','ipca','saque','ir'])
+        if (isNaN(cfg[k]) || cfg[k] < 0) return toast('Confira os valores numéricos dos parâmetros.', 'error');
+    if (cfg.aporte <= 0 || cfg.renda <= 0 || cfg.saque <= 0) return toast('Aporte, renda alvo e saque precisam ser maiores que zero.', 'error');
+    if (!misSelicPares(cfg.selic).length) return toast('Selic projetada no formato "2026:13.75; 2027:12".', 'error');
+    let soma = 0;
+    for (const cl of MIS_CLASSES) {
+        const v = parseBR($(`mis-cfg-alvo-${cl.k}`).value || '0');
+        if (isNaN(v) || v < 0) return toast(`Alvo inválido em "${cl.n}".`, 'error');
+        cfg.alvo[cl.k] = v; soma += v;
+    }
+    if (Math.abs(soma - 100) > 0.01) return toast(`A alocação-alvo soma ${fmtN(soma,0)}%. Ela precisa somar 100%.`, 'error');
+    const atual = misObj();
+    const perdidos = Object.keys(atual.meses).filter(mk => mkI(mk) <= mkI(cfg.baseMk)).length;
+    if (perdidos && !confirm(`${perdidos} registro(s) ficam no mês-base ou antes dele e deixarão de contar. Continuar?`)) return;
+    const ok = await misSalvar(m => { m.cfg = cfg; });
+    if (ok) { misCfgDirty = false; updateView(); toast('Parâmetros salvos. Plano recalculado.', 'success'); }
+}
+async function misRestaurarPadrao(){
+    if (!confirm('Restaurar os parâmetros originais do plano? Registros mensais e índices não são alterados.')) return;
+    const ok = await misSalvar(m => { m.cfg = misPadrao().cfg; });
+    if (ok) { misCfgDirty = false; updateView(); toast('Parâmetros restaurados.', 'success'); }
+}
+
+// ── card no Dashboard ──
+function misKpiDashboard(x){
+    if (!x) return '';
+    const pl = x.plano[x.kAt], d = x.tot - pl;
+    return `<div class="kpi kpi-highlight" style="cursor:pointer;" onclick="$('nav-Missao')?.click()" title="Abrir a aba Missão">
+        <div class="kpi-label">🎯 Missão R$ ${fmtN(x.c.renda/1000,0)} mil</div>
+        <div class="kpi-value c-primary">${fmtN(x.pctMeta*100,1)}%</div>
+        <div class="kpi-sub">
+            <div class="kpi-sub-row"><span>Patrimônio</span><strong>${fmt(x.tot)}</strong></div>
+            <div class="kpi-sub-row"><span>vs plano</span><strong>${seta(d)} ${fmtSigned(d)}</strong></div>
+            <div class="kpi-sub-row"><span>Chegada</span><strong>${x.chegI != null ? iLbl(x.chegI) : '—'}</strong></div>
+        </div></div>`;
+}
+
+// ── medidor do armazenamento (Config.) ──
+function renderUso(){
+    const bar = $('uso-bar'); if (!bar) return;
+    const n = JSON.stringify(financialData).length;
+    const p = n / LIMITE_CELULA;
+    const mis = misGet() ? JSON.stringify(misGet()).length : 0;
+    bar.className = 'uso-bar' + (p > 0.8 ? ' alto' : '');
+    bar.firstElementChild.style.width = Math.min(100, p*100).toFixed(1) + '%';
+    $('uso-txt').textContent = `${n.toLocaleString('pt-BR')} de ${LIMITE_CELULA.toLocaleString('pt-BR')} caracteres · Missão: ${mis.toLocaleString('pt-BR')}`;
+    $('uso-pct').textContent = `${p > 0.8 ? '▲ ' : ''}${fmtN(p*100,1)}%`;
+    $('uso-nota').textContent = !dataLoaded ? 'Dados ainda não carregados do Sheets.'
+        : p < 0.6 ? 'Folga confortável.'
+        : p < 0.8 ? 'Atenção: acima de 60%. Planeje dividir o armazenamento em várias células.'
+        : 'Crítico: acima de 80%. Divida o armazenamento no Apps Script antes de continuar lançando.';
+}
+
+// ══════════════════════════════════════════════════════
 //  TABS DINÂMICAS
 // ══════════════════════════════════════════════════════
 function renderTabs() {
@@ -1616,6 +2483,9 @@ function openTab(e, name) {
     if(editModeId) cancelEdit();
 }
 async function changeMonth(o){
+    // Registro da Missão digitado e não salvo: pergunta antes de trocar de mês
+    if (misDirty && !confirm('O registro da Missão deste mês tem valores não salvos. Trocar de mês e descartá-los?')) return;
+    misDirty = false;
     // Não perde o que estiver digitado ao navegar entre meses
     if (notaAlterada) await salvarNota(true);
     currentDate.setMonth(currentDate.getMonth()+o);
@@ -1631,7 +2501,7 @@ function setFilter(type,f){
     updateView();
 }
 window.addEventListener('beforeunload', e => {
-    if (notaAlterada) { e.preventDefault(); e.returnValue = ''; }
+    if (notaAlterada || misDirty || misIdxDirty || misCfgDirty) { e.preventDefault(); e.returnValue = ''; }
 });
 
 function toggleGrouping(type){
@@ -1675,7 +2545,7 @@ function toggleTabVisibility(tabId, visible) {
 
 function applyTabVisibility() {
     const prefs = JSON.parse(localStorage.getItem('tabVisibility') || '{}');
-    ['Dividas','Patrimonio'].forEach(tabId => {
+    ['Dividas','Patrimonio','Missao'].forEach(tabId => {
         const visible = prefs[tabId] !== false; // padrão: visível
         const navBtn  = $(`nav-${tabId}`);
         const checkbox = $(`vis-${tabId}`);
@@ -1766,6 +2636,19 @@ function exportExcel() {
         const wsNotas = XLSX.utils.aoa_to_sheet(notasRows);
         wsNotas['!cols'] = [{ wch: 12 }, { wch: 90 }];
         XLSX.utils.book_append_sheet(wb, wsNotas, 'Anotações');
+    }
+
+    // ── Aba Missão ──
+    const mx = misCalc();
+    if (mx.hist.length) {
+        const cab = ['Mês', 'Aporte (R$)', 'Rendimento (R$)', 'Rend. %', 'Patrimônio (R$)', 'Plano (R$)', 'Desvio (R$)', 'Desvio %',
+                     ...MIS_CLASSES.map(cl => `${cl.n} (R$)`)];
+        const rowsM = [cab, [iLbl(mx.baseI), '', '', '', mx.c.p0, mx.c.p0, '', '', ...MIS_CLASSES.map(() => '')]];
+        mx.hist.forEach(h => rowsM.push([iLbl(h.i), h.ap, h.rend, h.rendPct, h.tot, h.plano, h.desvio, h.desvioPct,
+            ...MIS_CLASSES.map(cl => Number(h[cl.k]) || 0)]));
+        const wsM = XLSX.utils.aoa_to_sheet(rowsM);
+        wsM['!cols'] = cab.map((_,j) => ({ wch: j === 0 ? 10 : 16 }));
+        XLSX.utils.book_append_sheet(wb, wsM, 'Missão');
     }
 
     // ── Aba Resumo Mensal ──
