@@ -24,6 +24,7 @@
   --perigo:#1b2230; --perigo-soft:#e4e8ee;
   --zebra:#f5f7fa; --hov:#dde9f5;
   --neg:#b42318;
+  --cat:#e2e7ee;
   --sombra:0 1px 2px rgba(16,24,40,.05),0 4px 14px rgba(16,24,40,.06); --r:14px;
 }
 [data-theme="dark"]{
@@ -35,6 +36,7 @@
   --perigo:#e8eaef; --perigo-soft:#2c3440;
   --zebra:#20262f; --hov:#1b3040;
   --neg:#fda29b;
+  --cat:#252c37;
   --sombra:0 1px 2px rgba(0,0,0,.3),0 4px 14px rgba(0,0,0,.25);
 }
 /* nomes antigos apontando para os tokens da agenda — mantém o JS intacto */
@@ -131,7 +133,7 @@ th{text-align:left;padding:7px 10px;font-size:11.5px;font-weight:700;letter-spac
 td{padding:4px 10px;border-bottom:1px solid var(--bor);vertical-align:middle;color:var(--txt);font-weight:400}
 tbody tr:last-child td{border-bottom:none}
 tbody tr:hover td{background:var(--hov)}
-.cat-row{background:var(--sup2);cursor:pointer}
+.cat-row{background:var(--cat);cursor:pointer}
 .cat-row td{font-weight:700;font-size:12px;color:var(--mut);text-transform:uppercase;letter-spacing:.06em;border-top:1px solid var(--bor);padding-top:6px;padding-bottom:6px}
 .cat-row:hover td{background:var(--hov)}
 .row-paid td{color:var(--mut);background:var(--sup2)}
