@@ -92,6 +92,29 @@ header{position:sticky;top:0;z-index:100;background:var(--nav);color:var(--nav-t
 #current-month{font-size:13.5px;font-weight:600;min-width:135px;text-align:center;color:var(--nav-txt)}
 .icon-btn{width:40px;height:40px;display:inline-grid;place-items:center;border-radius:10px;border:1.5px solid var(--nav-bor);background:transparent;color:var(--nav-txt);font-size:16px;transition:all .15s}
 .icon-btn:hover{background:var(--nav-hov);border-color:var(--nav-txt)}
+/* ── Modo privado ──
+   Desfoca os VALORES de cada bloco (títulos continuam legíveis).
+   Mouse: só o bloco sob o cursor aparece. Toque: um toque revela
+   aquele bloco por 15 s. Configurações não é afetada. */
+.icon-btn[aria-pressed="true"]{background:var(--nav-txt);color:var(--nav);border-color:var(--nav-txt)}
+.icon-btn[aria-pressed="true"]:hover{background:var(--nav-txt);filter:brightness(.92)}
+body.privado main .kpi > :not(.kpi-label),
+body.privado main section:not(#Configuracoes) .card:not(:has(> form)) > :not(h2):not(table),
+body.privado main section:not(#Configuracoes) .card:not(:has(> form)) > table > tbody,
+body.privado main .summary-strip strong{transition:filter .2s,opacity .2s}
+@media (hover:hover){
+body.privado main .kpi:not(:hover):not(.revelado) > :not(.kpi-label),
+body.privado main section:not(#Configuracoes) .card:not(:has(> form)):not(:hover):not(.revelado) > :not(h2):not(table),
+body.privado main section:not(#Configuracoes) .card:not(:has(> form)):not(:hover):not(.revelado) > table > tbody,
+body.privado main .summary-strip:not(:hover):not(.revelado) strong{filter:blur(7px);opacity:.7;user-select:none;pointer-events:none}
+}
+@media (hover:none){
+body.privado main .kpi:not(.revelado) > :not(.kpi-label),
+body.privado main section:not(#Configuracoes) .card:not(:has(> form)):not(.revelado) > :not(h2):not(table),
+body.privado main section:not(#Configuracoes) .card:not(:has(> form)):not(.revelado) > table > tbody,
+body.privado main .summary-strip:not(.revelado) strong{filter:blur(7px);opacity:.7;user-select:none;pointer-events:none}
+}
+
 
 /* ── Abas dentro da barra ── */
 nav{background:var(--nav);overflow-x:auto;scrollbar-width:thin}
@@ -385,6 +408,7 @@ details.mis-cfg[open] summary::before{content:'▾ ';}
             </div>
             <button class="icon-btn" onclick="forceSync()" title="Sincronizar">🔄</button>
             <button class="icon-btn" onclick="toggleTheme()" title="Tema">🌓</button>
+            <button class="icon-btn" id="btnPrivado" onclick="alternarPrivado()" aria-pressed="false" title="Modo privado desligado — atalho P"></button>
         </div>
     </div>
     <!-- ABAS -->
@@ -736,6 +760,86 @@ const LIMITE_CELULA = 50000;   // máximo de caracteres numa célula do Google S
 const daily   = () => parseFloat(localStorage.getItem('dailyRate')) || 400;
 const $ = id  => document.getElementById(id);
 
+// ══════════════════════════════════════════════════════
+//  MODO PRIVADO (mesmo comportamento da Agenda)
+//  Preferência gravada no Sheets num registro único
+//  {id:'config', type:'config'} — sem mês, sem categoria, sem
+//  valor: invisível para dashboard, abas, atrasadas e Excel,
+//  e passa pela mesma trava dataLoaded + rollback do commit.
+// ══════════════════════════════════════════════════════
+let modoPrivado = false;
+const cfgGet = () => financialData.find(i => i.type === 'config');
+const ICO_OLHO = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+const ICO_OLHO_OFF = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><path d="M1 1l22 22"/></svg>';
+
+function esconderRevelados(){
+    document.querySelectorAll('.revelado').forEach(el => { clearTimeout(el._tmrPriv); el.classList.remove('revelado'); });
+}
+
+function aplicarPrivado(){
+    document.body.classList.toggle('privado', modoPrivado);
+    const b = $('btnPrivado');
+    if (b) {
+        b.setAttribute('aria-pressed', String(modoPrivado));
+        b.innerHTML = modoPrivado ? ICO_OLHO_OFF : ICO_OLHO;
+        b.title = (modoPrivado ? 'Modo privado LIGADO' : 'Modo privado desligado') + ' — atalho P';
+    }
+    esconderRevelados();
+}
+
+async function alternarPrivado(){
+    modoPrivado = !modoPrivado;
+    aplicarPrivado();
+    toast(modoPrivado
+        ? 'Modo privado ligado: os valores só aparecem com o mouse sobre o bloco (no celular, toque para ver).'
+        : 'Modo privado desligado.', 'info', 5000);
+    // Sem leitura confirmada do Sheets não grava nada (trava contra perda de dados).
+    // O modo vale na tela mesmo assim; só não fica salvo.
+    if (!dataLoaded) return;
+    await commit(d => {
+        let cfg = d.find(i => i.type === 'config');
+        if (!cfg) { cfg = { id:'config', type:'config' }; d.push(cfg); }
+        cfg.privado = modoPrivado;
+    });
+}
+
+// Bloco que o modo privado desfoca (espelha os seletores do CSS)
+function blocoProtegido(el){
+    const b = el.closest('main .kpi, main .card, main .summary-strip');
+    if (!b) return null;
+    if (b.classList.contains('card')) {
+        if (b.closest('#Configuracoes')) return null;
+        if (b.querySelector(':scope > form')) return null;   // formulários de lançamento
+    }
+    return b;
+}
+
+// Toque (celular/tablet): revela o bloco tocado por 15 s
+document.addEventListener('pointerdown', e => {
+    if (!modoPrivado || e.pointerType === 'mouse') return;
+    const b = blocoProtegido(e.target);
+    if (!b || b.classList.contains('revelado')) return;
+    b.classList.add('revelado');
+    clearTimeout(b._tmrPriv);
+    b._tmrPriv = setTimeout(() => b.classList.remove('revelado'), 15000);
+}, true);
+
+// Saiu da janela ou trocou de aba: esconde tudo na hora
+window.addEventListener('blur', esconderRevelados);
+document.addEventListener('visibilitychange', () => { if (document.hidden) esconderRevelados(); });
+
+// Atalho P (fora de campos de texto e com o app desbloqueado)
+document.addEventListener('keydown', e => {
+    if (e.key !== 'p' && e.key !== 'P') return;
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    const t = e.target;
+    if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable)) return;
+    const login = $('login-screen');
+    if (login && !login.classList.contains('hidden')) return;
+    e.preventDefault();
+    alternarPrivado();
+});
+
 function daysLeft() {
     const n=new Date(), y=currentDate.getFullYear(), m=currentDate.getMonth();
     if(y===n.getFullYear()&&m===n.getMonth()) return (new Date(y,m+1,0).getDate()-n.getDate())+1;
@@ -961,6 +1065,8 @@ async function loadFromSheets() {
         financialData = Array.isArray(res.data) ? res.data : [];
         if (res.categories) categories = { ...categories, ...res.categories };
         migrateLegacy();
+        modoPrivado = !!(cfgGet() || {}).privado;   // preferência salva no Sheets
+        aplicarPrivado();
         dataLoaded = true;   // libera gravações
         showBlockedBanner(false);
         setStatus('online');
@@ -1076,6 +1182,7 @@ function init() {
     const ci = $('config-url'); if(ci) ci.value = SCRIPT_URL;
     const di = $('daily-rate'); if(di) di.value = daily();
     applyTabVisibility(); // Restaura preferência de abas visíveis
+    aplicarPrivado();     // desenha o ícone; a preferência real vem do Sheets na carga
     // Aguarda login antes de conectar ao Sheets
     // URL já embutida no código — wizard não é necessário na abertura
 }
