@@ -131,6 +131,10 @@ main{max-width:1280px;margin:0 auto;padding:22px 24px 80px}
 .tab-content.active{display:block}
 .card{background:var(--sup);border:1px solid var(--bor);border-radius:var(--r);padding:20px 22px;box-shadow:var(--sombra);margin-bottom:16px;overflow-x:auto}
 .card h2{font-size:16px;font-weight:700;color:var(--tit);letter-spacing:-.01em;margin-bottom:14px}
+.mis-conf{margin-top:10px;padding:10px 14px;border:1px solid var(--bor);border-radius:10px;background:var(--sup2)}
+.mis-conf:empty{display:none}
+.mis-conf .kpi-sub-row:first-child{margin-top:0}
+.mis-conf.alerta{border:2px solid var(--txt);background:var(--prio-soft)}
 .acoes-dash{display:flex;justify-content:flex-end;gap:8px;margin-bottom:12px;flex-wrap:wrap}
 .flex-row{display:flex;flex-wrap:wrap;gap:16px;margin-bottom:16px}
 .flex-col{flex:1;min-width:290px}
@@ -504,21 +508,40 @@ details.mis-cfg[open] summary::before{content:'▾ ';}
 
         <div class="kpi-grid" id="mis-kpis"></div>
 
+        <!-- Aportes (livro de lançamentos) -->
+        <div class="card">
+            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:6px;">
+                <h2 style="margin:0;">Aportes</h2>
+                <span id="mis-ap-resumo" style="font-size:12.5px;color:var(--text-muted);"></span>
+            </div>
+            <p class="mis-note" style="margin:0 0 12px;">Lance cada aporte <strong>no dia em que fizer</strong>, quantos quiser. O app soma por mês sozinho, pré-preenche os saldos do registro mensal e compara o total aportado com a meta acumulada.</p>
+            <div class="form-row">
+                <div class="form-field" style="max-width:170px;"><label>Data</label><input type="date" id="mis-ap-data"></div>
+                <div class="form-field"><label>Valor (R$)</label><input id="mis-ap-valor" inputmode="decimal" placeholder="0,00"></div>
+                <div class="form-field"><label>Onde aplicou</label><select id="mis-ap-classe"></select></div>
+                <div class="form-field" style="flex:2;min-width:180px;"><label>Observação (opcional)</label><input id="mis-ap-obs" placeholder="Ex.: aporte extra, 13º, bônus"></div>
+                <button class="btn btn-primary" id="mis-ap-btn" onclick="misSalvarAporte()">+ Lançar aporte</button>
+                <button class="btn btn-ghost" id="mis-ap-cancel" style="display:none;" onclick="misCancelarAporte()">Cancelar</button>
+            </div>
+            <div id="mis-ap-lista" style="margin-top:14px;"></div>
+        </div>
+
         <!-- Registro do mês -->
         <div class="card">
             <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:6px;">
                 <h2 style="margin:0;">Registro de <span id="mis-reg-mes">—</span></h2>
                 <span id="mis-reg-status" style="font-size:12px;font-weight:600;color:var(--text-muted);"></span>
             </div>
-            <p class="mis-note" style="margin:0 0 12px;">Informe o <strong>saldo de fechamento</strong> de cada classe no fim do mês e quanto você <strong>aportou</strong> no mês. O rendimento é calculado sozinho: saldo final − saldo anterior − aporte. Use a navegação de meses do topo para registrar outros meses.</p>
+            <p class="mis-note" style="margin:0 0 12px;">No fim do mês, confira na corretora o <strong>saldo de cada classe</strong>. Os campos já vêm com o saldo anterior + os aportes lançados; ajuste para o valor real e a diferença é o rendimento. Os aportes <strong>não</strong> se digitam aqui: vêm do cartão Aportes acima.</p>
             <div id="mis-form-wrap">
                 <div class="mis-grid" id="mis-form"></div>
                 <div class="mis-total">
                     <span>Patrimônio da missão no fim do mês</span>
                     <strong id="mis-form-total">R$ 0,00</strong>
                 </div>
+                <div class="mis-conf" id="mis-form-conf"></div>
                 <div class="form-row" style="margin-top:12px;justify-content:flex-end;">
-                    <button class="btn btn-ghost" onclick="misCopiarAnterior()" title="Preenche os saldos com os do último mês registrado">↺ Copiar mês anterior</button>
+                    <button class="btn btn-ghost" onclick="misCopiarAnterior()" title="Saldo do último mês registrado + aportes lançados no período">↺ Preencher com o esperado</button>
                     <button class="btn btn-ghost" id="mis-btn-excluir" onclick="misExcluirRegistro()">Excluir registro</button>
                     <button class="btn btn-primary" onclick="misSalvarRegistro()">Salvar registro</button>
                 </div>
@@ -1941,8 +1964,22 @@ function misObj(){
     return { ...d, ...m,
         cfg:{ ...d.cfg, ...(m.cfg||{}), alvo:{ ...d.cfg.alvo, ...((m.cfg||{}).alvo||{}) } },
         idx:{ ...d.idx, ...(m.idx||{}) },
-        meses: m.meses || {}, check: m.check || [] };
+        meses: m.meses || {}, check: m.check || [], aportes: misAportesDe(m) };
 }
+// Aportes: a fonte é m.aportes. Dados antigos (um "ap" por registro mensal)
+// são convertidos em lançamentos no último dia do mês, sem classe.
+function misAportesDe(m){
+    if (Array.isArray(m.aportes)) return m.aportes;
+    const meses = m.meses || {};
+    return Object.keys(meses).filter(mk => Number(meses[mk].ap) > 0).map(mk => {
+        const i = mkI(mk), y = Math.floor(i/12), mo = i % 12, ult = new Date(y, mo+1, 0).getDate();
+        return { id:'mig_'+mk, data:`${y}-${String(mo+1).padStart(2,'0')}-${String(ult).padStart(2,'0')}`,
+                 valor:Number(meses[mk].ap), classe:'', obs:`migrado do registro de ${iLbl(i)}` };
+    });
+}
+// "2026-09-27" → índice de mês (ano*12 + mês)
+const dataI = iso => /^\d{4}-\d{2}-\d{2}$/.test(iso||'') ? Number(iso.slice(0,4))*12 + Number(iso.slice(5,7)) - 1 : null;
+const escH  = s => String(s ?? '').replace(/[&<>"]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch]));
 async function misSalvar(mut){
     if (!dataLoaded) { toast('Não é possível salvar: os dados não foram carregados do Sheets.', 'error', 8000); return false; }
     return await commit(d => {
@@ -1953,6 +1990,10 @@ async function misSalvar(mut){
         m.idx = { ...p.idx, ...(m.idx||{}) };
         if (!m.meses) m.meses = {};
         if (!m.check) m.check = [];
+        if (!Array.isArray(m.aportes)) {                 // conversão única dos dados antigos
+            m.aportes = misAportesDe(m);
+            Object.values(m.meses).forEach(r => { delete r.ap; });
+        }
         mut(m);
     });
 }
@@ -2003,6 +2044,15 @@ function misCalc(){
     const metaNom  = k => metaHoje * Math.pow(1 + ipcaM, k);   // corrigida k meses após o mês-base
     const taxaI    = i => misTaxaMes(misSelicAno(c, Math.floor(i/12)), c.ir);
 
+    // Livro de aportes: datas livres, quantos quiser
+    const aportes = (m.aportes || []).map(a => ({ ...a, i: dataI(a.data) }))
+        .filter(a => a.i != null && Number(a.valor) > 0);
+    const apEntre = (i0, i1) => aportes.reduce((s,a) => s + (a.i > i0 && a.i <= i1 ? Number(a.valor) : 0), 0); // (i0, i1]
+    const apMes   = i => apEntre(i-1, i);
+    const apAte   = i => aportes.reduce((s,a) => s + (a.i <= i ? Number(a.valor) : 0), 0);
+    const apBase  = apAte(baseI);          // aportes no mês-base (ou antes) entram no ponto de partida
+    const p0Real  = c.p0 + apBase;         // o PLANO continua saindo de c.p0; o extra aparece como adiantamento
+
     // Curva do plano: aporte constante, rendimento pela Selic projetada
     const plano = [c.p0];
     for (let k = 1, v = c.p0; k <= 240; k++) { v = v*(1 + taxaI(baseI+k)) + c.aporte; plano.push(v); }
@@ -2013,10 +2063,10 @@ function misCalc(){
     // Histórico registrado
     const regs = Object.keys(m.meses).map(mk => ({ mk, i:mkI(mk), ...m.meses[mk] }))
         .filter(r => r.i > baseI).sort((a,b) => a.i - b.i);
-    let prevTot = c.p0, prevI = baseI, acumAp = 0, fator = 1;
+    let prevTot = p0Real, prevI = baseI, acumAp = 0, fator = 1;
     const hist = regs.map(r => {
         const tot  = MIS_CLASSES.reduce((s,cl) => s + (Number(r[cl.k])||0), 0);
-        const ap   = Number(r.ap) || 0;
+        const ap   = apEntre(prevI, r.i);   // todos os aportes desde o registro anterior
         const rend = tot - prevTot - ap;
         const rendPct = prevTot > 0 ? rend/prevTot : null;
         if (rendPct != null) fator *= 1 + rendPct;
@@ -2033,7 +2083,7 @@ function misCalc(){
 
     const atual  = hist.filter(h => h.i <= selI).pop() || null;
     const regSel = hist.find(h => h.i === selI) || null;
-    const tot    = atual ? atual.tot : c.p0;
+    const tot    = atual ? atual.tot : p0Real;
     const kAt    = atual ? atual.k : 0;
     const iAt    = atual ? atual.i : baseI;
     const patrReal  = tot / Math.pow(1 + ipcaM, kAt);
@@ -2069,7 +2119,7 @@ function misCalc(){
     else if (feitos < MIS_CHECK.length && kAt <= 3) fase = 0;
     else fase = 1;
 
-    return { m, c, baseI, selI, hojeI, ipcaM, metaHoje, metaNom, taxaI, plano, planoChegK, plano1miK, plano2miK,
+    return { m, c, aportes, apEntre, apMes, apAte, apBase, p0Real, baseI, selI, hojeI, ipcaM, metaHoje, metaNom, taxaI, plano, planoChegK, plano1miK, plano2miK,
              hist, atual, regSel, tot, kAt, iAt, patrReal, pctMeta, rendaSust, selicAtual, rPot, rendPot,
              chegI, planoChegI, aloc, entradas, feitos, fase };
 }
@@ -2085,7 +2135,7 @@ function renderMissao(x){
     $('mis-pct').textContent = `${fmtN(x.pctMeta*100,1)}% da meta`;
     $('mis-hero-sub').innerHTML = x.atual
         ? `${fmt(x.tot)} no fim de ${iLbl(x.iAt)} · <strong>${fmt(x.patrReal)}</strong> em valores de hoje · meta ${fmtMi(x.metaHoje)} de hoje`
-        : `Ponto de partida: ${fmt(c.p0)} em ${iLbl(x.baseI)} · nenhum mês registrado até ${iLbl(x.selI)}`;
+        : `Ponto de partida: ${fmt(x.p0Real)} em ${iLbl(x.baseI)}${x.apBase ? ` (${fmt(c.p0)} + ${fmt(x.apBase)} de aportes)` : ''} · nenhum mês registrado até ${iLbl(x.selI)}`;
     $('mis-fase').textContent = FASES[x.fase];
     let cheg = '—';
     if (x.chegI != null) {
@@ -2112,7 +2162,8 @@ function renderMissao(x){
     const planoMes = x.plano[x.kAt];
     const desvio = x.tot - planoMes, desvioPct = planoMes ? desvio/planoMes : 0;
     const metadeI = c.aporte/2 / x.rPot, viradaP = c.aporte / x.rPot;
-    const apSel = x.regSel ? x.regSel.ap : null;
+    const apSel = x.apMes(x.selI);
+    const metaAc = c.aporte * Math.max(0, x.selI - x.baseI), apAc = x.apAte(x.selI), difAc = apAc - metaAc;
     const kp = (label, val, cls, rows, extra='') => `<div class="kpi ${extra}"><div class="kpi-label">${label}</div>
         <div class="kpi-value ${cls}">${val}</div><div class="kpi-sub">${rows.map(r =>
         `<div class="kpi-sub-row"><span>${r[0]}</span><strong>${r[1]}</strong></div>`).join('')}</div></div>`;
@@ -2121,10 +2172,10 @@ function renderMissao(x){
             ['Plano para o mês', fmt(planoMes)],
             ['Desvio', `${seta(desvio)} ${fmtSigned(desvio)}`],
             ['Desvio %', fmtPs(desvioPct)] ], 'kpi-highlight'),
-        kp('💰 Aporte do mês', apSel != null ? fmt(apSel) : '—', '', [
-            ['Meta mensal', fmt(c.aporte)],
-            ['Acumulado', fmt(a ? a.acumAp : 0)],
-            ['Meta acumulada', fmt(c.aporte * x.kAt)] ]),
+        kp(`💰 Aportes · ${iLbl(x.selI)}`, fmt(apSel), '', [
+            [`Acumulado até ${iLbl(x.selI)}`, fmt(apAc)],
+            ['Meta acumulada', fmt(metaAc)],
+            ['Diferença', `${seta(difAc)} ${fmtSigned(difAc)}`] ]),
         kp('📈 Rendimento do mês', a ? `${seta(a.rend)} ${fmtSigned(a.rend)}` : '—', '', [
             ['Rend. no mês', a ? fmtP(a.rendPct) : '—'],
             ['Esperado no plano', fmtP(x.taxaI(x.iAt))],
@@ -2137,7 +2188,7 @@ function renderMissao(x){
             ['Juros ÷ aporte meta', 'hoje'],
             ['Juros = ½ aporte com', fmtMi(metadeI)],
             ['Juros = aporte com', fmtMi(viradaP)] ]),
-        kp('🧾 Aporte ÷ renda do mês', (apSel != null && x.entradas > 0) ? fmtP(apSel / x.entradas, 0) : '—', '', [
+        kp('🧾 Aporte ÷ renda do mês', (apSel > 0 && x.entradas > 0) ? fmtP(apSel / x.entradas, 0) : '—', '', [
             ['Receitas + locações', fmt(x.entradas)],
             ['Mês', iLbl(x.selI)] ]),
         kp('🎯 Meta', fmtMi(x.metaHoje), '', [
@@ -2146,6 +2197,7 @@ function renderMissao(x){
             ['Falta (valores de hoje)', fmt(Math.max(0, x.metaHoje - x.patrReal))] ]),
     ].join('');
 
+    misRenderAportes(x);
     misRenderForm(x);
     misChart(x);
     misRenderAlertas(x);
@@ -2158,6 +2210,16 @@ function renderMissao(x){
 }
 
 // ── registro do mês ──
+let misFormCtx = null;   // base da conferência: saldo anterior + aportes do período
+// Saldo anterior por classe + aportes do período por classe
+function misEsperadoPorClasse(x){
+    const ant = x.hist.filter(h => h.i < x.selI).pop() || null;
+    const prevI = ant ? ant.i : x.baseI;
+    const porClasse = {};
+    MIS_CLASSES.forEach(cl => { porClasse[cl.k] = ant ? (Number(ant[cl.k])||0) : 0; });
+    x.aportes.forEach(a => { if (a.i > prevI && a.i <= x.selI && porClasse[a.classe] != null) porClasse[a.classe] += Number(a.valor); });
+    return { ant, prevI, porClasse };
+}
 function misRenderForm(x){
     const mk = iMk(x.selI);
     $('mis-reg-mes').textContent = mesExtenso();
@@ -2166,46 +2228,68 @@ function misRenderForm(x){
     const nb = $('mis-form-bloqueado');
     nb.style.display = bloqueado ? '' : 'none';
     if (bloqueado) {
-        nb.innerHTML = `${iLbl(x.baseI)} é o <strong>ponto de partida</strong> (${fmt(x.c.p0)}). Os registros começam em ${iLbl(x.baseI+1)}: use ▶ no topo para avançar o mês.`;
+        nb.innerHTML = x.selI === x.baseI
+            ? `${iLbl(x.baseI)} é o <strong>ponto de partida</strong>: ${fmt(x.c.p0)} dos Parâmetros${x.apBase ? ` + ${fmt(x.apBase)} de aportes lançados até este mês = <strong>${fmt(x.p0Real)}</strong>` : ''}. Os saldos começam a ser registrados em ${iLbl(x.baseI+1)} (use ▶ no topo). Aportes feitos neste mês você lança normalmente no cartão <strong>Aportes</strong>, acima.`
+            : `${iLbl(x.selI)} é anterior ao ponto de partida (${iLbl(x.baseI)}). Use ▶ no topo para avançar.`;
         $('mis-reg-status').textContent = '';
+        misFormCtx = null;
         return;
     }
     const form = $('mis-form');
     if (!form.dataset.pronto) {
         form.innerHTML = MIS_CLASSES.map(cl => `<div class="form-field"><label>${cl.n} (R$)</label>
-            <input id="mis-f-${cl.k}" inputmode="decimal" placeholder="0,00" oninput="misMarcarForm()"></div>`).join('') +
-            `<div class="form-field"><label>Aporte feito no mês (R$)</label>
-            <input id="mis-f-ap" inputmode="decimal" placeholder="0,00" oninput="misMarcarForm()"></div>`;
+            <input id="mis-f-${cl.k}" inputmode="decimal" placeholder="0,00" oninput="misMarcarForm()"></div>`).join('');
         form.dataset.pronto = '1';
     }
+    const esp = misEsperadoPorClasse(x), r = x.regSel;
+    misFormCtx = {
+        prevTot: esp.ant ? esp.ant.tot : x.p0Real,
+        prevLbl: esp.ant ? `Saldo de ${iLbl(esp.ant.i)}` : `Ponto de partida (${iLbl(x.baseI)})`,
+        ap: x.apEntre(esp.prevI, x.selI),
+        periodo: esp.prevI < x.selI - 1 ? `${iLbl(esp.prevI+1)} a ${iLbl(x.selI)}` : iLbl(x.selI)
+    };
     // Não sobrescreve o que está sendo digitado no mesmo mês
     if (misFormMk !== mk || !misDirty) {
-        const r = x.regSel;
-        MIS_CLASSES.forEach(cl => { $(`mis-f-${cl.k}`).value = r && r[cl.k] ? fmtN(r[cl.k]) : ''; });
-        $('mis-f-ap').value = r && r.ap != null ? fmtN(r.ap) : '';
+        MIS_CLASSES.forEach(cl => {
+            const v = r ? r[cl.k] : (esp.ant ? esp.porClasse[cl.k] : 0);   // sem registro: sugestão
+            $(`mis-f-${cl.k}`).value = v ? fmtN(v) : '';
+        });
         misFormMk = mk; misDirty = false;
     }
     misAtualizaTotal();
     const st = $('mis-reg-status');
-    st.textContent = misDirty ? '● alterações não salvas' : (x.regSel ? '✓ mês registrado' : '○ mês sem registro');
-    $('mis-btn-excluir').style.display = x.regSel ? '' : 'none';
+    st.textContent = misDirty ? '● alterações não salvas'
+        : (r ? '✓ mês registrado' : (esp.ant ? '○ sugestão (saldo anterior + aportes): ajuste e salve' : '○ mês sem registro'));
+    $('mis-btn-excluir').style.display = r ? '' : 'none';
 }
 function misMarcarForm(){
     misDirty = true;
     const st = $('mis-reg-status'); if (st) st.textContent = '● alterações não salvas';
     misAtualizaTotal();
 }
+// Total + conferência ao vivo: mostra o rendimento que os saldos digitados implicam
 function misAtualizaTotal(){
     const t = MIS_CLASSES.reduce((s,cl) => s + (numOuNull($(`mis-f-${cl.k}`)?.value) || 0), 0);
     const el = $('mis-form-total'); if (el) el.textContent = fmt(t);
+    const cf = $('mis-form-conf'); if (!cf) return;
+    const ctx = misFormCtx;
+    if (!ctx) { cf.innerHTML = ''; cf.className = 'mis-conf'; return; }
+    const esperado = ctx.prevTot + ctx.ap;
+    const rend = t - esperado, pct = ctx.prevTot > 0 ? rend/ctx.prevTot : null;
+    const estranho = t > 0 && pct != null && (pct < -0.03 || pct > 0.05);
+    cf.className = 'mis-conf' + (estranho ? ' alerta' : '');
+    cf.innerHTML = `<div class="kpi-sub-row"><span>${ctx.prevLbl}</span><strong>${fmt(ctx.prevTot)}</strong></div>
+        <div class="kpi-sub-row"><span>+ Aportes lançados (${ctx.periodo})</span><strong>${fmt(ctx.ap)}</strong></div>
+        <div class="kpi-sub-row"><span>= Esperado sem rendimento</span><strong>${fmt(esperado)}</strong></div>
+        ${t > 0 ? `<div class="kpi-sub-row"><span>Rendimento (saldo informado − esperado)</span><strong>${seta(rend)} ${fmtSigned(rend)}${pct != null ? ` · ${fmtPs(pct,2)}` : ''}</strong></div>` : ''}
+        ${estranho ? `<p style="margin:8px 0 0;font-weight:700;">⚠ Rendimento fora do normal para um mês. Confira se os saldos incluem todos os aportes do período.</p>` : ''}`;
 }
 function misCopiarAnterior(){
-    const x = misCalc();
-    const ant = x.hist.filter(h => h.i < x.selI).pop();
-    if (!ant) return toast('Não há mês anterior registrado para copiar.', 'info');
-    MIS_CLASSES.forEach(cl => { $(`mis-f-${cl.k}`).value = ant[cl.k] ? fmtN(ant[cl.k]) : ''; });
+    const x = misCalc(), esp = misEsperadoPorClasse(x);
+    if (!esp.ant) return toast('Primeiro mês do plano: informe o saldo de cada classe conforme a corretora. A conferência abaixo mostra o total esperado.', 'info', 7000);
+    MIS_CLASSES.forEach(cl => { const v = esp.porClasse[cl.k]; $(`mis-f-${cl.k}`).value = v ? fmtN(v) : ''; });
     misMarcarForm();
-    toast(`Saldos copiados de ${iLbl(ant.i)}. Ajuste o que mudou e salve.`, 'info');
+    toast(`Preenchido com o saldo de ${iLbl(esp.ant.i)} + os aportes do período. Ajuste para o saldo real e salve.`, 'info', 6000);
 }
 async function misSalvarRegistro(){
     const x = misCalc();
@@ -2218,17 +2302,101 @@ async function misSalvarRegistro(){
         if (isNaN(v) || v < 0) return toast(`Valor inválido em "${cl.n}".`, 'error');
         if (v > 0) reg[cl.k] = Math.round(v*100)/100;
     }
-    const apRaw = $('mis-f-ap').value.trim();
-    const ap = apRaw ? parseBR(apRaw) : 0;
-    if (isNaN(ap)) return toast('Aporte inválido.', 'error');
-    reg.ap = Math.round(ap*100)/100;
     if (!MIS_CLASSES.some(cl => reg[cl.k])) return toast('Informe o saldo de pelo menos uma classe.', 'error');
+    // Trava contra o erro mais comum: saldo lançado sem incluir um aporte
+    const ctx = misFormCtx;
+    if (ctx) {
+        const t = MIS_CLASSES.reduce((s,cl) => s + (reg[cl.k]||0), 0);
+        const rend = t - ctx.prevTot - ctx.ap, pct = ctx.prevTot > 0 ? rend/ctx.prevTot : 0;
+        if ((pct < -0.03 || pct > 0.05) && !confirm(`Com esses saldos, o rendimento de ${iLbl(x.selI)} fica em ${fmtSigned(rend)} (${fmtPs(pct,1)}).\n\nIsso costuma indicar saldo lançado sem incluir algum aporte, ou um aporte faltando ou duplicado no cartão Aportes.\n\nSalvar mesmo assim?`)) return;
+    }
     const mk = iMk(x.selI);
     const ok = await misSalvar(m => { m.meses[mk] = reg; });
     if (ok) {
         misDirty = false; misFormMk = null;
         updateView();
         toast(`Registro de ${iLbl(x.selI)} salvo.`, 'success');
+    }
+}
+
+// ── livro de aportes ──
+let misApEditId = null;
+function misRenderAportes(x){
+    const sel = $('mis-ap-classe'); if (!sel) return;
+    if (!sel.dataset.pronto) {
+        sel.innerHTML = '<option value="">Selecione...</option>' + MIS_CLASSES.map(cl => `<option value="${cl.k}">${cl.n}</option>`).join('');
+        sel.dataset.pronto = '1';
+        $('mis-ap-data').value = hojeISO();
+    }
+    const nomeCl = k => (MIS_CLASSES.find(cl => cl.k === k) || {}).n || '—';
+    const ref = x.selI;
+    const feito = x.apAte(ref), meta = x.c.aporte * Math.max(0, ref - x.baseI), dif = feito - meta;
+    $('mis-ap-resumo').innerHTML = `Aportado até ${iLbl(ref)}: <strong>${fmt(feito)}</strong> · meta acumulada ${fmt(meta)} · <strong>${seta(dif)} ${fmtSigned(dif)}</strong>`;
+    const box = $('mis-ap-lista');
+    const lista = x.aportes.slice().sort((a,b) => b.data.localeCompare(a.data));
+    if (!lista.length) { box.innerHTML = '<p class="mis-note" style="margin:0;">Nenhum aporte lançado ainda.</p>'; return; }
+    box.innerHTML = `<div style="max-height:340px;overflow-y:auto;border:1px solid var(--bor);border-radius:10px;">
+        <table><thead><tr><th>Data</th><th class="num-cell">Valor</th><th>Onde aplicou</th><th>Observação</th><th style="width:70px;"></th></tr></thead><tbody>
+        ${lista.map(a => `<tr class="${a.i === ref ? 'row-starred' : ''}">
+            <td style="white-space:nowrap;">${a.data.split('-').reverse().join('/')}${a.i <= x.baseI ? ' <span title="No mês-base ou antes: entra no ponto de partida">◆</span>' : ''}</td>
+            <td class="num-cell"><strong>${fmt(Number(a.valor))}</strong></td>
+            <td>${nomeCl(a.classe)}</td>
+            <td style="color:var(--mut);">${escH(a.obs)}</td>
+            <td><div style="display:flex;gap:2px;">
+                <button class="btn btn-warning btn-sm" onclick="misEditarAporte('${a.id}')" title="Editar">✎</button>
+                <button class="btn btn-danger btn-sm" onclick="misExcluirAporte('${a.id}')" title="Excluir">×</button>
+            </div></td></tr>`).join('')}
+        </tbody></table></div>
+        <p class="mis-note" style="margin:8px 0 0;">Destacados: aportes do mês selecionado no topo. ◆ = no mês-base ou antes, entra no ponto de partida.</p>`;
+}
+async function misSalvarAporte(){
+    const data = $('mis-ap-data').value;
+    const valor = parseBR($('mis-ap-valor').value);
+    const classe = $('mis-ap-classe').value;
+    const obs = $('mis-ap-obs').value.trim();
+    if (dataI(data) == null) return toast('Informe a data do aporte.', 'error');
+    if (isNaN(valor) || valor <= 0) return toast('Informe um valor maior que zero.', 'error');
+    if (!classe) return toast('Informe onde o dinheiro foi aplicado.', 'error');
+    const x = misCalc(), i = dataI(data);
+    const reg = { data, valor: Math.round(valor*100)/100, classe, obs };
+    const editId = misApEditId;
+    const ok = await misSalvar(m => {
+        if (editId) { const a = m.aportes.find(a => a.id === editId); if (a) Object.assign(a, reg); }
+        else m.aportes.push({ id: 'ap_' + Date.now(), ...reg });
+    });
+    if (!ok) return;
+    misCancelarAporte();
+    misDirty = false; misFormMk = null;   // o registro mensal recalcula a sugestão
+    updateView();
+    let msg = editId ? 'Aporte atualizado.' : `Aporte de ${fmt(reg.valor)} lançado em ${iLbl(i)}.`;
+    if (i <= x.baseI) msg += ' Entrou no ponto de partida.';
+    else if (x.hist.some(h => h.i >= i)) msg += ` Já existem saldos registrados a partir de ${iLbl(i)}: confira se eles incluem este aporte.`;
+    toast(msg, 'success', 9000);
+}
+function misEditarAporte(id){
+    const a = (misObj().aportes || []).find(a => a.id === id); if (!a) return;
+    misApEditId = id;
+    $('mis-ap-data').value = a.data; $('mis-ap-valor').value = fmtN(Number(a.valor));
+    $('mis-ap-classe').value = a.classe || ''; $('mis-ap-obs').value = a.obs || '';
+    $('mis-ap-btn').textContent = 'Salvar alteração';
+    $('mis-ap-cancel').style.display = '';
+    $('mis-ap-valor').focus();
+}
+function misCancelarAporte(){
+    misApEditId = null;
+    $('mis-ap-data').value = hojeISO(); $('mis-ap-valor').value = '';
+    $('mis-ap-classe').value = ''; $('mis-ap-obs').value = '';
+    $('mis-ap-btn').textContent = '+ Lançar aporte';
+    $('mis-ap-cancel').style.display = 'none';
+}
+async function misExcluirAporte(id){
+    const a = (misObj().aportes || []).find(a => a.id === id); if (!a) return;
+    if (!confirm(`Excluir o aporte de ${fmt(Number(a.valor))} em ${a.data.split('-').reverse().join('/')}?`)) return;
+    const ok = await misSalvar(m => { m.aportes = m.aportes.filter(z => z.id !== id); });
+    if (ok) {
+        if (misApEditId === id) misCancelarAporte();
+        misDirty = false; misFormMk = null;
+        updateView(); toast('Aporte excluído.', 'success');
     }
 }
 async function misExcluirRegistro(){
@@ -2249,7 +2417,7 @@ function misChart(x){
     const N = Math.min(240, Math.max(x.planoChegK > 0 ? x.planoChegK : 60, chegK, lastK) + 4);
     const plano = x.plano.slice(0, N+1);
     const meta  = [...Array(N+1)].map((_,k) => x.metaNom(k));
-    const real  = [{ k:0, v:x.c.p0, i:x.baseI }, ...x.hist.map(h => ({ k:h.k, v:h.tot, i:h.i }))];
+    const real  = [{ k:0, v:x.p0Real, i:x.baseI }, ...x.hist.map(h => ({ k:h.k, v:h.tot, i:h.i }))];
     const ymax  = Math.max(...plano, ...meta, ...real.map(p => p.v)) * 1.06;
     const X = k => L + (W-L-R) * k / N;
     const Y = v => T + (H-T-B) * (1 - v/ymax);
@@ -2295,10 +2463,21 @@ function misRenderAlertas(x){
     const ultimoFechado = Math.min(x.hojeI - 1, x.selI);
     if (x.selI > x.baseI && !x.regSel && x.selI <= x.hojeI)
         add('○', `${iLbl(x.selI)} ainda não tem registro. Lance os saldos de fechamento quando o mês terminar.`);
-    if (x.regSel && x.regSel.ap < c.aporte)
-        add('▼', `<strong>Aporte de ${iLbl(x.selI)} abaixo da meta:</strong> ${fmt(x.regSel.ap)} de ${fmt(c.aporte)}. Cada mês sem o aporte cheio atrasa a meta em quase um mês.`, 'forte');
-    const falhas = x.hist.filter(h => h.i > ultimoFechado - 12 && h.i <= ultimoFechado && h.ap < c.aporte).length;
-    if (falhas >= 2) add('▼', `${falhas} meses com aporte abaixo da meta nos últimos 12. Gatilho de revisão do plano.`, 'forte');
+    // Aportes com datas livres: a cobrança é pelo ACUMULADO, não mês a mês
+    const refI = Math.min(x.hojeI, x.selI);
+    if (refI > x.baseI) {
+        const feito  = x.apAte(refI);
+        const devido = c.aporte * (refI - 1 - x.baseI);   // só meses já encerrados
+        const ateMes = c.aporte * (refI - x.baseI);       // incluindo o mês corrente
+        if (devido > 0 && feito < devido)
+            add('▼', `<strong>Aportes atrasados:</strong> ${fmt(feito)} aportados de ${fmt(devido)} previstos até ${iLbl(refI-1)}. Faltam ${fmt(devido - feito)}. Cada mês de meta não aportado atrasa a chegada em quase um mês.`, 'forte');
+        else if (feito > ateMes)
+            add('▲', `Aportes adiantados: ${fmt(feito)} aportados, ${fmt(feito - ateMes)} acima da meta acumulada até ${iLbl(refI)}.`, 'bom');
+    }
+    // Rendimento fora do normal quase sempre é saldo lançado sem incluir um aporte
+    const rChk = x.regSel || x.atual;
+    if (rChk && rChk.rendPct != null && (rChk.rendPct < -0.03 || rChk.rendPct > 0.05))
+        add('⚠', `<strong>Rendimento de ${fmtSigned(rChk.rend)} (${fmtPs(rChk.rendPct,1)}) em ${iLbl(rChk.i)} parece errado.</strong> Confira se os saldos incluem todos os aportes do período e se nenhum aporte foi lançado em dobro no cartão Aportes.`, 'forte');
     const tp = Number(m.idx.ipcaPlus);
     if (tp) {
         if (tp >= 7) add('▲', `Tesouro IPCA+ a IPCA + ${fmtN(tp,2)}%: taxa real alta. Vale concentrar os aportes em IPCA+, até 60% da carteira.`, 'bom');
@@ -2336,13 +2515,13 @@ function misRenderAloc(x){
     // Sugestão: cobre primeiro os déficits em relação ao alvo
     const base = x.atual ? x.aloc.map(a => a.v) : x.aloc.map(() => 0);
     const total = x.atual ? x.tot : 0;
-    const aporte = x.atual ? c.aporte : c.p0 + c.aporte;
+    const aporte = x.atual ? c.aporte : x.p0Real + c.aporte;
     const novo = total + aporte;
     const def = x.aloc.map((a,j) => Math.max(0, a.alvo*novo - base[j]));
     const soma = def.reduce((s,v) => s+v, 0);
     const dist = def.map((d,j) => soma >= aporte ? d*aporte/soma : d + (aporte - soma)*x.aloc[j].alvo);
     const linhas = x.aloc.map((a,j) => ({ n:a.n, v:dist[j] })).filter(l => l.v >= 1).sort((a,b) => b.v - a.v);
-    sg.innerHTML = (x.atual ? '' : `<p class="mis-note" style="margin:0 0 8px;">Sem registro ainda: distribuição inicial de ${fmt(c.p0)} + o primeiro aporte de ${fmt(c.aporte)}.</p>`) +
+    sg.innerHTML = (x.atual ? '' : `<p class="mis-note" style="margin:0 0 8px;">Sem registro ainda: distribuição inicial de ${fmt(x.p0Real)} + o primeiro aporte de ${fmt(c.aporte)}.</p>`) +
         `<table><tbody>${linhas.map(l => `<tr><td>${l.n}</td><td class="num-cell"><strong>${fmt(l.v)}</strong></td></tr>`).join('')}
         <tr><td style="color:var(--mut);">Total</td><td class="num-cell">${fmt(aporte)}</td></tr></tbody></table>`;
 }
@@ -2412,15 +2591,15 @@ function misRenderHist(x){
     const tb = $('mis-hist'); if (!tb) return;
     const linhas = x.hist.slice().reverse().map(h => `<tr class="${h.i === x.selI ? 'row-starred' : ''}">
         <td style="white-space:nowrap;">${iLbl(h.i)}${h.salto ? ' <span title="Houve meses sem registro antes deste; o rendimento cobre o período todo">*</span>' : ''}</td>
-        <td class="num-cell">${fmt(h.ap)}${h.ap < x.c.aporte ? ' ▼' : ''}</td>
+        <td class="num-cell">${fmt(h.ap)}</td>
         <td class="num-cell">${fmtSigned(h.rend)}</td>
         <td class="num-cell">${fmtP(h.rendPct)}</td>
         <td class="num-cell"><strong>${fmt(h.tot)}</strong></td>
         <td class="num-cell">${h.plano != null ? fmt(h.plano) : '—'}</td>
         <td class="num-cell">${h.desvio != null ? `${seta(h.desvio)} ${fmtPs(h.desvioPct,1)}` : '—'}</td>
         <td class="num-cell">${fmtP(h.rendAp,0)}</td></tr>`);
-    linhas.push(`<tr class="row-paid"><td>${iLbl(x.baseI)}</td><td class="num-cell">—</td><td class="num-cell">—</td><td class="num-cell">—</td>
-        <td class="num-cell"><strong>${fmt(x.c.p0)}</strong></td><td class="num-cell">${fmt(x.c.p0)}</td><td class="num-cell">ponto de partida</td><td class="num-cell">—</td></tr>`);
+    linhas.push(`<tr class="row-paid"><td>${iLbl(x.baseI)}</td><td class="num-cell">${x.apBase ? fmt(x.apBase) : '—'}</td><td class="num-cell">—</td><td class="num-cell">—</td>
+        <td class="num-cell"><strong>${fmt(x.p0Real)}</strong></td><td class="num-cell">${fmt(x.c.p0)}</td><td class="num-cell">ponto de partida</td><td class="num-cell">—</td></tr>`);
     tb.innerHTML = linhas.join('');
 }
 
