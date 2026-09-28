@@ -2163,7 +2163,10 @@ function renderMissao(x){
     const desvio = x.tot - planoMes, desvioPct = planoMes ? desvio/planoMes : 0;
     const metadeI = c.aporte/2 / x.rPot, viradaP = c.aporte / x.rPot;
     const apSel = x.apMes(x.selI);
-    const metaAc = c.aporte * Math.max(0, x.selI - x.baseI), apAc = x.apAte(x.selI), difAc = apAc - metaAc;
+    // Meta acumulada só conta meses já encerrados (mesmo critério dos Alertas): o mês corrente
+    // ainda não venceu, então não entra como "atrasado" enquanto não fechar.
+    const refFechAc = Math.min(x.hojeI, x.selI) - 1;
+    const metaAc = c.aporte * Math.max(0, refFechAc - x.baseI), apAc = x.apAte(x.selI), difAc = apAc - metaAc;
     const kp = (label, val, cls, rows, extra='') => `<div class="kpi ${extra}"><div class="kpi-label">${label}</div>
         <div class="kpi-value ${cls}">${val}</div><div class="kpi-sub">${rows.map(r =>
         `<div class="kpi-sub-row"><span>${r[0]}</span><strong>${r[1]}</strong></div>`).join('')}</div></div>`;
@@ -2330,7 +2333,9 @@ function misRenderAportes(x){
     }
     const nomeCl = k => (MIS_CLASSES.find(cl => cl.k === k) || {}).n || '—';
     const ref = x.selI;
-    const feito = x.apAte(ref), meta = x.c.aporte * Math.max(0, ref - x.baseI), dif = feito - meta;
+    // Mesmo critério dos Alertas: meta acumulada só cobra meses já encerrados.
+    const refFech = Math.min(x.hojeI, ref) - 1;
+    const feito = x.apAte(ref), meta = x.c.aporte * Math.max(0, refFech - x.baseI), dif = feito - meta;
     $('mis-ap-resumo').innerHTML = `Aportado até ${iLbl(ref)}: <strong>${fmt(feito)}</strong> · meta acumulada ${fmt(meta)} · <strong>${seta(dif)} ${fmtSigned(dif)}</strong>`;
     const box = $('mis-ap-lista');
     const lista = x.aportes.slice().sort((a,b) => b.data.localeCompare(a.data));
