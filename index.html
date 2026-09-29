@@ -3044,17 +3044,37 @@ function showScript(){
     const code=`// ════════════════════════════════════════════
 // CONTROLE FINANCEIRO — Apps Script
 // Implante como Web App, acesso: Qualquer pessoa
+//
+// Cada lançamento vira uma LINHA na aba "Dados", com colunas legíveis
+// (ID, Tipo, Descrição...) para você conseguir olhar direto na planilha,
+// mais uma coluna "JSON" com o objeto completo daquele item — essa coluna
+// é a fonte da verdade na leitura, então nenhum campo se perde mesmo que
+// o item tenha algo fora das colunas legíveis (ex.: o registro "missao").
+//
+// Isso elimina o limite de 50.000 caracteres por célula como teto do
+// armazenamento total: agora o limite passa a valer por LANÇAMENTO
+// (cada um numa célula própria), não mais pela soma de tudo.
+//
+// Compatível com o formato antigo: se a aba "Dados" ainda tiver o array
+// inteiro gravado numa célula só (formato anterior), a leitura reconhece
+// e converte — a primeira gravação depois deste script já migra para o
+// formato em tabela, sem precisar de nenhum passo manual.
 // ════════════════════════════════════════════
 
 const SHEET_DATA = "Dados";
 const SHEET_CAT  = "Categorias";
 
+// Colunas da aba "Dados". A última (JSON) é a fonte da verdade na leitura;
+// as outras são só para leitura humana direto na planilha.
+const COLS = ['ID','Tipo','Descrição','Categoria','Valor','Mês Base','Recorrente','Vencimento','Fim Parcelas','Pago','Destaque','JSON'];
+const COL_JSON = COLS.length;
+
 // Leitura — chamada via GET
 function doGet(e) {
   try {
     const ss   = SpreadsheetApp.getActiveSpreadsheet();
-    const data = readSheet(ss, SHEET_DATA);
-    const cats = readSheet(ss, SHEET_CAT);
+    const data = readData(ss);
+    const cats = readCategories(ss);
     return respond({ status: "ok", data: data, categories: cats });
   } catch(err) {
     return respond({ status: "error", message: err.toString() });
@@ -3066,25 +3086,90 @@ function doPost(e) {
   try {
     const payload = JSON.parse(e.postData.contents);
     const ss = SpreadsheetApp.getActiveSpreadsheet();
-    if (payload.data !== undefined)       writeSheet(ss, SHEET_DATA, payload.data);
-    if (payload.categories !== undefined) writeSheet(ss, SHEET_CAT,  payload.categories);
+    if (payload.data !== undefined)       writeData(ss, payload.data);
+    if (payload.categories !== undefined) writeCategories(ss, payload.categories);
     return respond({ status: "ok" });
   } catch(err) {
     return respond({ status: "error", message: err.toString() });
   }
 }
 
-function readSheet(ss, name) {
-  const sheet = ss.getSheetByName(name);
-  if (!sheet) return (name === SHEET_DATA) ? [] : {};
-  const val = sheet.getRange(1, 1).getValue();
-  try { return val ? JSON.parse(val) : (name === SHEET_DATA ? [] : {}); }
-  catch(e) { return (name === SHEET_DATA) ? [] : {}; }
+// ── Dados (lançamentos): uma linha por item ──
+
+function readData(ss) {
+  const sheet = ss.getSheetByName(SHEET_DATA);
+  if (!sheet) return [];
+  const lastRow = sheet.getLastRow();
+  if (lastRow < 1) return [];
+
+  // Compatibilidade com o formato antigo: array inteiro em JSON na célula A1.
+  const a1 = sheet.getRange(1, 1).getValue();
+  if (lastRow === 1 && typeof a1 === 'string' && a1.trim().indexOf('[') === 0) {
+    try { return JSON.parse(a1); } catch(e) { return []; }
+  }
+
+  if (lastRow < 2) return []; // só cabeçalho, ainda sem lançamentos
+  const values = sheet.getRange(2, 1, lastRow - 1, COL_JSON).getValues();
+  const out = [];
+  values.forEach(row => {
+    const raw = row[COL_JSON - 1];
+    if (!raw) return; // linha vazia (sobra de uma gravação anterior maior)
+    try { out.push(JSON.parse(raw)); } catch(e) { /* linha corrompida: ignora, não derruba a leitura inteira */ }
+  });
+  return out;
 }
 
-function writeSheet(ss, name, data) {
-  const sheet = ss.getSheetByName(name) || ss.insertSheet(name);
-  sheet.getRange(1, 1).setValue(JSON.stringify(data));
+function writeData(ss, data) {
+  const sheet = ss.getSheetByName(SHEET_DATA) || ss.insertSheet(SHEET_DATA);
+  const oldLastRow = sheet.getLastRow();
+
+  const rows = data.map(item => [
+    item.id || '',
+    item.type || '',
+    item.description || '',
+    item.category || '',
+    item.value !== undefined ? item.value : '',
+    item.baseMonthKey || '',
+    item.recurring ? 'Sim' : '',
+    item.dueDate || '',
+    item.endMonthKey || '',
+    item.paid !== undefined ? (item.paid ? 'Sim' : 'Não')
+      : (item.paidMonths && item.paidMonths.length ? item.paidMonths.join(', ') : ''),
+    item.starred ? 'Sim' : '',
+    JSON.stringify(item)
+  ]);
+
+  // Escreve os dados NOVOS primeiro (nunca limpa antes de ter tudo gravado —
+  // se algo falhar no meio do caminho, o que já estava na planilha continua lá).
+  sheet.getRange(1, 1, 1, COLS.length).setValues([COLS]);
+  sheet.getRange(1, 1, 1, COLS.length).setFontWeight('bold');
+  if (rows.length) {
+    sheet.getRange(2, 1, rows.length, COLS.length).setValues(rows);
+  }
+
+  // Só depois, se a lista nova tem menos itens que a anterior, apaga a sobra
+  // de linhas antigas que ficariam com lixo do lançamento anterior.
+  const newLastRow = rows.length + 1;
+  if (oldLastRow > newLastRow) {
+    sheet.getRange(newLastRow + 1, 1, oldLastRow - newLastRow, COLS.length).clearContent();
+  }
+
+  sheet.autoResizeColumns(1, COLS.length - 1); // não redimensiona a coluna JSON
+}
+
+// ── Categorias: objeto pequeno, não cresce como os lançamentos — segue como estava ──
+
+function readCategories(ss) {
+  const sheet = ss.getSheetByName(SHEET_CAT);
+  if (!sheet) return {};
+  const val = sheet.getRange(1, 1).getValue();
+  try { return val ? JSON.parse(val) : {}; }
+  catch(e) { return {}; }
+}
+
+function writeCategories(ss, categories) {
+  const sheet = ss.getSheetByName(SHEET_CAT) || ss.insertSheet(SHEET_CAT);
+  sheet.getRange(1, 1).setValue(JSON.stringify(categories));
 }
 
 function respond(data) {
