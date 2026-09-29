@@ -784,6 +784,9 @@ const fmt     = v => Number(v||0).toLocaleString('pt-BR',{style:'currency',curre
 const fmtSigned = v => { const n=Number(v||0); return n<0 ? `- ${fmt(Math.abs(n))}` : fmt(n); };
 // ⚙️ CONFIGURAÇÃO — altere aqui se mudar o Apps Script
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx5ccP8JL2Wn_szIQai0yOP2900XTOpBwmCdAJzfn_Prxwqnbi1ZqiyKOCXskAcpboNUw/exec';
+// URL customizada (colada na aba Config./wizard) persiste no localStorage — sem
+// isso, fechar e abrir o app perdia a URL nova e voltava pro SCRIPT_URL fixo.
+window._runtimeUrl = localStorage.getItem('scriptUrl') || null;
 const url = () => window._runtimeUrl || SCRIPT_URL;
 const LIMITE_CELULA = 50000;   // máximo de caracteres numa célula do Google Sheets (agora vale por lançamento, não pelo total)
 const daily   = () => parseFloat(localStorage.getItem('dailyRate')) || 400;
@@ -1209,7 +1212,7 @@ function init() {
     applyTheme();
     renderTabs();
     updateMonthDisplay();
-    const ci = $('config-url'); if(ci) ci.value = SCRIPT_URL;
+    const ci = $('config-url'); if(ci) ci.value = url();   // mostra a URL em uso (custom salva, ou a fixa do código)
     const di = $('daily-rate'); if(di) di.value = daily();
     applyTabVisibility(); // Restaura preferência de abas visíveis
     aplicarPrivado();     // desenha o ícone; a preferência real vem do Sheets na carga
@@ -1264,8 +1267,9 @@ function saveUrl() {
     const configInput = $('config-url');
     const u = (wizardInput?.value.trim()) || (configInput?.value.trim()) || '';
     if(!u) return toast('Cole a URL primeiro.','error');
-    // Atualiza a constante em memória para esta sessão
+    // Grava no localStorage — sem isso, a URL nova sumia ao fechar o app
     window._runtimeUrl = u;
+    localStorage.setItem('scriptUrl', u);
     if(wizardInput) wizardInput.value = u;
     if(configInput) configInput.value = u;
     $('setup-wizard').classList.add('hidden');
