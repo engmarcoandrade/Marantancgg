@@ -785,7 +785,7 @@ const fmtSigned = v => { const n=Number(v||0); return n<0 ? `- ${fmt(Math.abs(n)
 // ⚙️ CONFIGURAÇÃO — altere aqui se mudar o Apps Script
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx5ccP8JL2Wn_szIQai0yOP2900XTOpBwmCdAJzfn_Prxwqnbi1ZqiyKOCXskAcpboNUw/exec';
 const url = () => window._runtimeUrl || SCRIPT_URL;
-const LIMITE_CELULA = 50000;   // máximo de caracteres numa célula do Google Sheets
+const LIMITE_CELULA = 50000;   // máximo de caracteres numa célula do Google Sheets (agora vale por lançamento, não pelo total)
 const daily   = () => parseFloat(localStorage.getItem('dailyRate')) || 400;
 const $ = id  => document.getElementById(id);
 
@@ -1120,14 +1120,15 @@ async function saveToSheets() {
         return false;
     }
     if (isSaving) return false;
-    // Limite físico do Google Sheets: 50.000 caracteres por célula.
-    // Acima disso o Apps Script falha ao gravar e, como o POST é no-cors,
-    // o app não enxergaria o erro — o lançamento sumiria em silêncio.
-    const enviado = JSON.stringify(financialData);
-    if (enviado.length > LIMITE_CELULA) {
-        toast(`Gravação bloqueada: os dados ocupam ${enviado.length.toLocaleString('pt-BR')} caracteres e a célula do Sheets aceita no máximo 50.000. Nada foi perdido; é preciso dividir o armazenamento no Apps Script.`, 'error', 15000);
+    // Limite físico do Google Sheets: 50.000 caracteres por célula. Desde que a
+    // gravação passou a ser uma linha por lançamento (cada um na sua própria
+    // célula JSON), o limite vale por LANÇAMENTO, não mais pela soma de tudo.
+    const itemGrande = financialData.find(i => JSON.stringify(i).length > LIMITE_CELULA);
+    if (itemGrande) {
+        toast(`Gravação bloqueada: o lançamento "${itemGrande.description || itemGrande.type}" sozinho ocupa mais de ${LIMITE_CELULA.toLocaleString('pt-BR')} caracteres — acima do limite de uma célula do Sheets. Nada foi perdido; fale comigo antes de continuar.`, 'error', 15000);
         return false;
     }
+    const enviado = JSON.stringify(financialData);
     isSaving = true;
     setStatus('syncing');
     try {
@@ -2731,19 +2732,27 @@ function misKpiDashboard(x){
 }
 
 // ── medidor do armazenamento (Config.) ──
+// Cada lançamento é gravado na sua própria linha/célula no Sheets, então o que
+// importa agora não é mais a soma de tudo, e sim o MAIOR lançamento individual
+// em relação ao limite de 50.000 caracteres de uma célula.
 function renderUso(){
     const bar = $('uso-bar'); if (!bar) return;
     const n = JSON.stringify(financialData).length;
-    const p = n / LIMITE_CELULA;
+    let maior = 0, maiorDesc = '—';
+    financialData.forEach(i => {
+        const len = JSON.stringify(i).length;
+        if (len > maior) { maior = len; maiorDesc = i.description || i.type; }
+    });
+    const p = maior / LIMITE_CELULA;
     const mis = misGet() ? JSON.stringify(misGet()).length : 0;
     bar.className = 'uso-bar' + (p > 0.8 ? ' alto' : '');
     bar.firstElementChild.style.width = Math.min(100, p*100).toFixed(1) + '%';
-    $('uso-txt').textContent = `${n.toLocaleString('pt-BR')} de ${LIMITE_CELULA.toLocaleString('pt-BR')} caracteres · Missão: ${mis.toLocaleString('pt-BR')}`;
+    $('uso-txt').textContent = `Maior lançamento: "${maiorDesc}" com ${maior.toLocaleString('pt-BR')} de ${LIMITE_CELULA.toLocaleString('pt-BR')} caracteres · total de dados: ${n.toLocaleString('pt-BR')} caracteres · Missão: ${mis.toLocaleString('pt-BR')}`;
     $('uso-pct').textContent = `${p > 0.8 ? '▲ ' : ''}${fmtN(p*100,1)}%`;
     $('uso-nota').textContent = !dataLoaded ? 'Dados ainda não carregados do Sheets.'
-        : p < 0.6 ? 'Folga confortável.'
-        : p < 0.8 ? 'Atenção: acima de 60%. Planeje dividir o armazenamento em várias células.'
-        : 'Crítico: acima de 80%. Divida o armazenamento no Apps Script antes de continuar lançando.';
+        : p < 0.6 ? 'Folga confortável — cada lançamento tem sua própria linha, sem limite prático de quantidade.'
+        : p < 0.8 ? 'Atenção: um lançamento específico está ficando grande. Vale checar se algo acumulou dado demais.'
+        : 'Crítico: um lançamento passou de 80% do limite de uma célula. Fale comigo antes de continuar lançando.';
 }
 
 // ══════════════════════════════════════════════════════
