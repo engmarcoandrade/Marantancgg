@@ -764,6 +764,10 @@ let isSaving      = false;
 let dataLoaded    = false;
 let appPassword   = localStorage.getItem('appPassword') || '123';
 
+// Dívidas e Patrimônio não são vinculados a mês: aparecem sempre e o "pago"
+// é um flag único por lançamento (item.paid), não por mês (paidMonths).
+const GLOBAL_TYPES = ['divida', 'patrimonio'];
+
 const TABS = [
     { id:'Despesas',  type:'despesa',    title:'Lançar Despesa'  },
     { id:'Receitas',  type:'receita',    title:'Lançar Receita'  },
@@ -1214,6 +1218,13 @@ function init() {
 
 function migrateLegacy() {
     financialData.forEach(i => { if(i.type==='atrasada') i.type='divida'; });
+    // Dívidas/Patrimônio antigos controlavam "pago" por mês (paidMonths). Agora é um
+    // flag único por lançamento: se foi marcado pago em algum mês, considera pago.
+    financialData.forEach(i => {
+        if (GLOBAL_TYPES.includes(i.type) && i.paid === undefined) {
+            i.paid = !!(i.paidMonths && i.paidMonths.length);
+        }
+    });
 }
 
 // ══════════════════════════════════════════════════════
@@ -1316,9 +1327,10 @@ async function handleSubmit(e, type) {
         toast('Lançamento atualizado.','success');
         return; // Garante que não cai no bloco de criação abaixo
     } else {
-        const isGlobal = type === 'divida' || type === 'patrimonio';
+        const isGlobal = GLOBAL_TYPES.includes(type);
         const endKey = rec ? calcEndMonthKey(mk, parcelas) : null;
         const item = { id:Date.now().toString(), type, description:desc, category:cat, value:val, baseMonthKey: isGlobal ? 'global' : mk, recurring:rec, paidMonths:[] };
+        if (isGlobal) item.paid = false;   // flag único, independente do mês
         if (venc) item.dueDate = venc;
         if (endKey) item.endMonthKey = endKey;
         await commit(d => d.push(item));
@@ -1414,6 +1426,10 @@ async function toggleStar(id) {
 async function togglePaid(id, mk) {
     await commit(d => {
         const i=d.find(x=>x.id===id); if(!i)return;
+        if (GLOBAL_TYPES.includes(i.type)) {           // dívida/patrimônio: flag único, não por mês
+            i.paid = !i.paid;
+            return;
+        }
         if(!i.paidMonths)i.paidMonths=[];
         const idx=i.paidMonths.indexOf(mk);
         if(idx>-1) i.paidMonths.splice(idx,1); else i.paidMonths.push(mk);
@@ -1640,8 +1656,19 @@ function updateView() {
     // ATRASADAS
     let atrasadas=[], totReceber=0, totPagar=0;
     financialData.forEach(item=>{
-        if(item.type==='conta'||item.type==='patrimonio'||item.type==='nota'||!item.baseMonthKey)return;
+        if(item.type==='conta'||item.type==='patrimonio'||item.type==='nota')return;
         const isIncome=item.type==='receita'||item.type==='locacao';
+        if(item.type==='divida'){
+            // Dívida não tem mês: fica "atrasada" pela data de vencimento (se houver) e não paga.
+            if(item.paid || !item.dueDate) return;
+            const [dy,dm]=item.dueDate.split('-').map(Number);
+            if(dy<y||(dy===y&&(dm-1)<m)){
+                atrasadas.push({...item,pastMonthKey:`${dy}-${dm-1}`,isIncome:false,isGlobal:true});
+                totPagar+=item.value;
+            }
+            return;
+        }
+        if(!item.baseMonthKey)return;
         const[by,bm]=item.baseMonthKey.split('-').map(Number);
         if(item.recurring){
             let cy=by,cm=bm;
@@ -1669,21 +1696,25 @@ function updateView() {
         ?`<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--success);">Nenhuma pendência! 🎉</td></tr>`
         :atrasadas.map(item=>{
             const[ay,am]=item.pastMonthKey.split('-').map(Number);
-            const ms=new Date(ay,am,1).toLocaleDateString('pt-BR',{month:'short',year:'numeric'});
+            // Dívida: mostra a data de vencimento real. Demais: o mês/ano do lançamento.
+            const ms = item.isGlobal ? item.dueDate.split('-').reverse().join('/')
+                : new Date(ay,am,1).toLocaleDateString('pt-BR',{month:'short',year:'numeric'});
             const selId = `move-${item.id}-${item.pastMonthKey}`;
+            const moveCell = item.isGlobal
+                ? `<span style="color:var(--text-muted);font-size:11px;">vencida</span>`
+                : `<div style="display:flex;gap:4px;align-items:center;">
+                        <select id="${selId}" style="padding:4px 6px;font-size:11px;"></select>
+                        <button class="btn btn-warning btn-sm" onclick="moveOverdueItem('${item.id}','${item.pastMonthKey}','${selId}')">→</button>
+                    </div>`;
             return`<tr><td><input type="checkbox" onchange="togglePaid('${item.id}','${item.pastMonthKey}')"></td>
                 <td style="text-transform:capitalize;">${ms}</td>
                 <td>${item.type}/${item.category}</td>
                 <td>${item.description}${item.recurring?' 🔄':''}</td>
                 <td class="num-cell ${item.isIncome?'c-success':'c-danger'}"><strong>${item.isIncome?'+':'-'} ${fmt(item.value)}</strong></td>
-                <td>
-                    <div style="display:flex;gap:4px;align-items:center;">
-                        <select id="${selId}" style="padding:4px 6px;font-size:11px;"></select>
-                        <button class="btn btn-warning btn-sm" onclick="moveOverdueItem('${item.id}','${item.pastMonthKey}','${selId}')">→</button>
-                    </div>
-                </td></tr>`;}).join('');
-    // Popula os seletores de mês para cada linha (mês atual + 11 seguintes)
+                <td>${moveCell}</td></tr>`;}).join('');
+    // Popula os seletores de mês para cada linha (mês atual + 11 seguintes) — não se aplica a dívidas
     atrasadas.forEach(item=>{
+        if(item.isGlobal)return;
         const sel=$(`move-${item.id}-${item.pastMonthKey}`);
         if(!sel)return;
         let opts='';
@@ -1697,8 +1728,6 @@ function updateView() {
     });
 
     // MÉTRICAS
-    // Dívidas e Patrimônio não são filtrados por mês — aparecem sempre
-    const GLOBAL_TYPES = ['divida', 'patrimonio'];
     const monthData=financialData.filter(i=>{
         if(i.type==='conta' || i.type==='nota') return false;
         if(GLOBAL_TYPES.includes(i.type)) return true;
@@ -1720,7 +1749,7 @@ function updateView() {
         const groups={};
         typeData.forEach(item=>{
             if(!groups[item.category]) groups[item.category]={total:0,aPagar:0,pago:0,items:[]};
-            const paid=item.paidMonths?.includes(mk);
+            const paid=GLOBAL_TYPES.includes(item.type)?!!item.paid:item.paidMonths?.includes(mk);
             const vOpen=paid?0:item.value, vPaid=paid?item.value:0;
             groups[item.category].items.push({...item,paid,vOpen,vPaid});
             groups[item.category].total+=item.value;
@@ -1773,7 +1802,7 @@ function updateView() {
         } else {
             // Modo lista simples: só os lançamentos, sem linhas de categoria
             typeData.forEach(item=>{
-                const paid  = item.paidMonths?.includes(mk);
+                const paid  = GLOBAL_TYPES.includes(item.type)?!!item.paid:item.paidMonths?.includes(mk);
                 const vOpen = paid?0:item.value, vPaid = paid?item.value:0;
                 const full  = {...item, paid, vOpen, vPaid};
                 if(!matchesFilter(full,filter)) return;
@@ -2893,7 +2922,7 @@ function exportExcel() {
             rows = [['Banco', 'Saldo (R$)']];
             items.forEach(i => rows.push([i.description, i.value]));
         } else {
-            rows = [['Mês Base', 'Descrição', 'Vencimento', 'Categoria', 'Valor (R$)', 'Recorrente', 'Meses Pagos']];
+            rows = [['Mês Base', 'Descrição', 'Vencimento', 'Categoria', 'Valor (R$)', 'Recorrente', key === 'divida' || key === 'patrimonio' ? 'Status' : 'Meses Pagos']];
             items.forEach(i => rows.push([
                 mkLabel(i.baseMonthKey),
                 i.description,
@@ -2901,7 +2930,9 @@ function exportExcel() {
                 i.category,
                 i.value,
                 i.recurring ? 'Sim' : 'Não',
-                (i.paidMonths || []).map(mk => { const [y,m]=mk.split('-').map(Number); return `${meses[m]}/${y}`; }).join(', ') || '—'
+                (key === 'divida' || key === 'patrimonio')
+                    ? (i.paid ? 'Pago' : 'Em aberto')
+                    : ((i.paidMonths || []).map(mk => { const [y,m]=mk.split('-').map(Number); return `${meses[m]}/${y}`; }).join(', ') || '—')
             ]));
         }
 
