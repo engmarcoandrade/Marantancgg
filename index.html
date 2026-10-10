@@ -447,17 +447,6 @@ details.mis-cfg[open] summary::before{content:'▾ ';}
 
         <div class="flex-row">
             <div class="card flex-col">
-                <h2>Evolução — Últimos 6 Meses</h2>
-                <div id="chart-evolucao"></div>
-            </div>
-            <div class="card flex-col">
-                <h2>Despesas por Categoria — Mês Atual</h2>
-                <div id="chart-categorias"></div>
-            </div>
-        </div>
-
-        <div class="flex-row">
-            <div class="card flex-col">
                 <h2>Contas Bancárias</h2>
                 <div class="form-row" style="margin-bottom:12px;">
                     <div class="form-field"><label>Banco</label><input id="bank-name" placeholder="Ex: Nubank"></div>
@@ -1824,8 +1813,6 @@ function updateView() {
     const saldo=(metrics.receita.aPagar+metrics.locacao.aPagar+totalBank)-(metrics.despesa.aPagar+prev);
     renderNota();
     aplicarVencPadraoTodas();
-    renderEvolucao();
-    renderCategorias(groupsDespesa);
     renderUso();
     const mis = misCalc();
     renderMissao(mis);
@@ -1869,76 +1856,6 @@ function sumTypeInMonth(type, y, m) {
         if (applies) total += i.value;
     });
     return total;
-}
-
-// ── Gráfico: evolução dos últimos 6 meses ──
-function renderEvolucao() {
-    const box = document.getElementById('chart-evolucao');
-    if (!box) return;
-    const meses = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
-    const y = currentDate.getFullYear(), m = currentDate.getMonth();
-
-    const dados = [];
-    for (let k = 5; k >= 0; k--) {
-        const t = m - k;
-        const ry = y + Math.floor(t / 12);
-        const rm = ((t % 12) + 12) % 12;
-        dados.push({
-            label: meses[rm],
-            entrada: sumTypeInMonth('receita', ry, rm) + sumTypeInMonth('locacao', ry, rm),
-            saida:   sumTypeInMonth('despesa', ry, rm)
-        });
-    }
-
-    const max = Math.max(...dados.map(d => Math.max(d.entrada, d.saida)), 1);
-
-    box.innerHTML = `
-        <div style="display:flex;gap:14px;font-size:11px;font-weight:600;margin-bottom:10px;">
-            <span><span style="display:inline-block;width:10px;height:10px;background:var(--primary);border-radius:2px;margin-right:4px;"></span>Entradas</span>
-            <span><span style="display:inline-block;width:10px;height:10px;background:var(--text-muted);border-radius:2px;margin-right:4px;"></span>Despesas</span>
-        </div>
-        <div style="display:flex;align-items:flex-end;gap:10px;height:150px;">
-            ${dados.map(d => `
-                <div style="flex:1;display:flex;flex-direction:column;align-items:center;height:100%;">
-                    <div style="flex:1;display:flex;align-items:flex-end;gap:3px;width:100%;justify-content:center;">
-                        <div title="Entradas: ${fmt(d.entrada)}"
-                             style="width:42%;height:${(d.entrada/max*100).toFixed(1)}%;background:var(--primary);border-radius:3px 3px 0 0;min-height:2px;"></div>
-                        <div title="Despesas: ${fmt(d.saida)}"
-                             style="width:42%;height:${(d.saida/max*100).toFixed(1)}%;background:var(--text-muted);border-radius:3px 3px 0 0;min-height:2px;"></div>
-                    </div>
-                    <div style="font-size:11px;font-weight:700;margin-top:6px;">${d.label}</div>
-                </div>`).join('')}
-        </div>`;
-}
-
-// ── Gráfico: despesas por categoria (barras horizontais ordenadas) ──
-function renderCategorias(groupsDespesa) {
-    const box = document.getElementById('chart-categorias');
-    if (!box) return;
-
-    const linhas = Object.keys(groupsDespesa)
-        .map(cat => ({ cat, total: groupsDespesa[cat].total }))
-        .filter(l => l.total > 0)
-        .sort((a, b) => b.total - a.total);
-
-    if (!linhas.length) {
-        box.innerHTML = '<p style="font-size:12px;color:var(--text-muted);">Sem despesas lançadas neste mês.</p>';
-        return;
-    }
-
-    const max = linhas[0].total;
-    const soma = linhas.reduce((s, l) => s + l.total, 0);
-
-    box.innerHTML = linhas.map(l => `
-        <div style="margin-bottom:9px;">
-            <div style="display:flex;justify-content:space-between;font-size:12px;font-weight:600;margin-bottom:3px;">
-                <span>${l.cat}</span>
-                <span class="num">${fmt(l.total)} <span style="color:var(--text-muted);font-weight:500;">(${Math.round(l.total/soma*100)}%)</span></span>
-            </div>
-            <div style="height:9px;background:var(--border);border-radius:4px;overflow:hidden;">
-                <div style="height:100%;width:${(l.total/max*100).toFixed(1)}%;background:var(--primary);border-radius:4px;"></div>
-            </div>
-        </div>`).join('');
 }
 
 function kpi(label,m,l1,l2,c1,c2,mainColor,isExpense){
