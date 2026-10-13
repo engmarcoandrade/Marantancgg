@@ -1101,7 +1101,12 @@ async function loadFromSheets() {
         setStatus('offline');
         updateView();
         showBlockedBanner(true);
-        toast('Falha ao ler o Sheets. Gravação BLOQUEADA para proteger seus dados.', 'error', 10000);
+        const alvo = (url() || '').replace(/^https?:\/\//,'').slice(0, 48);
+        toast(`Falha ao ler o Sheets (${e.message}). Endereço usado: ${alvo}… Gravação BLOQUEADA para proteger seus dados.`, 'error', 15000);
+        // Se o endereço estiver morto/errado, abre a janela para colar o endereço atual
+        const wz = $('wizard-url'), sw = $('setup-wizard');
+        if (wz) wz.value = url();
+        if (sw) sw.classList.remove('hidden');
     } finally { hideLoading(); }
 }
 
