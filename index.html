@@ -299,6 +299,13 @@ td select{padding:3px 6px;font-size:12px}
 .uso-bar{height:12px;background:var(--bor);border-radius:6px;overflow:hidden;margin:8px 0 6px}
 .uso-bar>i{display:block;height:100%;background:var(--acc)}
 .uso-bar.alto>i{background:var(--prio)}
+.ver-badge{font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;border:1.5px solid currentColor;opacity:.85;white-space:nowrap;letter-spacing:.02em}
+.app-rodape{text-align:center;font-size:12px;color:var(--mut);padding:18px 0 28px}
+.pg-head{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:6px}
+.pg-head h2{margin:0}
+.pg-row-ok td{color:var(--mut)}
+.pg-row-ok .pg-desc{text-decoration:line-through}
+.pg-late{font-weight:700;font-size:11.5px;white-space:nowrap}
 details.mis-cfg summary{cursor:pointer;font-weight:700;color:var(--tit);font-size:15px;list-style:none}
 details.mis-cfg summary::before{content:'▸ ';}
 details.mis-cfg[open] summary::before{content:'▾ ';}
@@ -340,7 +347,8 @@ details.mis-cfg[open] summary::before{content:'▾ ';}
     <div class="login-card">
         <div class="login-logo">💰</div>
         <h2>Controle Financeiro</h2>
-        <p>Insira a senha para acessar</p>
+        <p style="margin-bottom:6px;">Insira a senha para acessar</p>
+        <p style="font-size:12px;margin-bottom:12px;"><span class="ver-badge" data-versao="curta"></span></p>
         <input type="password" id="login-pass" placeholder="Senha" onkeydown="if(event.key==='Enter')checkLogin()">
         <button class="btn btn-primary" style="width:100%;" onclick="checkLogin()">Entrar</button>
         <div class="login-error" id="login-error">Senha incorreta.</div>
@@ -402,6 +410,7 @@ details.mis-cfg[open] summary::before{content:'▾ ';}
     <div class="header-inner">
         <div class="header-brand">
             <h1>💰 Controle Financeiro</h1>
+            <span class="ver-badge" data-versao="curta" title="Versão do app"></span>
             <span class="status-pill">
                 <span id="status-dot" class="status-dot dot-offline"></span>
                 <span id="status-text">Offline</span>
@@ -516,6 +525,29 @@ details.mis-cfg[open] summary::before{content:'▾ ';}
                 <button class="btn btn-ghost" id="mis-ap-cancel" style="display:none;" onclick="misCancelarAporte()">Cancelar</button>
             </div>
             <div id="mis-ap-lista" style="margin-top:14px;"></div>
+        </div>
+
+        <!-- Programação de recebimentos -->
+        <div class="card" id="mis-pg-card">
+            <div class="pg-head">
+                <h2>Programação de recebimentos</h2>
+                <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+                    <span id="mis-pg-resumo" style="font-size:12.5px;color:var(--text-muted);"></span>
+                    <button type="button" class="btn btn-ghost btn-sm" id="mis-pg-toggle" onclick="misTogglePg()" aria-expanded="true">▾ Fechar</button>
+                </div>
+            </div>
+            <div id="mis-pg-corpo">
+                <p class="mis-note" style="margin:0 0 12px;">Lance aqui o que você <strong>espera receber</strong> e quando. Ao concluir o recebimento, use <strong>✓ Efetivar</strong>: a linha vira uma receita real na aba Receitas, já marcada como recebida.</p>
+                <div class="form-row">
+                    <div class="form-field" style="flex:2;min-width:180px;"><label>Descrição</label><input id="mis-pg-desc" placeholder="Ex: Resgate da aplicação, venda do imóvel"></div>
+                    <div class="form-field" style="max-width:170px;"><label>Data prevista</label><input type="date" id="mis-pg-data"></div>
+                    <div class="form-field"><label>Categoria</label><select id="mis-pg-cat"></select></div>
+                    <div class="form-field"><label>Valor (R$)</label><input id="mis-pg-valor" inputmode="decimal" placeholder="0,00"></div>
+                    <button class="btn btn-primary" id="mis-pg-btn" onclick="misSalvarProg()">+ Programar</button>
+                    <button class="btn btn-ghost" id="mis-pg-cancel" style="display:none;" onclick="misCancelarProg()">Cancelar</button>
+                </div>
+                <div id="mis-pg-lista" style="margin-top:14px;"></div>
+            </div>
         </div>
 
         <!-- Registro do mês -->
@@ -734,6 +766,7 @@ details.mis-cfg[open] summary::before{content:'▾ ';}
         </div>
     </section>
 </main>
+<footer class="app-rodape" data-versao="longa"></footer>
 
 <script>
 // ══════════════════════════════════════════════════════
@@ -769,6 +802,21 @@ const TABS = [
 // ══════════════════════════════════════════════════════
 //  UTILS
 // ══════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
+//  VERSÃO DO APP  —  ATUALIZE A CADA ALTERAÇÃO PUBLICADA
+//  Formato: MAIOR.MENOR.AJUSTE  (nova função = MENOR+1; correção = AJUSTE+1)
+//  Histórico:
+//   1.0.0 (13/10/2026) base: despesas, receitas, locações, dívidas, patrimônio, Missão
+//   1.1.0 (31/10/2026) Missão: Programação de recebimentos (+ Efetivar em Receitas); versão visível no app
+// ══════════════════════════════════════════════════════
+const APP_VERSAO = '1.1.0';
+const APP_VERSAO_DATA = '31/10/2026';
+document.querySelectorAll('[data-versao]').forEach(el => {
+    el.textContent = el.dataset.versao === 'longa'
+        ? `Controle Financeiro · versão ${APP_VERSAO} · ${APP_VERSAO_DATA}`
+        : `v${APP_VERSAO}`;
+});
+
 const fmt     = v => Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
 // Formata sempre mostrando o sinal de menos quando negativo (Intl não soma "-" antes do R$ por padrão em todos os navegadores)
 const fmtSigned = v => { const n=Number(v||0); return n<0 ? `- ${fmt(Math.abs(n))}` : fmt(n); };
@@ -1949,6 +1997,7 @@ async function misSalvar(mut){
         m.idx = { ...p.idx, ...(m.idx||{}) };
         if (!m.meses) m.meses = {};
         if (!m.check) m.check = [];
+        if (!Array.isArray(m.progs)) m.progs = [];
         if (!Array.isArray(m.aportes)) {                 // conversão única dos dados antigos
             m.aportes = misAportesDe(m);
             Object.values(m.meses).forEach(r => { delete r.ap; });
@@ -2160,6 +2209,7 @@ function renderMissao(x){
     ].join('');
 
     misRenderAportes(x);
+    misRenderProg(x);
     misRenderForm(x);
     misChart(x);
     misRenderAlertas(x);
@@ -2362,6 +2412,125 @@ async function misExcluirAporte(id){
         misDirty = false; misFormMk = null;
         updateView(); toast('Aporte excluído.', 'success');
     }
+}
+// ── programação de recebimentos ──
+// Guardada em m.progs (dentro do registro da Missão, como os aportes).
+// "Efetivar" cria a receita real e marca a linha na MESMA gravação (commit único),
+// então ou acontece tudo ou nada — nunca fica receita duplicada nem linha órfã.
+let misPgEditId = null;
+const misPgAberto = () => { try { return localStorage.getItem('misPgAberto') !== '0'; } catch(e){ return true; } };
+function misTogglePg(){
+    try { localStorage.setItem('misPgAberto', misPgAberto() ? '0' : '1'); } catch(e){}
+    misAplicarPg();
+}
+function misAplicarPg(){
+    const a = misPgAberto();
+    const c = $('mis-pg-corpo'); if (c) c.style.display = a ? '' : 'none';
+    const b = $('mis-pg-toggle');
+    if (b) { b.textContent = a ? '▾ Fechar' : '▸ Abrir'; b.setAttribute('aria-expanded', String(a)); }
+}
+const dataBR = iso => String(iso||'').split('-').reverse().join('/');
+function misRenderProg(x){
+    const sel = $('mis-pg-cat'); if (!sel) return;
+    const atual = sel.value;
+    sel.innerHTML = '<option value="">Selecione...</option>' + (categories.receita || []).map(c => `<option value="${escH(c)}">${escH(c)}</option>`).join('');
+    sel.value = atual;
+    if (!$('mis-pg-data').value) $('mis-pg-data').value = hojeISO();
+    misAplicarPg();
+
+    const progs = Array.isArray(x.m.progs) ? x.m.progs : [];
+    const pend = progs.filter(p => !p.efetivada).sort((a,b) => a.data.localeCompare(b.data));
+    const feitas = progs.filter(p => p.efetivada).sort((a,b) => b.data.localeCompare(a.data));
+    const soma = l => l.reduce((s,p) => s + Number(p.valor||0), 0);
+    $('mis-pg-resumo').innerHTML = progs.length
+        ? `A receber: <strong>${fmt(soma(pend))}</strong> (${pend.length}) · Efetivado: <strong>${fmt(soma(feitas))}</strong> (${feitas.length})`
+        : 'Nenhuma programação ainda';
+
+    const box = $('mis-pg-lista');
+    if (!progs.length) { box.innerHTML = '<p class="mis-note" style="margin:0;">Nenhum recebimento programado.</p>'; return; }
+    const hoje = hojeISO();
+    const linha = p => {
+        if (p.efetivada) return `<tr class="pg-row-ok">
+            <td style="white-space:nowrap;">${dataBR(p.data)}</td>
+            <td class="pg-desc">${escH(p.desc)}</td>
+            <td>${escH(p.cat)}</td>
+            <td class="num-cell"><strong>${fmt(Number(p.valor))}</strong></td>
+            <td style="white-space:nowrap;"><span title="Lançada em Receitas">✓ Efetivada${p.efetivadaEm ? ' em ' + dataBR(p.efetivadaEm) : ''}</span></td>
+            <td><button class="btn btn-danger btn-sm" onclick="misExcluirProg('${p.id}')" title="Remover da programação">×</button></td></tr>`;
+        const atrasada = p.data < hoje;
+        return `<tr>
+            <td style="white-space:nowrap;">${dataBR(p.data)}${atrasada ? ' <span class="pg-late" title="A data prevista já passou">▲ passou</span>' : ''}</td>
+            <td>${escH(p.desc)}</td>
+            <td>${escH(p.cat)}</td>
+            <td class="num-cell"><strong>${fmt(Number(p.valor))}</strong></td>
+            <td><button class="btn btn-success btn-sm" onclick="misEfetivarProg('${p.id}')" title="Lançar em Receitas como recebida">✓ Efetivar</button></td>
+            <td><div style="display:flex;gap:2px;">
+                <button class="btn btn-warning btn-sm" onclick="misEditarProg('${p.id}')" title="Editar">✎</button>
+                <button class="btn btn-danger btn-sm" onclick="misExcluirProg('${p.id}')" title="Excluir">×</button>
+            </div></td></tr>`;
+    };
+    box.innerHTML = `<div style="max-height:380px;overflow-y:auto;border:1px solid var(--bor);border-radius:10px;">
+        <table><thead><tr><th>Data prevista</th><th>Descrição</th><th>Categoria</th><th class="num-cell">Valor</th><th>Situação</th><th style="width:70px;"></th></tr></thead><tbody>
+        ${[...pend, ...feitas].map(linha).join('')}
+        </tbody></table></div>`;
+}
+async function misSalvarProg(){
+    const desc = $('mis-pg-desc').value.trim();
+    const data = $('mis-pg-data').value;
+    const cat = $('mis-pg-cat').value;
+    const valor = parseBR($('mis-pg-valor').value);
+    if (!desc) return toast('Informe a descrição.', 'error');
+    if (dataI(data) == null) return toast('Informe a data prevista.', 'error');
+    if (!cat) return toast('Escolha a categoria.', 'error');
+    if (isNaN(valor) || valor <= 0) return toast('Informe um valor maior que zero.', 'error');
+    const reg = { desc, data, cat, valor: Math.round(valor*100)/100 };
+    const editId = misPgEditId;
+    const ok = await misSalvar(m => {
+        if (editId) { const p = m.progs.find(z => z.id === editId); if (p && !p.efetivada) Object.assign(p, reg); }
+        else m.progs.push({ id: 'pg_' + Date.now(), efetivada:false, ...reg });
+    });
+    if (!ok) return;
+    misCancelarProg();
+    updateView();
+    toast(editId ? 'Programação atualizada.' : 'Recebimento programado.', 'success');
+}
+function misEditarProg(id){
+    const p = (misObj().progs || []).find(z => z.id === id); if (!p || p.efetivada) return;
+    misPgEditId = id;
+    $('mis-pg-desc').value = p.desc; $('mis-pg-data').value = p.data;
+    $('mis-pg-cat').value = p.cat; $('mis-pg-valor').value = fmtN(Number(p.valor));
+    $('mis-pg-btn').textContent = 'Salvar alteração';
+    $('mis-pg-cancel').style.display = '';
+    $('mis-pg-desc').focus();
+}
+function misCancelarProg(){
+    misPgEditId = null;
+    $('mis-pg-desc').value = ''; $('mis-pg-valor').value = ''; $('mis-pg-cat').value = '';
+    $('mis-pg-data').value = hojeISO();
+    $('mis-pg-btn').textContent = '+ Programar';
+    $('mis-pg-cancel').style.display = 'none';
+}
+async function misExcluirProg(id){
+    const p = (misObj().progs || []).find(z => z.id === id); if (!p) return;
+    const aviso = p.efetivada ? '\n\nA receita já lançada em Receitas NÃO será apagada; só sai desta lista.' : '';
+    if (!confirm(`Remover "${p.desc}" (${fmt(Number(p.valor))}) da programação?${aviso}`)) return;
+    const ok = await misSalvar(m => { m.progs = m.progs.filter(z => z.id !== id); });
+    if (ok) { if (misPgEditId === id) misCancelarProg(); updateView(); toast('Removida da programação.', 'success'); }
+}
+async function misEfetivarProg(id){
+    const p = (misObj().progs || []).find(z => z.id === id);
+    if (!p || p.efetivada) return;
+    const i = dataI(p.data), mk = iMk(i), rid = Date.now().toString();
+    if (!confirm(`Efetivar "${p.desc}" de ${fmt(Number(p.valor))}?\n\nSerá lançada em Receitas de ${iLbl(i)} (vencimento ${dataBR(p.data)}), já marcada como recebida.\nSe a data estiver errada, cancele e edite a linha antes.`)) return;
+    const ok = await commit(d => {
+        const m = d.find(z => z.type === 'missao');
+        const pr = m && Array.isArray(m.progs) ? m.progs.find(z => z.id === id) : null;
+        if (!pr || pr.efetivada) return;   // já efetivada: nunca duplica
+        d.push({ id: rid, type:'receita', description: pr.desc, category: pr.cat, value: pr.valor,
+                 baseMonthKey: mk, recurring:false, paidMonths:[mk], dueDate: pr.data });
+        pr.efetivada = true; pr.efetivadaEm = hojeISO(); pr.receitaId = rid;
+    });
+    if (ok) toast(`Efetivada: lançada em Receitas de ${iLbl(i)} como recebida.`, 'success', 7000);
 }
 async function misExcluirRegistro(){
     const x = misCalc();
