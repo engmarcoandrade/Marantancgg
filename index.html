@@ -182,6 +182,14 @@ td select{padding:3px 6px;font-size:12px}
 .status-mark{display:inline-block;width:16px;font-weight:700;font-size:13px}
 .mark-paid{color:var(--acc)}
 .mark-open{color:var(--mut)}
+.mark-parc{color:var(--acc)}
+/* Parcial: linha continua ativa (sem esmaecer); o selo escrito e o ½ dizem que é parcial, sem depender de cor */
+.parcial-tag{display:inline-block;margin-left:6px;padding:1px 7px;border:1.5px solid currentColor;border-radius:999px;font-size:10.5px;font-weight:700;letter-spacing:.02em;white-space:nowrap;color:var(--acc);vertical-align:1px}
+.parc-info{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:4px 0 14px}
+.parc-info div{background:var(--sup2);border:1px solid var(--bor);border-radius:10px;padding:8px 10px}
+.parc-info span{display:block;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--mut)}
+.parc-info strong{font-size:15px;font-variant-numeric:tabular-nums}
+.parc-hist{max-height:200px;overflow-y:auto;border:1px solid var(--bor);border-radius:10px;margin-bottom:14px}
 
 /* ── Formulários ── */
 .form-row{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end}
@@ -246,9 +254,10 @@ td select{padding:3px 6px;font-size:12px}
 #blocked-banner button{margin-left:10px;padding:5px 13px;border:none;border-radius:8px;background:var(--sup);color:var(--perigo);font-weight:700}
 
 /* ── Modais ── */
-#setup-wizard,#modal-recorrente{position:fixed;inset:0;background:rgba(10,14,20,.55);backdrop-filter:blur(3px);display:grid;place-items:center;padding:16px;z-index:9990}
+#setup-wizard,#modal-recorrente,#modal-parcial{position:fixed;inset:0;background:rgba(10,14,20,.55);backdrop-filter:blur(3px);display:grid;place-items:center;padding:16px;z-index:9990}
 #modal-recorrente{z-index:9995}
-#setup-wizard.hidden,#modal-recorrente.hidden{display:none}
+#modal-parcial{z-index:9996}
+#setup-wizard.hidden,#modal-recorrente.hidden,#modal-parcial.hidden{display:none}
 .wizard-card,.modal-card{width:100%;background:var(--sup);border:1px solid var(--bor);border-radius:18px;padding:22px;box-shadow:0 20px 60px rgba(0,0,0,.3);animation:entra .2s}
 .wizard-card{max-width:520px}
 .modal-card{max-width:480px}
@@ -386,6 +395,11 @@ details.mis-cfg[open] summary::before{content:'▾ ';}
             <button class="btn btn-ghost" onclick="closeModalRecorrente()">Cancelar</button>
         </div>
     </div>
+</div>
+
+<!-- MODAL PAGAMENTO / RECEBIMENTO PARCIAL -->
+<div id="modal-parcial" class="hidden" onclick="if(event.target===this)fecharParcial()">
+    <div class="modal-card" id="parcial-card" style="max-height:92vh;overflow-y:auto;"></div>
 </div>
 
 <!-- BANNER DE BLOQUEIO -->
@@ -808,9 +822,10 @@ const TABS = [
 //  Histórico:
 //   1.0.0 (13/10/2026) base: despesas, receitas, locações, dívidas, patrimônio, Missão
 //   1.1.0 (31/10/2026) Missão: Programação de recebimentos (+ Efetivar em Receitas); versão visível no app
+//   1.2.0 (07/11/2026) Pagamento/recebimento parcial (botão ½), com histórico e quitação automática
 // ══════════════════════════════════════════════════════
-const APP_VERSAO = '1.1.0';
-const APP_VERSAO_DATA = '31/10/2026';
+const APP_VERSAO = '1.2.0';
+const APP_VERSAO_DATA = '07/11/2026';
 document.querySelectorAll('[data-versao]').forEach(el => {
     el.textContent = el.dataset.versao === 'longa'
         ? `Controle Financeiro · versão ${APP_VERSAO} · ${APP_VERSAO_DATA}`
@@ -924,18 +939,25 @@ function itemRow(item, cc, mk, tipo){
     const starred  = item.starred ? 'row-starred' : '';
     const base     = item.paid ? `row-paid ${cc}` : cc;
     const rowClass = [base, starred].filter(Boolean).join(' ').trim();
+    const inc      = tipo === 'receita' || tipo === 'locacao';
+    const parcial  = !item.paid && item.parc > 0;
+    // 99,6% não pode aparecer como "100%" sem estar quitado: fica entre 1 e 99
+    const pct      = parcial && item.value > 0 ? Math.min(99, Math.max(1, Math.round(item.parc / item.value * 100))) : 0;
+    const mark     = item.paid ? ['mark-paid','✓','Quitado'] : parcial ? ['mark-parc','½','Parcial'] : ['mark-open','○','Em aberto'];
+    const temParc  = PARC_TYPES.includes(item.type) && (!item.paid || parcList(item, mk).length > 0);
     return `<tr class="${rowClass}">
         <td><input type="checkbox" ${item.paid?'checked':''} onchange="togglePaid('${item.id}','${mk}')"></td>
         <td>
-            <span class="status-mark ${item.paid?'mark-paid':'mark-open'}" title="${item.paid?'Quitado':'Em aberto'}">${item.paid?'✓':'○'}</span>
+            <span class="status-mark ${mark[0]}" title="${mark[2]}">${mark[1]}</span>
             <button class="star-btn ${item.starred?'active':''}" onclick="toggleStar('${item.id}')" title="${item.starred?'Remover destaque':'Destacar'}">◈</button>
-            ${item.description}${item.recurring?' 🔄':''}
+            ${item.description}${item.recurring?' 🔄':''}${parcial?`<span class="parcial-tag" title="Já ${inc?'recebido':'pago'}: ${fmt(item.parc)}">parcial ${pct}%</span>`:''}
         </td>
         <td style="white-space:nowrap;">${fmtVenc(venc)}</td>
         <td class="num-cell">${fmt(item.value)}</td>
         <td class="num-cell">${fmt(item.vOpen)}</td>
         <td class="num-cell">${fmt(item.vPaid)}</td>
         <td><div style="display:flex;gap:4px;">
+            ${temParc?`<button class="btn btn-warning btn-sm" onclick="abrirParcial('${item.id}','${mk}')" title="${inc?'Receber parte':'Pagar parte'} / histórico de parciais">½</button>`:''}
             <button class="btn btn-warning btn-sm" onclick="editEntry('${item.id}','${tipo}')">✎</button>
             <button class="btn btn-danger btn-sm"  onclick="deleteEntry('${item.id}')">×</button>
         </div></td></tr>`;
@@ -1370,7 +1392,9 @@ async function handleSubmit(e, type) {
         }
         // Item não-recorrente: edita direto
         const endKey = rec ? calcEndMonthKey(original.baseMonthKey, parcelas) : null;
-        await commit(d => { const i=d.find(x=>x.id===id); if(i){i.description=desc;i.category=cat;i.value=val;i.recurring=rec;if(endKey)i.endMonthKey=endKey;else delete i.endMonthKey;} });
+        await commit(d => { const i=d.find(x=>x.id===id); if(i){i.description=desc;i.category=cat;i.value=val;i.recurring=rec;if(endKey)i.endMonthKey=endKey;else delete i.endMonthKey;
+            // Valor reduzido para igual/abaixo do que já foi pago em parciais: quita
+            if(!i.recurring && parcList(i,i.baseMonthKey).length && parcSoma(i,i.baseMonthKey)>=r2(i.value)) quitarItem(i,i.baseMonthKey);} });
         cancelEdit();
         toast('Lançamento atualizado.','success');
         return; // Garante que não cai no bloco de criação abaixo
@@ -1426,7 +1450,8 @@ async function confirmEditRecorrente(mode) {
                 baseMonthKey: mk,
                 recurring: false,
                 paidMonths: [],
-                dueDate: venc
+                dueDate: venc,
+                ...copiarParciais(orig, mk)
             });
         });
         toast('Alterado apenas para este mês.', 'success');
@@ -1455,7 +1480,8 @@ async function confirmEditRecorrente(mode) {
                 baseMonthKey: mk,
                 recurring: rec,
                 paidMonths: [],
-                dueDate: venc
+                dueDate: venc,
+                ...copiarParciais(orig, mk)
             });
         });
         toast('Alterado para este e os meses seguintes.', 'success');
@@ -1472,8 +1498,18 @@ async function toggleStar(id) {
 }
 
 async function togglePaid(id, mk) {
+    const atual = financialData.find(x => x.id === id);
+    if (!atual) return;
+    const estavaPago = estaQuitado(atual, mk);
+    const nParc = parcList(atual, mk).length;
+    // Desmarcar algo quitado que tem parciais: os parciais daquele mês são apagados
+    // (senão a linha ficaria "em aberto" com saldo zero). Só faz com confirmação.
+    if (estavaPago && nParc) {
+        if (!confirm(`"${atual.description}" tem ${nParc} ${nParc===1?'parcial registrado':'parciais registrados'} (${fmt(parcSoma(atual, mk))}).\n\nDesmarcar como quitado vai APAGAR esses parciais e o valor total volta a ficar em aberto.\n\nContinuar?`)) { updateView(); return; }
+    }
     await commit(d => {
         const i=d.find(x=>x.id===id); if(!i)return;
+        if (estavaPago && i.partials) delete i.partials[parcKey(i, mk)];
         if (GLOBAL_TYPES.includes(i.type)) {           // dívida/patrimônio: flag único, não por mês
             i.paid = !i.paid;
             return;
@@ -1482,6 +1518,151 @@ async function togglePaid(id, mk) {
         const idx=i.paidMonths.indexOf(mk);
         if(idx>-1) i.paidMonths.splice(idx,1); else i.paidMonths.push(mk);
     });
+}
+
+// ══════════════════════════════════════════════════════
+//  PAGAMENTO / RECEBIMENTO PARCIAL  (v1.2.0)
+//  item.partials = { "<mês>": [ {id, valor, data} ] }
+//   - por mês ("2026-10"), para que nas recorrentes cada mês tenha o seu;
+//   - chave "global" em Dívidas (que não têm mês).
+//  Campo opcional: lançamentos sem parcial seguem exatamente como antes.
+//  Quando a soma chega ao valor total, quita sozinho (mesmo efeito do checkbox).
+// ══════════════════════════════════════════════════════
+const PARC_TYPES = ['despesa','receita','locacao','divida'];
+const r2 = v => Math.round(Number(v||0)*100)/100;
+const parcKey  = (item, mk) => GLOBAL_TYPES.includes(item.type) ? 'global' : mk;
+const parcList = (item, mk) => (item && item.partials && item.partials[parcKey(item, mk)]) || [];
+const parcSoma = (item, mk) => r2(parcList(item, mk).reduce((s,p) => s + Number(p.valor||0), 0));
+const estaQuitado = (item, mk) => GLOBAL_TYPES.includes(item.type) ? !!item.paid : !!item.paidMonths?.includes(mk);
+// Saldo em aberto no mês (nunca negativo)
+const saldoEm = (item, mk) => estaQuitado(item, mk) ? 0 : Math.max(0, r2(item.value - parcSoma(item, mk)));
+// Valores da linha: quitado = tudo pago; senão, pago = soma dos parciais
+function calcPago(item, mk){
+    const paid = estaQuitado(item, mk);
+    const parc = paid ? 0 : Math.min(parcSoma(item, mk), Number(item.value)||0);
+    return { paid, parc, vPaid: paid ? item.value : parc, vOpen: paid ? 0 : Math.max(0, r2(item.value - parc)) };
+}
+function quitarItem(i, mk){
+    if (GLOBAL_TYPES.includes(i.type)) { i.paid = true; return; }
+    if (!i.paidMonths) i.paidMonths = [];
+    if (!i.paidMonths.includes(mk)) i.paidMonths.push(mk);
+}
+function reabrirItem(i, mk){
+    if (GLOBAL_TYPES.includes(i.type)) { i.paid = false; return; }
+    if (i.paidMonths) i.paidMonths = i.paidMonths.filter(x => x !== mk);
+}
+// Copia os parciais de um mês para um lançamento novo (edição "só este mês"/"daqui pra frente")
+function copiarParciais(orig, mk){
+    const l = orig && orig.partials && orig.partials[mk];
+    return l && l.length ? { partials: { [mk]: JSON.parse(JSON.stringify(l)) } } : {};
+}
+
+let parcCtx = null;   // { id, mk } do lançamento aberto na janela
+function abrirParcial(id, mk){
+    if (!financialData.find(x => x.id === id)) return;
+    parcCtx = { id, mk };
+    renderParcial();
+    $('modal-parcial').classList.remove('hidden');
+    setTimeout(() => { const v = $('parc-valor'); if (v) v.focus(); }, 50);
+}
+function fecharParcial(){
+    parcCtx = null;
+    $('modal-parcial').classList.add('hidden');
+}
+document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && parcCtx) fecharParcial();
+});
+function renderParcial(){
+    if (!parcCtx) return;
+    const item = financialData.find(x => x.id === parcCtx.id);
+    if (!item) { fecharParcial(); return; }
+    const mk = parcCtx.mk;
+    const inc = item.type === 'receita' || item.type === 'locacao';
+    const quitado = estaQuitado(item, mk);
+    const lista = parcList(item, mk).slice().sort((a,b) => String(a.data).localeCompare(String(b.data)));
+    const soma = parcSoma(item, mk);
+    const jaPago = quitado ? item.value : Math.min(soma, item.value);
+    const saldo = saldoEm(item, mk);
+    const [y, m] = mk.split('-').map(Number);
+    const refMes = GLOBAL_TYPES.includes(item.type) ? '' : ` · ${MESES_ABREV[m]}/${y}`;
+    const situacao = quitado ? '✓ Quitado' : (soma > 0 ? `½ Parcial (${Math.min(99, Math.max(1, Math.round(soma/item.value*100)))}%)` : '○ Em aberto');
+    $('parcial-card').innerHTML = `
+        <h3>½ ${inc ? 'Recebimento' : 'Pagamento'} parcial</h3>
+        <p style="margin-bottom:8px;"><strong style="color:var(--txt);">${escH(item.description)}</strong>${refMes} · ${situacao}</p>
+        <div class="parc-info">
+            <div><span>Total</span><strong>${fmt(item.value)}</strong></div>
+            <div><span>Já ${inc ? 'recebido' : 'pago'}</span><strong>${fmt(jaPago)}</strong></div>
+            <div><span>Saldo</span><strong>${fmt(saldo)}</strong></div>
+        </div>
+        ${lista.length ? `<div class="parc-hist"><table>
+            <thead><tr><th>Data</th><th class="num-cell">Valor</th><th style="width:40px;"></th></tr></thead><tbody>
+            ${lista.map(pc => `<tr><td>${dataBR(pc.data)}</td><td class="num-cell"><strong>${fmt(pc.valor)}</strong></td>
+                <td><button class="btn btn-danger btn-sm" onclick="removerParcial('${pc.id}')" title="Excluir este parcial">×</button></td></tr>`).join('')}
+            </tbody></table></div>` : `<p class="mis-note" style="margin:0 0 14px;">Nenhum ${inc ? 'recebimento' : 'pagamento'} parcial registrado${refMes ? ' neste mês' : ''}.</p>`}
+        ${saldo > 0 ? `
+        <div class="form-row">
+            <div class="form-field"><label>Valor ${inc ? 'recebido' : 'pago'} (R$)</label>
+                <input id="parc-valor" inputmode="decimal" placeholder="0,00" onkeydown="if(event.key==='Enter')registrarParcial()"></div>
+            <div class="form-field" style="max-width:170px;"><label>Data</label><input type="date" id="parc-data" value="${hojeISO()}"></div>
+        </div>
+        <div class="form-row" style="margin-top:10px;justify-content:flex-end;">
+            <button class="btn btn-ghost" onclick="$('parc-valor').value='${fmtN(saldo)}';$('parc-valor').focus();" title="Preenche com o saldo inteiro">Usar o saldo (${fmt(saldo)})</button>
+            <button class="btn btn-primary" id="parc-btn" onclick="registrarParcial()">Registrar ${inc ? 'recebimento' : 'pagamento'}</button>
+        </div>
+        <p class="mis-note">Quando a soma chegar a ${fmt(item.value)}, o lançamento é quitado sozinho, como no checkbox.${item.recurring ? ' Nas recorrentes, o parcial vale só para este mês.' : ''}</p>` : ''}
+        <div class="modal-btns" style="margin-top:14px;"><button class="btn btn-ghost" onclick="fecharParcial()">Fechar</button></div>`;
+}
+let parcSalvando = false;
+async function registrarParcial(){
+    if (!parcCtx || parcSalvando) return;
+    const { id, mk } = parcCtx;
+    const item = financialData.find(x => x.id === id);
+    if (!item) return;
+    const inc = item.type === 'receita' || item.type === 'locacao';
+    const valor = r2(parseBR($('parc-valor').value));
+    const data = $('parc-data').value;
+    if (isNaN(valor) || valor <= 0) return toast('Informe um valor maior que zero.', 'error');
+    if (dataI(data) == null) return toast('Informe a data.', 'error');
+    if (estaQuitado(item, mk)) return toast('Este lançamento já está quitado.', 'error');
+    const saldo = saldoEm(item, mk);
+    if (valor > saldo) return toast(`Valor maior que o saldo em aberto (${fmt(saldo)}).`, 'error', 6000);
+    const quita = r2(valor) >= r2(saldo);
+    parcSalvando = true;
+    const b = $('parc-btn'); if (b) { b.disabled = true; b.textContent = 'Gravando...'; }
+    const ok = await commit(d => {
+        const i = d.find(x => x.id === id); if (!i) return;
+        if (!i.partials) i.partials = {};
+        const k = parcKey(i, mk);
+        if (!Array.isArray(i.partials[k])) i.partials[k] = [];
+        i.partials[k].push({ id: 'pc_' + Date.now(), valor, data });
+        if (r2(parcSoma(i, mk)) >= r2(i.value)) quitarItem(i, mk);
+    });
+    parcSalvando = false;
+    if (!ok) { renderParcial(); return; }
+    if (quita) {
+        toast(`${inc ? 'Recebimento' : 'Pagamento'} de ${fmt(valor)} registrado. Saldo zerado: lançamento quitado.`, 'success', 6000);
+        fecharParcial();
+    } else {
+        toast(`${inc ? 'Recebimento' : 'Pagamento'} parcial de ${fmt(valor)} registrado. Saldo: ${fmt(r2(saldo - valor))}.`, 'success', 6000);
+        renderParcial();
+    }
+}
+async function removerParcial(pid){
+    if (!parcCtx) return;
+    const { id, mk } = parcCtx;
+    const item = financialData.find(x => x.id === id); if (!item) return;
+    const pc = parcList(item, mk).find(z => z.id === pid); if (!pc) return;
+    if (!confirm(`Excluir o parcial de ${fmt(pc.valor)} em ${dataBR(pc.data)}?`)) return;
+    const ok = await commit(d => {
+        const i = d.find(x => x.id === id); if (!i || !i.partials) return;
+        const k = parcKey(i, mk);
+        i.partials[k] = (i.partials[k] || []).filter(z => z.id !== pid);
+        if (!i.partials[k].length) delete i.partials[k];
+        // Se estava quitado e a soma não fecha mais o total, volta a ficar em aberto
+        if (estaQuitado(i, mk) && parcSoma(i, mk) < r2(i.value)) reabrirItem(i, mk);
+    });
+    if (ok) toast('Parcial excluído.', 'success');
+    renderParcial();
 }
 
 /**
@@ -1512,14 +1693,18 @@ async function moveOverdueItem(id, pastMonthKey, selId) {
                 type: item.type,
                 description: item.description + ' (movido)',
                 category: item.category,
-                value: item.value,
+                value: saldoEm(item, pastMonthKey) || item.value,   // com parcial, só o saldo vai para o novo mês
                 baseMonthKey: targetMk,
                 recurring: false,
                 paidMonths: []
             });
         } else {
-            // Item avulso: apenas reatribui o mês
+            // Item avulso: apenas reatribui o mês (os parciais acompanham)
             item.baseMonthKey = targetMk;
+            if (item.partials && item.partials[pastMonthKey]) {
+                item.partials[targetMk] = item.partials[pastMonthKey];
+                delete item.partials[pastMonthKey];
+            }
         }
     });
     toast('Lançamento movido para o novo mês.', 'success');
@@ -1711,8 +1896,9 @@ function updateView() {
             if(item.paid || !item.dueDate) return;
             const [dy,dm]=item.dueDate.split('-').map(Number);
             if(dy<y||(dy===y&&(dm-1)<m)){
-                atrasadas.push({...item,pastMonthKey:`${dy}-${dm-1}`,isIncome:false,isGlobal:true});
-                totPagar+=item.value;
+                const sd=saldoEm(item,'global');
+                atrasadas.push({...item,pastMonthKey:`${dy}-${dm-1}`,isIncome:false,isGlobal:true,saldo:sd});
+                totPagar+=sd;
             }
             return;
         }
@@ -1723,15 +1909,17 @@ function updateView() {
             while(cy<y||(cy===y&&cm<m)){
                 const pmk=`${cy}-${cm}`;
                 if(!item.paidMonths?.includes(pmk) && !item.skipMonths?.includes(pmk)){
-                    atrasadas.push({...item,pastMonthKey:pmk,isIncome});
-                    isIncome?totReceber+=item.value:totPagar+=item.value;
+                    const sd=saldoEm(item,pmk);
+                    atrasadas.push({...item,pastMonthKey:pmk,isIncome,saldo:sd});
+                    isIncome?totReceber+=sd:totPagar+=sd;
                 }
                 cm++;if(cm>11){cy++;cm=0;}
             }
         } else if(by<y||(by===y&&bm<m)){
             if(!item.paidMonths?.includes(item.baseMonthKey) && !item.skipMonths?.includes(item.baseMonthKey)){
-                atrasadas.push({...item,pastMonthKey:item.baseMonthKey,isIncome});
-                isIncome?totReceber+=item.value:totPagar+=item.value;
+                const sd=saldoEm(item,item.baseMonthKey);
+                atrasadas.push({...item,pastMonthKey:item.baseMonthKey,isIncome,saldo:sd});
+                isIncome?totReceber+=sd:totPagar+=sd;
             }
         }
     });
@@ -1757,8 +1945,8 @@ function updateView() {
             return`<tr><td><input type="checkbox" onchange="togglePaid('${item.id}','${item.pastMonthKey}')"></td>
                 <td style="text-transform:capitalize;">${ms}</td>
                 <td>${item.type}/${item.category}</td>
-                <td>${item.description}${item.recurring?' 🔄':''}</td>
-                <td class="num-cell ${item.isIncome?'c-success':'c-danger'}"><strong>${item.isIncome?'+':'-'} ${fmt(item.value)}</strong></td>
+                <td>${item.description}${item.recurring?' 🔄':''}${item.saldo<item.value?`<span class="parcial-tag">parcial</span>`:''}</td>
+                <td class="num-cell ${item.isIncome?'c-success':'c-danger'}"><strong>${item.isIncome?'+':'-'} ${fmt(item.saldo)}</strong>${item.saldo<item.value?`<div style="font-size:11px;font-weight:600;color:var(--mut);">saldo de ${fmt(item.value)}</div>`:''}</td>
                 <td>${moveCell}</td></tr>`;}).join('');
     // Popula os seletores de mês para cada linha (mês atual + 11 seguintes) — não se aplica a dívidas
     atrasadas.forEach(item=>{
@@ -1797,9 +1985,8 @@ function updateView() {
         const groups={};
         typeData.forEach(item=>{
             if(!groups[item.category]) groups[item.category]={total:0,aPagar:0,pago:0,items:[]};
-            const paid=GLOBAL_TYPES.includes(item.type)?!!item.paid:item.paidMonths?.includes(mk);
-            const vOpen=paid?0:item.value, vPaid=paid?item.value:0;
-            groups[item.category].items.push({...item,paid,vOpen,vPaid});
+            const {paid,vOpen,vPaid,parc}=calcPago(item,mk);
+            groups[item.category].items.push({...item,paid,vOpen,vPaid,parc});
             groups[item.category].total+=item.value;
             groups[item.category].aPagar+=vOpen;
             groups[item.category].pago+=vPaid;
@@ -1850,9 +2037,8 @@ function updateView() {
         } else {
             // Modo lista simples: só os lançamentos, sem linhas de categoria
             typeData.forEach(item=>{
-                const paid  = GLOBAL_TYPES.includes(item.type)?!!item.paid:item.paidMonths?.includes(mk);
-                const vOpen = paid?0:item.value, vPaid = paid?item.value:0;
-                const full  = {...item, paid, vOpen, vPaid};
+                const {paid,vOpen,vPaid,parc} = calcPago(item, mk);
+                const full  = {...item, paid, vOpen, vPaid, parc};
                 if(!matchesFilter(full,filter)) return;
                 tbody.innerHTML += itemRow(full, '', mk, tab.type);
             });
@@ -3027,7 +3213,7 @@ function exportExcel() {
             rows = [['Banco', 'Saldo (R$)']];
             items.forEach(i => rows.push([i.description, i.value]));
         } else {
-            rows = [['Mês Base', 'Descrição', 'Vencimento', 'Categoria', 'Valor (R$)', 'Recorrente', key === 'divida' || key === 'patrimonio' ? 'Status' : 'Meses Pagos']];
+            rows = [['Mês Base', 'Descrição', 'Vencimento', 'Categoria', 'Valor (R$)', 'Recorrente', key === 'divida' || key === 'patrimonio' ? 'Status' : 'Meses Pagos', 'Parciais']];
             items.forEach(i => rows.push([
                 mkLabel(i.baseMonthKey),
                 i.description,
@@ -3037,7 +3223,10 @@ function exportExcel() {
                 i.recurring ? 'Sim' : 'Não',
                 (key === 'divida' || key === 'patrimonio')
                     ? (i.paid ? 'Pago' : 'Em aberto')
-                    : ((i.paidMonths || []).map(mk => { const [y,m]=mk.split('-').map(Number); return `${meses[m]}/${y}`; }).join(', ') || '—')
+                    : ((i.paidMonths || []).map(mk => { const [y,m]=mk.split('-').map(Number); return `${meses[m]}/${y}`; }).join(', ') || '—'),
+                Object.keys(i.partials || {}).map(k => (i.partials[k] || []).map(pc =>
+                    `${k === 'global' ? '' : mkLabel(k) + ': '}R$ ${Number(pc.valor).toLocaleString('pt-BR',{minimumFractionDigits:2})} em ${String(pc.data).split('-').reverse().join('/')}`
+                ).join('; ')).filter(Boolean).join('; ') || '—'
             ]));
         }
 
@@ -3046,7 +3235,7 @@ function exportExcel() {
         // Larguras de coluna
         ws['!cols'] = key === 'conta'
             ? [{ wch: 28 }, { wch: 16 }]
-            : [{ wch: 12 }, { wch: 36 }, { wch: 12 }, { wch: 20 }, { wch: 14 }, { wch: 12 }, { wch: 30 }];
+            : [{ wch: 12 }, { wch: 36 }, { wch: 12 }, { wch: 20 }, { wch: 14 }, { wch: 12 }, { wch: 30 }, { wch: 50 }];
 
         XLSX.utils.book_append_sheet(wb, ws, label);
     });
