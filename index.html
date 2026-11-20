@@ -590,7 +590,7 @@ body[data-estilo="grafite"] nav button.tab-link.active{ border-bottom-color:var(
                 </div>
             </div>
             <p style="font-size:12px;color:var(--text-muted);margin-bottom:10px;">
-                As anotações são do mês de trabalho. Quando você encerra o mês, a caixa passa a ser a do mês seguinte; as anteriores continuam guardadas e saem no Excel.
+                As anotações são do mês de trabalho e são apagadas quando você encerra o mês.
             </p>
             <textarea id="notas-texto"
                 placeholder="Escreva aqui o que precisar lembrar sobre este mês..."
@@ -622,12 +622,8 @@ body[data-estilo="grafite"] nav button.tab-link.active{ border-bottom-color:var(
 
         <div class="card">
             <h2>Mês de trabalho</h2>
-            <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">O app mostra sempre um único mês: o que você está trabalhando agora. Ele só muda quando você encerra o mês no Dashboard. Use os botões abaixo apenas para corrigir um encerramento feito por engano.</p>
-            <div class="form-row">
-                <button class="btn btn-ghost" onclick="voltarMes()">◀ Voltar um mês</button>
-                <span style="font-weight:700;padding:10px 4px;" id="cfg-mes">—</span>
-                <button class="btn btn-ghost" onclick="irMesAtual()">Ir para o mês do calendário</button>
-            </div>
+            <p style="font-size:12px;color:var(--text-muted);margin-bottom:8px;">O app mostra um único mês: <strong id="cfg-mes">—</strong>. Quando tudo estiver quitado, encerre o mês no Dashboard.</p>
+            <p style="font-size:12px;color:var(--text-muted);">Ao encerrar, os lançamentos e anotações do mês são <strong>apagados de vez</strong>. Os recorrentes continuam no mês seguinte, sem o histórico. Dívidas, patrimônio e contas bancárias não são tocados.</p>
         </div>
 
         <div class="card">
@@ -730,6 +726,8 @@ const TABS = [
 //   1.1.0 (31/10/2026) Missão: Programação de recebimentos (+ Efetivar em Receitas); versão visível no app
 //   1.2.0 (07/11/2026) Pagamento/recebimento parcial (botão ½), com histórico e quitação automática
 //   1.3.0 (07/11/2026) Aba Missão retirada (vive no app próprio); dados dela preservados no Sheets
+//   1.8.0 (20/11/2026) Encerrar o mês APAGA os registros do mês (e anteriores): só com tudo quitado e digitando ENCERRAR;
+//                     recorrentes seguem no mês novo sem histórico; sem Desfazer/Reabrir
 //   1.7.1 (20/11/2026) Encerrar o mês: botão Desfazer logo após encerrar e "Reabrir mês anterior" no cartão do mês
 //   1.7.0 (20/11/2026) Caixa de lançamento das abas pode ser recolhida (botão ▴ Recolher / ▾ Abrir), lembrada por aparelho
 //   1.6.0 (20/11/2026) Revisão geral: valores com milhar (1.234,56), vencimento na edição, atrasadas fantasmas de
@@ -737,7 +735,7 @@ const TABS = [
 //   1.5.0 (20/11/2026) Aparência: 4 estilos visuais (Padrão, Planilha, Windows, Grafite) — Config. ou botão 🎨
 //   1.4.0 (20/11/2026) Mês único de trabalho: sem setas de mês; o mês fica salvo no Sheets e só muda ao "Encerrar o mês"
 // ══════════════════════════════════════════════════════
-const APP_VERSAO = '1.7.1';
+const APP_VERSAO = '1.8.0';
 const APP_VERSAO_DATA = '20/11/2026';
 document.querySelectorAll('[data-versao]').forEach(el => {
     el.textContent = el.dataset.versao === 'longa'
@@ -2261,30 +2259,85 @@ async function gravarMesTrabalho(mk){
     return ok;
 }
 
+// Tudo que está em aberto no mês de trabalho e nos anteriores (despesa, receita, locação)
+function abertosAte(mk){
+    const lim = mkIdx(mk), out = [];
+    financialData.forEach(i => {
+        if (!['despesa','receita','locacao'].includes(i.type) || !/^\d{4}-\d{1,2}$/.test(i.baseMonthKey || '')) return;
+        const ini = mkIdx(i.baseMonthKey);
+        const fim = i.recurring ? Math.min(lim, i.endMonthKey ? mkIdx(i.endMonthKey) : lim) : ini;
+        for (let k = ini; k <= fim && k <= lim; k++) {
+            const m = `${Math.floor(k/12)}-${k%12}`;
+            if (i.skipMonths && i.skipMonths.includes(m)) continue;
+            if (estaQuitado(i, m)) continue;
+            const sd = saldoEm(i, m); if (sd > 0) out.push({ i, m, sd });
+        }
+    });
+    return out;
+}
+
+// Limpa tudo do mês encerrado (e de antes): apaga avulsos e anotações; nas
+// recorrentes, apaga o histórico e passa o início para o mês novo; recorrente
+// que já terminou é apagada. Dívidas, patrimônio e contas não são tocados.
+function limparAte(d, mk, prox){
+    const lim = mkIdx(mk);
+    const antigo = k => /^\d{4}-\d{1,2}$/.test(k || '') && mkIdx(k) <= lim;
+    for (let n = d.length - 1; n >= 0; n--) {
+        const i = d[n];
+        if (i.type === 'nota') { if (antigo(i.baseMonthKey)) d.splice(n, 1); continue; }
+        if (!['despesa','receita','locacao'].includes(i.type) || !antigo(i.baseMonthKey)) continue;
+        if (!i.recurring || (i.endMonthKey && mkIdx(i.endMonthKey) <= lim)) { d.splice(n, 1); continue; }
+        i.baseMonthKey = prox;
+        i.paidMonths = (i.paidMonths || []).filter(x => !antigo(x));
+        if (i.skipMonths) { i.skipMonths = i.skipMonths.filter(x => !antigo(x)); if (!i.skipMonths.length) delete i.skipMonths; }
+        if (i.partials) { Object.keys(i.partials).forEach(k => { if (antigo(k)) delete i.partials[k]; }); if (!Object.keys(i.partials).length) delete i.partials; }
+    }
+}
+
+let encerrando = false;
 async function encerrarMes(){
-    const mk = mkDe(currentDate), prox = mkSoma(mk, 1);
-    const p = pendenciasDoMes(mk);
+    if (encerrando) return;
+    if (!dataLoaded) return toast('Não é possível encerrar: os dados ainda não foram carregados do Sheets.', 'error', 8000);
+    const mk = mkDe(currentDate), prox = mkSoma(mk, 1), mes = nomeMes(mk).split(' ')[0];
+    const abertos = abertosAte(mk);
+    if (abertos.length) {
+        const lista = abertos.slice(0, 6).map(a => `• ${a.i.description} — ${fmt(a.sd)}${a.m !== mk ? ` (${nomeMes(a.m)})` : ''}`).join('\n');
+        alert(`Ainda não dá para encerrar ${mes}.\n\nHá ${abertos.length} ${abertos.length===1?'lançamento em aberto':'lançamentos em aberto'}:\n${lista}${abertos.length > 6 ? `\n… e mais ${abertos.length - 6}` : ''}\n\nQuite, exclua ou mova para o mês seguinte (aba Atrasadas ou botão de editar) e tente de novo.`);
+        return;
+    }
+    // Conta o que vai sumir, para mostrar antes
+    const copia = JSON.parse(JSON.stringify(financialData));
+    const antes = copia.filter(i => ['despesa','receita','locacao','nota'].includes(i.type)).length;
+    limparAte(copia, mk, prox);
+    const depois = copia.filter(i => ['despesa','receita','locacao','nota'].includes(i.type)).length;
+    const recs = copia.filter(i => i.recurring && ['despesa','receita','locacao'].includes(i.type)).length;
     const futuro = mkIdx(prox) > mkIdx(mkDe(new Date()));
-    let msg = `Encerrar ${nomeMes(mk)} e passar a trabalhar em ${nomeMes(prox)}?\n\n`;
-    msg += p.n ? `Ficaram ${p.n} ${p.n===1?'lançamento':'lançamentos'} em aberto (a pagar ${fmt(p.pag)}, a receber ${fmt(p.rec)}). ${p.n===1?'Ele vai':'Eles vão'} para a aba Atrasadas, onde você pode quitar ou mover para outro mês.`
-               : 'Tudo deste mês está quitado.';
-    if (futuro) msg += `\n\nAtenção: ${nomeMes(prox)} ainda não começou no calendário.`;
-    if (!confirm(msg)) return;
-    if (await gravarMesTrabalho(prox)) toastAcao(`${nomeMes(mk)} encerrado. Agora você está em ${nomeMes(prox)}.`, `↶ Desfazer`, () => desfazerEncerramento(mk));
-}
-async function desfazerEncerramento(mk){
-    if (await gravarMesTrabalho(mk)) toast(`Voltou para ${nomeMes(mk)}. Nada foi alterado nos lançamentos.`, 'success', 6000);
-}
-async function voltarMes(){
-    const ant = mkSoma(mkDe(currentDate), -1);
-    if (!confirm(`Reabrir ${nomeMes(ant)}?\n\nNenhum lançamento é alterado; só muda o mês que o app mostra. Quando terminar, encerre de novo.`)) return;
-    if (await gravarMesTrabalho(ant)) toast(`Mês de trabalho: ${nomeMes(ant)}.`, 'success');
-}
-async function irMesAtual(){
-    const hoje = mkDe(new Date());
-    if (hoje === mkDe(currentDate)) return toast('Você já está no mês do calendário.', 'info');
-    if (!confirm(`Mudar o mês de trabalho para ${nomeMes(hoje)}?\n\nNenhum lançamento é alterado; o que estiver em aberto nos meses anteriores aparece em Atrasadas.`)) return;
-    if (await gravarMesTrabalho(hoje)) toast(`Mês de trabalho: ${nomeMes(hoje)}.`, 'success');
+    const resp = prompt(`ENCERRAR ${nomeMes(mk).toUpperCase()} — NÃO TEM VOLTA\n\n`
+        + `• ${antes - depois} ${antes - depois === 1 ? 'registro será APAGADO' : 'registros serão APAGADOS'} (lançamentos pagos/recebidos e anotações de ${mes} e meses anteriores).\n`
+        + `• ${recs} ${recs === 1 ? 'lançamento recorrente continua' : 'lançamentos recorrentes continuam'} em ${nomeMes(prox)}, sem o histórico.\n`
+        + `• Dívidas, patrimônio e contas bancárias não mudam.`
+        + (futuro ? `\n\nAtenção: ${nomeMes(prox)} ainda não começou no calendário.` : '')
+        + `\n\nPara confirmar, digite ENCERRAR:`);
+    if (resp === null) return;
+    if (resp.trim().toUpperCase() !== 'ENCERRAR') return toast('Encerramento cancelado: a palavra digitada não foi ENCERRAR.', 'info', 6000);
+    encerrando = true;
+    if (notaAlterada) await salvarNota(true);
+    const [py, pm] = prox.split('-').map(Number);
+    const anterior = currentDate;
+    currentDate = new Date(py, pm, 1);
+    showLoading(`Encerrando ${mes}...`);
+    const ok = await commit(d => {
+        limparAte(d, mk, prox);
+        let cfg = d.find(i => i.type === 'config');
+        if (!cfg) { cfg = { id:'config', type:'config' }; d.push(cfg); }
+        cfg.mesTrabalho = prox;
+    });
+    hideLoading();
+    encerrando = false;
+    if (!ok) { currentDate = anterior; updateMonthDisplay(); return; }
+    notaMesCarregado = null;
+    updateMonthDisplay();
+    toast(`${mes} encerrado e apagado. Agora você está em ${nomeMes(prox)}.`, 'success', 7000);
 }
 
 function renderMesTrabalho(){
@@ -2295,14 +2348,14 @@ function renderMesTrabalho(){
     const card = $('mes-card');
     if (card) card.innerHTML = `<div class="mes-card">
         <div><div class="kpi-label" style="margin:0;">Mês de trabalho</div><div class="mes-nome">${nomeMes(mk)}</div>
-            <div class="mes-info">${!dataLoaded ? 'Aguardando os dados do Sheets.' : p.n ? `${p.n} ${p.n===1?'lançamento em aberto':'lançamentos em aberto'} neste mês` : '✓ Tudo deste mês está quitado'}</div></div>
-        <div class="mes-acoes"><button class="btn btn-ghost" onclick="voltarMes()" title="Encerrou sem querer? Volta para o mês anterior sem alterar nenhum lançamento.">↶ Reabrir ${nomeMes(mkSoma(mk,-1)).split(' ')[0]}</button><button class="btn btn-ghost" onclick="encerrarMes()"${dataLoaded && atras > 0 ? ' style="display:none"' : ''}>Encerrar ${nomeMes(mk).split(' ')[0]} e ir para ${nomeMes(mkSoma(mk,1)).split(' ')[0]} →</button></div>
+            <div class="mes-info">${!dataLoaded ? 'Aguardando os dados do Sheets.' : p.n ? `${p.n} ${p.n===1?'lançamento em aberto':'lançamentos em aberto'}: quite tudo para poder encerrar` : '✓ Tudo quitado: o mês já pode ser encerrado'}</div></div>
+        <div class="mes-acoes"><button class="btn btn-ghost" onclick="encerrarMes()"${dataLoaded && atras > 0 ? ' style="display:none"' : ''}>Encerrar ${nomeMes(mk).split(' ')[0]} e ir para ${nomeMes(mkSoma(mk,1)).split(' ')[0]} →</button></div>
     </div>`;
     const b = $('virada-banner');
     if (b) {
         const mostra = dataLoaded && atras > 0;
         b.classList.toggle('show', mostra);
-        if (mostra) b.innerHTML = `<span><strong>${nomeMes(mk).split(' ')[0]} já terminou no calendário.</strong> Quando acabar de acertar este mês, encerre para passar a ${nomeMes(mkSoma(mk,1)).split(' ')[0].toLowerCase()}.${atras > 1 ? ` O calendário está ${atras} meses à frente.` : ''}</span>
+        if (mostra) b.innerHTML = `<span><strong>${nomeMes(mk).split(' ')[0]} já terminou no calendário.</strong> Quando tudo estiver quitado, encerre para passar a ${nomeMes(mkSoma(mk,1)).split(' ')[0].toLowerCase()}.${atras > 1 ? ` O calendário está ${atras} meses à frente.` : ''}</span>
             <button class="btn btn-primary" onclick="encerrarMes()">Encerrar ${nomeMes(mk).split(' ')[0]}</button>`;
     }
 }
