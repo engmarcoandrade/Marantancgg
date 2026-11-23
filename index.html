@@ -259,11 +259,19 @@ td select{padding:3px 6px;font-size:12px}
 #blocked-banner button{margin-left:10px;padding:5px 13px;border:none;border-radius:8px;background:var(--sup);color:var(--perigo);font-weight:700}
 
 /* ── Modais ── */
-#setup-wizard,#modal-recorrente,#modal-parcial,#modal-excluir{position:fixed;inset:0;background:rgba(10,14,20,.55);backdrop-filter:blur(3px);display:grid;place-items:center;padding:16px;z-index:9990}
+#setup-wizard,#modal-recorrente,#modal-parcial,#modal-excluir,#modal-enviar{position:fixed;inset:0;background:rgba(10,14,20,.55);backdrop-filter:blur(3px);display:grid;place-items:center;padding:16px;z-index:9990}
 #modal-recorrente{z-index:9995}
 #modal-parcial{z-index:9996}
 #modal-excluir{z-index:9995}
-#setup-wizard.hidden,#modal-recorrente.hidden,#modal-parcial.hidden,#modal-excluir.hidden{display:none}
+#setup-wizard.hidden,#modal-recorrente.hidden,#modal-parcial.hidden,#modal-excluir.hidden,#modal-enviar.hidden{display:none}
+#modal-enviar{z-index:9996}
+#enviar-card{max-width:640px}
+.env-sec{margin:0 0 14px}
+.env-sec h4{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--mut);margin:0 0 6px}
+.env-item{display:flex;gap:10px;align-items:flex-start;padding:8px 10px;border:1px solid var(--bor);border-radius:10px;margin-bottom:6px;font-size:13.5px;line-height:1.45;cursor:pointer}
+.env-item input{margin-top:3px;flex:none;width:17px;height:17px}
+.env-item small{display:block;color:var(--mut);font-size:12px}
+.env-aviso{font-weight:700}
 .wizard-card,.modal-card{width:100%;background:var(--sup);border:1px solid var(--bor);border-radius:18px;padding:22px;box-shadow:0 20px 60px rgba(0,0,0,.3);animation:entra .2s}
 .wizard-card{max-width:520px}
 .modal-card{max-width:480px}
@@ -473,6 +481,11 @@ body[data-estilo="grafite"] nav button.tab-link.active{ border-bottom-color:var(
     </div>
 </div>
 
+<!-- MODAL ENVIAR DESPESAS FIXAS (v1.10.0) -->
+<div id="modal-enviar" class="hidden" onclick="if(event.target===this)fecharEnviar()">
+    <div class="modal-card" id="enviar-card" style="max-height:92vh;overflow-y:auto;"></div>
+</div>
+
 <!-- MODAL PAGAMENTO / RECEBIMENTO PARCIAL -->
 <div id="modal-parcial" class="hidden" onclick="if(event.target===this)fecharParcial()">
     <div class="modal-card" id="parcial-card" style="max-height:92vh;overflow-y:auto;"></div>
@@ -597,7 +610,7 @@ body[data-estilo="grafite"] nav button.tab-link.active{ border-bottom-color:var(
                     <button type="button" class="btn btn-ghost" id="btn-cancel-fixa" style="display:none;" onclick="cancelarFixa()">Cancelar</button>
                 </div>
             </form>
-            <p class="mis-note">Lista só para você saber quanto custa manter o mês. <strong>Não entra</strong> nos totais, no Dashboard nem em Atrasadas, e <strong>não é apagada</strong> ao encerrar o mês.</p>
+            <p class="mis-note">Lista só para você saber quanto custa manter o mês. <strong>Não entra</strong> nos totais, no Dashboard nem em Atrasadas, e <strong>não é apagada</strong> ao encerrar o mês. Para levar as mudanças à aba Despesas, use <strong>⇧ Enviar para Despesas</strong>: ele só mexe nas despesas que vieram daqui.</p>
         </div>
         <div class="toolbar">
             <div class="summary-strip">
@@ -607,6 +620,7 @@ body[data-estilo="grafite"] nav button.tab-link.active{ border-bottom-color:var(
             </div>
             <div class="filter-group">
                 <button class="filter-btn" onclick="importarFixas()" title="Copia as despesas do mês de trabalho que ainda não estão nesta lista">⇩ Importar das Despesas do mês</button>
+                <button class="filter-btn active" onclick="abrirEnviar()" title="Cria ou atualiza na aba Despesas as despesas que vêm desta lista (mostra antes de gravar)">⇧ Enviar para Despesas</button>
             </div>
         </div>
         <div class="card" style="padding:0;">
@@ -767,6 +781,8 @@ const TABS = [
 //   1.1.0 (31/10/2026) Missão: Programação de recebimentos (+ Efetivar em Receitas); versão visível no app
 //   1.2.0 (07/11/2026) Pagamento/recebimento parcial (botão ½), com histórico e quitação automática
 //   1.3.0 (07/11/2026) Aba Missão retirada (vive no app próprio); dados dela preservados no Sheets
+//   1.10.0 (22/11/2026) Despesas Fixas: botão "Enviar para Despesas" (cria/atualiza só as despesas ligadas às fixas,
+//                      com prévia e escolha item a item; despesas avulsas não são tocadas)
 //   1.9.0 (22/11/2026) Aba Despesas Fixas (só controle, fora dos totais; não é apagada ao encerrar; pode ser ocultada)
 //   1.8.0 (20/11/2026) Encerrar o mês APAGA os registros do mês (e anteriores): só com tudo quitado e digitando ENCERRAR;
 //                     recorrentes seguem no mês novo sem histórico; sem Desfazer/Reabrir
@@ -777,7 +793,7 @@ const TABS = [
 //   1.5.0 (20/11/2026) Aparência: 4 estilos visuais (Padrão, Planilha, Windows, Grafite) — Config. ou botão 🎨
 //   1.4.0 (20/11/2026) Mês único de trabalho: sem setas de mês; o mês fica salvo no Sheets e só muda ao "Encerrar o mês"
 // ══════════════════════════════════════════════════════
-const APP_VERSAO = '1.9.0';
+const APP_VERSAO = '1.10.0';
 const APP_VERSAO_DATA = '22/11/2026';
 document.querySelectorAll('[data-versao]').forEach(el => {
     el.textContent = el.dataset.versao === 'longa'
@@ -1461,6 +1477,7 @@ async function confirmEditRecorrente(mode) {
                 dueDate: venc,
                 ...(fim ? { endMonthKey: fim } : {}),
                 ...(orig.starred ? { starred: true } : {}),
+                ...(orig.fixaId ? { fixaId: orig.fixaId } : {}),
                 ...copiarParciais(orig, mk)
             });
         });
@@ -1863,7 +1880,8 @@ function cancelarFixa(){
 }
 async function excluirFixa(id){
     const i = financialData.find(x => x.id === id && x.type === 'fixa'); if (!i) return;
-    if (!confirm(`Excluir "${i.description}" (${fmt(i.value)}) das despesas fixas?\n\nIsso não mexe na aba Despesas.`)) return;
+    const ligada = financialData.some(d => d.type === 'despesa' && d.fixaId === id);
+    if (!confirm(`Excluir "${i.description}" (${fmt(i.value)}) das despesas fixas?\n\nIsso não mexe na aba Despesas.${ligada ? '\nA despesa ligada a ela continua lá; no próximo "Enviar para Despesas" você escolhe se ela sai ou fica.' : ''}`)) return;
     const ok = await commit(d => { const k = d.findIndex(x => x.id === id && x.type === 'fixa'); if (k > -1) d.splice(k, 1); });
     if (ok) { if (fixaEditId === id) cancelarFixa(); toast('Despesa fixa excluída.', 'success'); }
 }
@@ -1900,6 +1918,154 @@ async function importarFixas(){
         });
     });
     if (ok) toast(`${novas.length} ${novas.length===1?'despesa importada':'despesas importadas'} para Despesas Fixas.`, 'success', 6000);
+}
+
+// ══════════════════════════════════════════════════════
+//  ENVIAR DESPESAS FIXAS PARA DESPESAS  (v1.10.0)
+//  Vínculo: a despesa guarda fixaId = id da fixa de origem.
+//  Regras:
+//   - só cria/altera/remove despesas LIGADAS a uma fixa; as demais nunca
+//     são lidas para alteração (avulsas, mercado etc. ficam intactas);
+//   - 1º envio: fixa sem vínculo procura uma despesa do mês com a mesma
+//     descrição (sem vínculo) e se liga a ela, em vez de duplicar;
+//   - despesa criada/ligada fica RECORRENTE (segue de mês a mês);
+//   - despesa já paga (ou com parcial) no mês não muda de valor agora;
+//   - fixa excluída: a despesa ligada só sai se você marcar;
+//   - tudo passa por uma prévia com caixa de seleção por item.
+// ══════════════════════════════════════════════════════
+let envPlano = null;
+const ateMk = (d, mk) => !d.endMonthKey || mkIdx(d.endMonthKey) >= mkIdx(mk);
+// "Linha" da despesa ligada que vale neste mês em diante
+function linhaDaFixa(fid, mk){
+    const l = financialData.filter(d => d.type === 'despesa' && d.fixaId === fid &&
+        (d.recurring ? ateMk(d, mk) && mkIdx(d.baseMonthKey) <= mkIdx(mk) : d.baseMonthKey === mk));
+    return l.find(d => d.recurring) || l[0] || null;
+}
+const diaDe = iso => /^\d{4}-\d{2}-\d{2}$/.test(iso || '') ? Number(iso.slice(8,10)) : null;
+function dataNoMes(mk, dia){
+    const [y,m] = mk.split('-').map(Number);
+    const d = Math.min(dia, new Date(y, m+1, 0).getDate());
+    return `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+}
+function montarPlanoEnvio(){
+    const mk = mkDe(currentDate), [y,m] = mk.split('-').map(Number);
+    const fixas = financialData.filter(i => i.type === 'fixa');
+    const idsFixa = new Set(fixas.map(f => f.id));
+    const doMes = financialData.filter(d => d.type === 'despesa' && !(d.skipMonths && d.skipMonths.includes(mk))
+        && (d.recurring ? monthValid(d.baseMonthKey, y, m, d.endMonthKey) : d.baseMonthKey === mk));
+    const usadas = new Set();
+    const plano = { mk, novas: [], alts: [], orfas: [], iguais: 0, ligar: [] };
+    fixas.forEach(f => {
+        let d = linhaDaFixa(f.id, mk), ligar = false;
+        if (!d) {
+            const k = normDesc(f.description);
+            const cands = doMes.filter(x => !x.fixaId && !usadas.has(x.id) && normDesc(x.description) === k);
+            d = cands.find(x => x.recurring) || cands[0] || null;
+            if (d) ligar = true;
+        }
+        if (!d) { plano.novas.push({ f }); return; }
+        usadas.add(d.id);
+        const pago = estaQuitado(d, mk) || parcList(d, mk).length > 0;
+        const mud = [], txt = [];
+        if (d.description !== f.description) { mud.push('description'); txt.push(`Descrição: "${escH(d.description)}" → "${escH(f.description)}"`); }
+        if (d.category !== f.category) { mud.push('category'); txt.push(`Categoria: ${escH(d.category)} → ${escH(f.category)}`); }
+        const diaD = diaDe(d.dueDate);
+        if (f.dia && diaD !== f.dia) { mud.push('dia'); txt.push(`Vencimento: ${diaD ? 'dia ' + diaD : '—'} → dia ${f.dia}`); }
+        if (!d.recurring) { mud.push('recurring'); txt.push('Passa a ser recorrente (segue nos próximos meses)'); }
+        let aviso = '';
+        if (r2(d.value) !== r2(f.value)) {
+            if (pago) aviso = `Já ${estaQuitado(d, mk) ? 'paga' : 'com pagamento parcial'} em ${nomeMes(mk).split(' ')[0]}: o valor continua ${fmt(d.value)} (fixa: ${fmt(f.value)}). Envie de novo depois de encerrar o mês.`;
+            else { mud.push('value'); txt.push(`Valor: ${fmt(d.value)} → <strong>${fmt(f.value)}</strong>`); }
+        }
+        if (mud.length) plano.alts.push({ f, d, mud, txt, aviso, ligar });
+        else { plano.iguais++; if (ligar) plano.ligar.push({ f, d }); if (aviso) plano.alts.push({ f, d, mud, txt, aviso, ligar, soAviso: true }); }
+    });
+    // Despesas ligadas a uma fixa que não existe mais (só as que ainda valem a partir deste mês)
+    const vistas = new Set();
+    financialData.forEach(d => {
+        if (d.type !== 'despesa' || !d.fixaId || idsFixa.has(d.fixaId)) return;
+        if (!(d.recurring ? ateMk(d, mk) : d.baseMonthKey === mk)) return;
+        if (vistas.has(d.id)) return; vistas.add(d.id);
+        plano.orfas.push({ d, pago: estaQuitado(d, mk) });
+    });
+    return plano;
+}
+function abrirEnviar(){
+    if (!dataLoaded) return toast('Aguarde os dados do Sheets carregarem.', 'error');
+    if (!financialData.some(i => i.type === 'fixa')) return toast('Não há despesas fixas para enviar.', 'info');
+    envPlano = montarPlanoEnvio();
+    const p = envPlano, mesN = nomeMes(p.mk);
+    const nada = !p.novas.length && !p.alts.filter(a => !a.soAviso).length && !p.orfas.length;
+    const chk = (grp, k, on) => `<input type="checkbox" data-env="${grp}" data-k="${k}" ${on ? 'checked' : ''}>`;
+    const sec = (titulo, html) => html ? `<div class="env-sec"><h4>${titulo}</h4>${html}</div>` : '';
+    $('enviar-card').innerHTML = `
+        <h3>⇧ Enviar para Despesas · ${mesN}</h3>
+        <p style="margin-bottom:12px;">Confira e desmarque o que não quiser. Só as despesas que vieram das fixas são mexidas; as outras da aba Despesas ficam como estão.</p>
+        ${sec(`Novas na aba Despesas (${p.novas.length})`, p.novas.map((n,k) => `<label class="env-item">${chk('nova',k,true)}<span><strong>${escH(n.f.description)}</strong> — ${fmt(n.f.value)}
+            <small>${escH(n.f.category)} · ${n.f.dia ? 'vence dia ' + n.f.dia : 'vencimento padrão (dia ' + DIA_VENC_PADRAO + ')'} · recorrente</small></span></label>`).join(''))}
+        ${sec(`Diferentes da fixa (${p.alts.filter(a=>!a.soAviso).length})`, p.alts.filter(a=>!a.soAviso).map(a => `<label class="env-item">${chk('alt',p.alts.indexOf(a),true)}<span><strong>${escH(a.d.description)}</strong>
+            <small>${a.txt.join('<br>')}${a.aviso ? `<br><span class="env-aviso">⚠ ${a.aviso}</span>` : ''}</small></span></label>`).join(''))}
+        ${sec('Avisos', p.alts.filter(a=>a.soAviso).map(a => `<div class="env-item" style="cursor:default;"><span><strong>${escH(a.d.description)}</strong><small class="env-aviso">⚠ ${a.aviso}</small></span></div>`).join(''))}
+        ${sec(`Ligadas a fixas que você excluiu (${p.orfas.length})`, p.orfas.map((o,k) => `<label class="env-item">${chk('orfa',k,false)}<span>Remover <strong>${escH(o.d.description)}</strong> (${fmt(o.d.value)}) da aba Despesas
+            <small>${o.pago ? `Já paga em ${mesN.split(' ')[0]}: fica neste mês e para de repetir a partir do próximo.` : `Sai a partir de ${mesN.split(' ')[0]}.`} Desmarcada: a despesa fica e passa a ser uma despesa comum.</small></span></label>`).join(''))}
+        <p class="mis-note" style="margin:0 0 14px;">${p.iguais} ${p.iguais===1?'despesa já está igual':'despesas já estão iguais'} à fixa${p.ligar.length ? ` (${p.ligar.length} ${p.ligar.length===1?'será ligada':'serão ligadas'} à sua fixa, sem mudar nada)` : ''}.${nada && !p.ligar.length ? ' <strong>Nada a enviar.</strong>' : ''}</p>
+        <div class="modal-btns">
+            ${nada && !p.ligar.length ? '' : `<button class="btn btn-primary" id="env-btn" onclick="confirmarEnviar()">Confirmar e gravar</button>`}
+            <button class="btn btn-ghost" onclick="fecharEnviar()">${nada && !p.ligar.length ? 'Fechar' : 'Cancelar'}</button>
+        </div>`;
+    $('modal-enviar').classList.remove('hidden');
+}
+function fecharEnviar(){ envPlano = null; $('modal-enviar').classList.add('hidden'); }
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && envPlano) fecharEnviar(); });
+let enviando = false;
+async function confirmarEnviar(){
+    if (!envPlano || enviando) return;
+    const p = envPlano, mk = p.mk;
+    const marcado = (g, k) => !!document.querySelector(`#enviar-card input[data-env="${g}"][data-k="${k}"]:checked`);
+    const novas = p.novas.filter((_,k) => marcado('nova', k)).map(n => n.f.id);
+    const alts  = p.alts.map((a,k) => (!a.soAviso && marcado('alt', k)) ? { fid: a.f.id, did: a.d.id, mud: a.mud } : null).filter(Boolean);
+    const liga  = [...p.ligar.map(l => ({ fid: l.f.id, did: l.d.id })), ...p.alts.filter((a,k) => a.ligar && (a.soAviso || !marcado('alt', k))).map(a => ({ fid: a.f.id, did: a.d.id }))];
+    const orfas = p.orfas.map((o,k) => ({ did: o.d.id, remove: marcado('orfa', k) }));
+    enviando = true;
+    const b = $('env-btn'); if (b) { b.disabled = true; b.textContent = 'Gravando...'; }
+    let nN = 0, nA = 0, nR = 0;
+    const base = Date.now();
+    const ok = await commit(d => {
+        nN = nA = nR = 0;
+        const fx = id => d.find(x => x.id === id && x.type === 'fixa');
+        const dp = id => d.find(x => x.id === id && x.type === 'despesa');
+        novas.forEach((fid, k) => {
+            const f = fx(fid); if (!f) return;
+            if (d.some(x => x.type === 'despesa' && x.fixaId === fid && (x.recurring ? ateMk(x, mk) : x.baseMonthKey === mk))) return;   // trava contra clique duplo
+            d.push({ id: `${base}_fx${k}`, type:'despesa', description: f.description, category: f.category, value: r2(f.value),
+                     baseMonthKey: mk, recurring: true, paidMonths: [], dueDate: f.dia ? dataNoMes(mk, f.dia) : vencPadrao(), fixaId: fid });
+            nN++;
+        });
+        alts.forEach(a => {
+            const f = fx(a.fid), x = dp(a.did); if (!f || !x) return;
+            x.fixaId = f.id;
+            if (a.mud.includes('description')) x.description = f.description;
+            if (a.mud.includes('category'))    x.category = f.category;
+            if (a.mud.includes('dia') && f.dia) x.dueDate = dataNoMes(mk, f.dia);
+            if (a.mud.includes('recurring'))   { x.recurring = true; delete x.endMonthKey; }
+            if (a.mud.includes('value') && !estaQuitado(x, mk) && !parcList(x, mk).length) x.value = r2(f.value);
+            nA++;
+        });
+        liga.forEach(l => { const x = dp(l.did); if (x && fx(l.fid)) x.fixaId = l.fid; });
+        orfas.forEach(o => {
+            const x = dp(o.did); if (!x) return;
+            if (!o.remove) { delete x.fixaId; return; }
+            nR++;
+            if (estaQuitado(x, mk)) { if (x.recurring) x.endMonthKey = mk; delete x.fixaId; return; }   // paga: fica neste mês
+            if (!x.recurring || mkIdx(x.baseMonthKey) >= mkIdx(mk)) { d.splice(d.indexOf(x), 1); return; }
+            x.endMonthKey = mkSoma(mk, -1);
+        });
+    });
+    enviando = false;
+    if (!ok) { if (b) { b.disabled = false; b.textContent = 'Confirmar e gravar'; } return; }
+    fecharEnviar();
+    const partes = [nN && `${nN} ${nN===1?'nova':'novas'}`, nA && `${nA} ${nA===1?'atualizada':'atualizadas'}`, nR && `${nR} ${nR===1?'removida':'removidas'}`].filter(Boolean);
+    toast(partes.length ? `Despesas: ${partes.join(', ')}.` : 'Vínculos gravados. Nenhuma despesa mudou.', 'success', 7000);
 }
 
 // ══════════════════════════════════════════════════════
