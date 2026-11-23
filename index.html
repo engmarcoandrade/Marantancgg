@@ -272,6 +272,11 @@ td select{padding:3px 6px;font-size:12px}
 .env-item input{margin-top:3px;flex:none;width:17px;height:17px}
 .env-item small{display:block;color:var(--mut);font-size:12px}
 .env-aviso{font-weight:700}
+.pat-rend{display:flex;gap:0}
+.pat-rend select{max-width:100px;flex:none;border-top-right-radius:0;border-bottom-right-radius:0;border-right:none}
+.pat-rend input{border-top-left-radius:0;border-bottom-left-radius:0;min-width:0}
+.pat-prev{font-size:12px;font-weight:700;margin-top:4px;min-height:16px;color:var(--mut)}
+.pat-sem{color:var(--mut);font-style:italic}
 .wizard-card,.modal-card{width:100%;background:var(--sup);border:1px solid var(--bor);border-radius:18px;padding:22px;box-shadow:0 20px 60px rgba(0,0,0,.3);animation:entra .2s}
 .wizard-card{max-width:520px}
 .modal-card{max-width:480px}
@@ -593,6 +598,49 @@ body[data-estilo="grafite"] nav button.tab-link.active{ border-bottom-color:var(
     <!-- TABS DINÂMICAS -->
     <div id="dynamic-tabs"></div>
 
+    <!-- PATRIMÔNIO (v1.11.0) — valor de cada bem e quanto ele rende por mês -->
+    <section id="Patrimonio" class="tab-content">
+        <div class="card form-card" id="form-card-patrimonio">
+            <div class="form-card-head">
+                <h2 id="pat-titulo">Lançar Patrimônio</h2>
+                <button type="button" class="btn btn-ghost btn-min" id="btn-min-patrimonio" onclick="minForm('patrimonio')" aria-expanded="true" title="Recolher a caixa de lançamento">▴ Recolher</button>
+            </div>
+            <form onsubmit="salvarPatrimonio(event)">
+                <div class="form-row" style="align-items:flex-start;">
+                    <div class="form-field" style="flex:2;min-width:150px;"><label>Descrição</label><input id="desc-patrimonio" placeholder="Ex: CDB Banco X, Casa da Rua Y" required></div>
+                    <div class="form-field"><label>Categoria</label><select id="cat-patrimonio" required></select></div>
+                    <div class="form-field"><label>Valor do patrimônio (R$)</label><input id="val-patrimonio" placeholder="0,00" required oninput="prevPatrimonio()"></div>
+                    <div class="form-field" style="min-width:200px;"><label>Rendimento mensal</label>
+                        <div class="pat-rend">
+                            <select id="rendtipo-patrimonio" onchange="prevPatrimonio()"><option value="pct" title="Percentual ao mês">% a.m.</option><option value="valor" title="Valor em reais por mês">R$ /mês</option></select>
+                            <input id="rend-patrimonio" placeholder="Ex: 1,00" oninput="prevPatrimonio()">
+                        </div>
+                        <div class="pat-prev" id="pat-prev"></div>
+                    </div>
+                    <div style="display:flex;gap:8px;align-self:flex-end;margin-bottom:20px;">
+                        <button type="submit" class="btn btn-primary" id="btn-submit-patrimonio">Lançar</button>
+                        <button type="button" class="btn btn-ghost" id="btn-cancel-patrimonio" style="display:none;" onclick="cancelarPatrimonio()">Cancelar</button>
+                    </div>
+                </div>
+            </form>
+            <p class="mis-note" style="margin-top:0;">Rendimento em <strong>%</strong> (aplicações: 1% de R$ 50.000 = R$ 500) ou em <strong>R$</strong> (aluguel: R$ 2.500 por mês). Deixe vazio se o bem não rende, como carro ou casa própria.</p>
+        </div>
+        <div class="toolbar">
+            <div class="summary-strip">
+                <span>Patrimônio: <strong id="sum-pat-total">R$ 0,00</strong></span>
+                <span>Rende por mês: <strong id="sum-pat-rend">R$ 0,00</strong></span>
+                <span>Rentabilidade média: <strong id="sum-pat-taxa">—</strong></span>
+                <span>Por ano: <strong id="sum-pat-ano">R$ 0,00</strong></span>
+            </div>
+        </div>
+        <div class="card" style="padding:0;">
+            <table id="table-patrimonio">
+                <thead><tr><th>Descrição</th><th class="num-cell">Valor do patrimônio</th><th class="num-cell">Rendimento informado</th><th class="num-cell">Rende por mês</th><th class="num-cell">Taxa a.m.</th><th width="9%">Ações</th></tr></thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </section>
+
     <!-- DESPESAS FIXAS (v1.9.0) — só controle/consulta: não entra nos totais do mês -->
     <section id="DespesasFixas" class="tab-content">
         <div class="card form-card" id="form-card-fixa">
@@ -767,7 +815,6 @@ const TABS = [
     { id:'Receitas',  type:'receita',    title:'Lançar Receita'  },
     { id:'Locacoes',  type:'locacao',    title:'Lançar Locação'  },
     { id:'Dividas',   type:'divida',     title:'Lançar Dívida'   },
-    { id:'Patrimonio',type:'patrimonio', title:'Patrimônio'      },
 ];
 
 // ══════════════════════════════════════════════════════
@@ -781,6 +828,8 @@ const TABS = [
 //   1.1.0 (31/10/2026) Missão: Programação de recebimentos (+ Efetivar em Receitas); versão visível no app
 //   1.2.0 (07/11/2026) Pagamento/recebimento parcial (botão ½), com histórico e quitação automática
 //   1.3.0 (07/11/2026) Aba Missão retirada (vive no app próprio); dados dela preservados no Sheets
+//   1.11.0 (23/11/2026) Patrimônio com rendimento mensal (em % ou em R$), rende por mês, taxa e totais;
+//                      sai o checkbox de pago/recorrente da aba (lançamentos antigos preservados)
 //   1.10.0 (22/11/2026) Despesas Fixas: botão "Enviar para Despesas" (cria/atualiza só as despesas ligadas às fixas,
 //                      com prévia e escolha item a item; despesas avulsas não são tocadas)
 //   1.9.0 (22/11/2026) Aba Despesas Fixas (só controle, fora dos totais; não é apagada ao encerrar; pode ser ocultada)
@@ -793,8 +842,8 @@ const TABS = [
 //   1.5.0 (20/11/2026) Aparência: 4 estilos visuais (Padrão, Planilha, Windows, Grafite) — Config. ou botão 🎨
 //   1.4.0 (20/11/2026) Mês único de trabalho: sem setas de mês; o mês fica salvo no Sheets e só muda ao "Encerrar o mês"
 // ══════════════════════════════════════════════════════
-const APP_VERSAO = '1.10.0';
-const APP_VERSAO_DATA = '22/11/2026';
+const APP_VERSAO = '1.11.0';
+const APP_VERSAO_DATA = '23/11/2026';
 document.querySelectorAll('[data-versao]').forEach(el => {
     el.textContent = el.dataset.versao === 'longa'
         ? `Controle Financeiro · versão ${APP_VERSAO} · ${APP_VERSAO_DATA}`
@@ -1921,6 +1970,124 @@ async function importarFixas(){
 }
 
 // ══════════════════════════════════════════════════════
+//  PATRIMÔNIO COM RENDIMENTO  (v1.11.0)
+//  Campos novos (opcionais) no lançamento type:'patrimonio':
+//    rendTipo  'pct' (% ao mês sobre o valor) | 'valor' (R$ por mês)
+//    rendValor número
+//  Os demais campos antigos (paid, baseMonthKey...) ficam como estão.
+// ══════════════════════════════════════════════════════
+let patEditId = null;
+function rendPat(i){
+    const v = Number(i.value) || 0, rv = Number(i.rendValor);
+    if (!i.rendTipo || !isFinite(rv) || rv === 0) return { mensal: 0, taxa: null, txt: '—', tem: false };
+    const mensal = i.rendTipo === 'pct' ? r2(v * rv / 100) : r2(rv);
+    const taxa = v > 0 ? mensal / v * 100 : null;
+    const txt = i.rendTipo === 'pct' ? `${fmtN(rv, 2)}% a.m.` : `${fmt(rv)} /mês`;
+    return { mensal, taxa, txt, tem: true };
+}
+const fmtTaxa = t => t == null ? '—' : `${fmtN(t, 2)}%`;
+function renderPatrimonio(){
+    const tb = document.querySelector('#table-patrimonio tbody'); if (!tb) return;
+    const itens = financialData.filter(i => i.type === 'patrimonio');
+    const total = r2(itens.reduce((t,i) => t + (Number(i.value)||0), 0));
+    const rend  = r2(itens.reduce((t,i) => t + rendPat(i).mensal, 0));
+    $('sum-pat-total').textContent = fmt(total);
+    $('sum-pat-rend').textContent = fmt(rend);
+    $('sum-pat-taxa').textContent = total > 0 && rend ? `${fmtN(rend/total*100, 2)}% a.m.` : '—';
+    $('sum-pat-ano').textContent = fmt(r2(rend*12));
+    if (!itens.length) { tb.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:22px;color:var(--text-muted);">Nenhum patrimônio lançado.</td></tr>`; return; }
+    const ordem = categories.patrimonio || [];
+    const pos = c => { const k = ordem.indexOf(c); return k < 0 ? 999 : k; };
+    const grupos = {};
+    itens.forEach(i => { (grupos[i.category] = grupos[i.category] || []).push(i); });
+    tb.innerHTML = Object.keys(grupos).sort((a,b) => pos(a)-pos(b) || a.localeCompare(b)).map((cat, gi) => {
+        const g = grupos[cat].sort((a,b) => (Number(b.value)||0) - (Number(a.value)||0));
+        const gv = r2(g.reduce((t,i) => t + (Number(i.value)||0), 0)), gr = r2(g.reduce((t,i) => t + rendPat(i).mensal, 0));
+        const cls = `pat-g${gi}`;
+        return `<tr class="cat-row" onclick="toggleRows('${cls}',this)">
+                <td><strong>▾ ${escH(cat)}</strong> <span style="font-weight:500;color:var(--text-muted);">(${g.length})</span></td>
+                <td class="num-cell"><strong>${fmt(gv)}</strong></td><td></td>
+                <td class="num-cell"><strong>${gr ? fmt(gr) : '—'}</strong></td>
+                <td class="num-cell"><strong>${gv > 0 && gr ? fmtTaxa(gr/gv*100) : '—'}</strong></td><td></td></tr>`
+            + g.map(i => { const r = rendPat(i); return `<tr class="${cls}">
+                <td>${escH(i.description)}</td>
+                <td class="num-cell">${fmt(Number(i.value)||0)}</td>
+                <td class="num-cell">${r.tem ? r.txt : '<span class="pat-sem">não rende</span>'}</td>
+                <td class="num-cell"><strong>${r.tem ? fmt(r.mensal) : '—'}</strong></td>
+                <td class="num-cell">${r.tem ? fmtTaxa(r.taxa) : '—'}</td>
+                <td><div style="display:flex;gap:4px;">
+                    <button class="btn btn-warning btn-sm" onclick="editarPatrimonio('${i.id}')" title="Editar">✎</button>
+                    <button class="btn btn-danger btn-sm" onclick="excluirPatrimonio('${i.id}')" title="Excluir">×</button>
+                </div></td></tr>`; }).join('');
+    }).join('');
+}
+// Mostra na hora quanto vai render ("= R$ 500,00/mês" ou "= 1,00% a.m.")
+function prevPatrimonio(){
+    const el = $('pat-prev'); if (!el) return;
+    const v = parseBR($('val-patrimonio').value), rv = parseBR($('rend-patrimonio').value), tipo = $('rendtipo-patrimonio').value;
+    $('rend-patrimonio').placeholder = tipo === 'pct' ? 'Ex: 1,00' : 'Ex: 2.500,00';
+    if (!$('rend-patrimonio').value.trim() || isNaN(rv)) { el.textContent = ''; return; }
+    if (tipo === 'pct') el.textContent = !isNaN(v) && v > 0 ? `= ${fmt(r2(v*rv/100))} por mês` : '';
+    else el.textContent = !isNaN(v) && v > 0 ? `= ${fmtN(rv/v*100, 2)}% ao mês` : '';
+}
+async function salvarPatrimonio(e){
+    e.preventDefault();
+    const desc = $('desc-patrimonio').value.trim(), cat = $('cat-patrimonio').value;
+    const valBruto = parseBR($('val-patrimonio').value);          // checa antes de arredondar (r2 transforma inválido em 0)
+    const val = isNaN(valBruto) ? NaN : r2(valBruto);
+    const tipo = $('rendtipo-patrimonio').value;
+    const rTxt = $('rend-patrimonio').value.trim();
+    const rv = rTxt ? parseBR(rTxt) : 0;
+    if (!desc || !cat || isNaN(val) || val <= 0) return toast('Preencha descrição, categoria e valor maior que zero. Valor aceita 1.234,56 ou 1234,56.', 'error');
+    if (rTxt && (isNaN(rv) || rv < 0)) return toast('Rendimento inválido. Use, por exemplo, 1,00 (%) ou 2.500,00 (R$).', 'error');
+    if (tipo === 'pct' && rv > 30 && !confirm(`Rendimento de ${fmtN(rv,2)}% AO MÊS está certo?\n\nSe era valor em reais, cancele e troque o tipo para "R$ /mês".`)) return;
+    const id = patEditId;
+    const ok = await commit(d => {
+        let i = id ? d.find(x => x.id === id && x.type === 'patrimonio') : null;
+        if (id && !i) return;
+        if (!i) { i = { id: 'pt_' + Date.now(), type:'patrimonio', baseMonthKey:'global', recurring:false, paidMonths:[], paid:false }; d.push(i); }
+        i.description = desc; i.category = cat; i.value = val;
+        if (rv > 0) { i.rendTipo = tipo; i.rendValor = tipo === 'pct' ? Math.round(rv*10000)/10000 : r2(rv); }
+        else { delete i.rendTipo; delete i.rendValor; }
+    });
+    if (!ok) return;
+    cancelarPatrimonio();
+    toast(id ? 'Patrimônio atualizado.' : 'Patrimônio lançado.', 'success');
+}
+function editarPatrimonio(id){
+    const i = financialData.find(x => x.id === id && x.type === 'patrimonio'); if (!i) return;
+    patEditId = id;
+    const fc = $('form-card-patrimonio'); if (fc.classList.contains('min')) { fc.classList.remove('min'); rotuloMin('patrimonio'); }
+    $('desc-patrimonio').value = i.description;
+    $('cat-patrimonio').value = i.category;
+    $('val-patrimonio').value = fmtN(Number(i.value)||0);
+    $('rendtipo-patrimonio').value = i.rendTipo === 'valor' ? 'valor' : 'pct';
+    $('rend-patrimonio').value = i.rendTipo ? fmtN(Number(i.rendValor), i.rendTipo === 'pct' ? 2 : 2) : '';
+    prevPatrimonio();
+    $('btn-submit-patrimonio').textContent = 'Salvar';
+    $('btn-cancel-patrimonio').style.display = 'inline-flex';
+    $('pat-titulo').textContent = 'Editar Patrimônio';
+    fc.scrollIntoView({ behavior:'smooth', block:'start' });
+    setTimeout(() => $('desc-patrimonio').focus({ preventScroll:true }), 300);
+}
+function cancelarPatrimonio(){
+    patEditId = null;
+    ['desc-patrimonio','val-patrimonio','rend-patrimonio'].forEach(k => { const el = $(k); if (el) el.value = ''; });
+    const c = $('cat-patrimonio'); if (c) c.value = '';
+    const t = $('rendtipo-patrimonio'); if (t) t.value = 'pct';
+    prevPatrimonio();
+    $('btn-submit-patrimonio').textContent = 'Lançar';
+    $('btn-cancel-patrimonio').style.display = 'none';
+    $('pat-titulo').textContent = 'Lançar Patrimônio';
+}
+async function excluirPatrimonio(id){
+    const i = financialData.find(x => x.id === id && x.type === 'patrimonio'); if (!i) return;
+    if (!confirm(`Excluir "${i.description}" (${fmt(Number(i.value)||0)}) do patrimônio?`)) return;
+    const ok = await commit(d => { const k = d.findIndex(x => x.id === id && x.type === 'patrimonio'); if (k > -1) d.splice(k, 1); });
+    if (ok) { if (patEditId === id) cancelarPatrimonio(); toast('Patrimônio excluído.', 'success'); }
+}
+
+// ══════════════════════════════════════════════════════
 //  ENVIAR DESPESAS FIXAS PARA DESPESAS  (v1.10.0)
 //  Vínculo: a despesa guarda fixaId = id da fixa de origem.
 //  Regras:
@@ -2139,6 +2306,8 @@ function updateDropdowns() {
         s.innerHTML='<option value="">Selecione...</option>';
         s.innerHTML += (categories[t.type]||[]).map(c=>`<option value="${escH(c)}">${escH(c)}</option>`).join('');
     });
+    const sp=$('cat-patrimonio');
+    if(sp){ const v=sp.value; sp.innerHTML='<option value="">Selecione...</option>'+(categories.patrimonio||[]).map(c=>`<option value="${escH(c)}">${escH(c)}</option>`).join(''); sp.value=v; }
     const sf=$('cat-fixa');
     if(sf){ const v=sf.value; sf.innerHTML='<option value="">Selecione...</option>'+(categories.despesa||[]).map(c=>`<option value="${escH(c)}">${escH(c)}</option>`).join(''); sf.value=v; }
 }
@@ -2284,6 +2453,7 @@ function updateView() {
     });
 
     renderFixas();
+    renderPatrimonio();
 
     // MÉTRICAS
     const monthData=financialData.filter(i=>{
@@ -2491,7 +2661,7 @@ function rotuloMin(type){
     const min = card.classList.contains('min');
     { b.textContent = min ? '▾ Abrir' : '▴ Recolher'; b.setAttribute('aria-expanded', String(!min)); b.title = min ? 'Abrir a caixa de lançamento' : 'Recolher a caixa de lançamento'; }
 }
-function aplicarFormMin(){ const pref = formMinPref(); TABS.forEach(t => { if (pref[t.type]) minForm(t.type, true); }); if (pref.fixa) minForm('fixa', true); }
+function aplicarFormMin(){ const pref = formMinPref(); TABS.forEach(t => { if (pref[t.type]) minForm(t.type, true); }); if (pref.fixa) minForm('fixa', true); if (pref.patrimonio) minForm('patrimonio', true); }
 
 function renderTabs() {
     $('dynamic-tabs').innerHTML=TABS.map(tab=>`
@@ -2833,7 +3003,6 @@ function exportExcel() {
         { key: 'receita',    label: 'Receitas'   },
         { key: 'locacao',    label: 'Locações'   },
         { key: 'divida',     label: 'Dívidas'    },
-        { key: 'patrimonio', label: 'Patrimônio' },
         { key: 'conta',      label: 'Contas Bancárias' },
     ];
 
@@ -2872,6 +3041,18 @@ function exportExcel() {
 
         XLSX.utils.book_append_sheet(wb, ws, label);
     });
+
+    // ── Aba Patrimônio ──
+    const patX = financialData.filter(i => i.type === 'patrimonio');
+    if (patX.length) {
+        const rowsP = [['Descrição', 'Categoria', 'Valor (R$)', 'Rendimento informado', 'Rende por mês (R$)', 'Taxa a.m. (%)']];
+        patX.forEach(i => { const r = rendPat(i); rowsP.push([i.description, i.category, Number(i.value)||0, r.txt, r.mensal, r.taxa == null ? '—' : r2(r.taxa)]); });
+        const tP = patX.reduce((t,i) => t + (Number(i.value)||0), 0), rP = patX.reduce((t,i) => t + rendPat(i).mensal, 0);
+        rowsP.push(['TOTAL', '', r2(tP), '', r2(rP), tP > 0 ? r2(rP/tP*100) : '—']);
+        const wsP = XLSX.utils.aoa_to_sheet(rowsP);
+        wsP['!cols'] = [{ wch: 36 }, { wch: 18 }, { wch: 16 }, { wch: 22 }, { wch: 18 }, { wch: 14 }];
+        XLSX.utils.book_append_sheet(wb, wsP, 'Patrimônio');
+    }
 
     // ── Aba Despesas Fixas ──
     const fixasX = financialData.filter(i => i.type === 'fixa');
