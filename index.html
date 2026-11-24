@@ -282,6 +282,24 @@ td select{padding:3px 6px;font-size:12px}
 .env-item input{margin-top:3px;flex:none;width:17px;height:17px}
 .env-item small{display:block;color:var(--mut);font-size:12px}
 .env-aviso{font-weight:700}
+/* ── Fixos (v1.14.0): despesas e receitas fixas lado a lado ── */
+.fx-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:16px}
+.fx-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px;align-items:start}
+.fx-box{background:var(--sup);border:2.5px solid var(--tit);border-radius:var(--r);box-shadow:var(--sombra);overflow:hidden}
+.fx-head{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:14px 16px 12px;border-bottom:2.5px solid var(--tit)}
+.fx-head h2{margin:0;color:var(--tit)}
+.fx-total{text-align:right}
+.fx-total span{display:block;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--mut)}
+.fx-total strong{font-size:18px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.fx-form{padding:12px 16px 4px}
+.fx-acoes{display:flex;gap:8px;flex-wrap:wrap;padding:8px 16px 12px}
+.fx-box table td,.fx-box table th{padding-left:12px;padding-right:12px}
+.fx-box .num-cell{white-space:nowrap}
+.fx-box .cat-row td:first-child{white-space:normal}
+.fx-barra{height:12px;border-radius:6px;background:var(--bor);overflow:hidden;margin:8px 0 4px}
+.fx-barra>i{display:block;height:100%;background:var(--tit)}
+@media (max-width:900px){ .fx-grid{grid-template-columns:minmax(0,1fr)} .fx-kpis{grid-template-columns:repeat(2,minmax(0,1fr))} }
+@media (max-width:700px){ .fx-box .col-pct{display:none} }
 .pat-rend{display:flex;gap:0}
 .pat-rend select{max-width:100px;flex:none;border-top-right-radius:0;border-bottom-right-radius:0;border-right:none}
 .pat-rend input{border-top-left-radius:0;border-bottom-left-radius:0;min-width:0}
@@ -552,7 +570,7 @@ body[data-estilo="grafite"] nav button.tab-link.active{ border-bottom-color:var(
     <div class="nav-inner">
         <button class="tab-link active" onclick="openTab(event,'Dashboard')">Dashboard</button>
         <button class="tab-link" onclick="openTab(event,'Despesas')">Despesas</button>
-        <button class="tab-link" id="nav-DespesasFixas" onclick="openTab(event,'DespesasFixas')">Despesas Fixas</button>
+        <button class="tab-link" id="nav-DespesasFixas" onclick="openTab(event,'DespesasFixas')">Fixos</button>
         <button class="tab-link" onclick="openTab(event,'Receitas')">Receitas</button>
         <button class="tab-link" onclick="openTab(event,'Locacoes')">Locações</button>
         <button class="tab-link" id="nav-Dividas" onclick="openTab(event,'Dividas')">Dívidas</button>
@@ -653,42 +671,67 @@ body[data-estilo="grafite"] nav button.tab-link.active{ border-bottom-color:var(
         </div>
     </section>
 
-    <!-- DESPESAS FIXAS (v1.9.0) — só controle/consulta: não entra nos totais do mês -->
+    <!-- FIXOS (v1.14.0) — despesas e receitas fixas lado a lado. Só planejamento:
+         não entram nos totais do mês e não são apagados ao encerrar o mês -->
     <section id="DespesasFixas" class="tab-content">
-        <div class="card form-card" id="form-card-fixa">
-            <div class="form-card-head">
-                <h2 id="fixa-titulo">Lançar Despesa Fixa</h2>
-                <button type="button" class="btn btn-ghost btn-min" id="btn-min-fixa" onclick="minForm('fixa')" aria-expanded="true" title="Recolher a caixa de lançamento">▴ Recolher</button>
-            </div>
-            <form onsubmit="salvarFixa(event)">
-                <div class="form-row">
-                    <div class="form-field" style="flex:2;min-width:150px;"><label>Descrição</label><input id="desc-fixa" placeholder="Ex: Condomínio" required></div>
-                    <div class="form-field"><label>Categoria</label><select id="cat-fixa" required></select></div>
-                    <div class="form-field" style="max-width:120px;"><label>Dia de venc.</label><input id="dia-fixa" type="number" min="1" max="31" step="1" placeholder="Ex: 10"></div>
-                    <div class="form-field"><label>Valor mensal (R$)</label><input id="val-fixa" placeholder="0,00" required></div>
-                    <button type="submit" class="btn btn-primary" id="btn-submit-fixa">Lançar</button>
-                    <button type="button" class="btn btn-ghost" id="btn-cancel-fixa" style="display:none;" onclick="cancelarFixa()">Cancelar</button>
+        <div class="fx-kpis">
+            <div class="kpi"><div class="kpi-label">⬆ Receitas fixas / mês</div><div class="kpi-value" id="fxk-rec">R$ 0,00</div>
+                <div class="kpi-sub"><div class="kpi-sub-row"><span>Por ano</span><strong id="fxk-rec-ano">R$ 0,00</strong></div></div></div>
+            <div class="kpi"><div class="kpi-label">⬇ Despesas fixas / mês</div><div class="kpi-value" id="fxk-desp">R$ 0,00</div>
+                <div class="kpi-sub"><div class="kpi-sub-row"><span>Por ano</span><strong id="fxk-desp-ano">R$ 0,00</strong></div></div></div>
+            <div class="kpi kpi-highlight"><div class="kpi-label" id="fxk-sobra-rot">= Sobra fixa / mês</div><div class="kpi-value c-primary" id="fxk-sobra">R$ 0,00</div>
+                <div class="kpi-sub"><div class="kpi-sub-row"><span>Por ano</span><strong id="fxk-sobra-ano">R$ 0,00</strong></div></div></div>
+            <div class="kpi"><div class="kpi-label">Renda comprometida</div><div class="kpi-value" id="fxk-comp">—</div>
+                <div class="fx-barra"><i id="fxk-barra" style="width:0%"></i></div>
+                <div class="kpi-sub-row" style="margin-top:2px;"><span>das receitas fixas vão para as despesas fixas</span></div></div>
+        </div>
+        <div class="fx-grid">
+            <div class="fx-box">
+                <div class="fx-head">
+                    <h2 id="titulo-fixa">⬇ Despesas fixas</h2>
+                    <div class="fx-total"><span>Total por mês</span><strong id="tot-fixa">R$ 0,00</strong></div>
                 </div>
-            </form>
-            <p class="mis-note">Lista só para você saber quanto custa manter o mês. <strong>Não entra</strong> nos totais, no Dashboard nem em Atrasadas, e <strong>não é apagada</strong> ao encerrar o mês. Para levar as mudanças à aba Despesas, use <strong>⇧ Enviar para Despesas</strong>: ele só mexe nas despesas que vieram daqui.</p>
-        </div>
-        <div class="toolbar">
-            <div class="summary-strip">
-                <span>Custo fixo mensal: <strong id="sum-fixa-total">R$ 0,00</strong></span>
-                <span>Por ano: <strong id="sum-fixa-ano">R$ 0,00</strong></span>
-                <span>Itens: <strong id="sum-fixa-n">0</strong></span>
+                <form class="form-row fx-form" onsubmit="salvarFixo(event,'fixa')">
+                    <div class="form-field" style="flex:2;min-width:140px;"><label>Descrição</label><input id="desc-fixa" placeholder="Ex: Condomínio" required></div>
+                    <div class="form-field" style="min-width:130px;"><label>Categoria</label><select id="cat-fixa" required></select></div>
+                    <div class="form-field" style="max-width:76px;"><label>Dia</label><input id="dia-fixa" type="number" min="1" max="31" step="1" placeholder="10"></div>
+                    <div class="form-field" style="max-width:130px;"><label>Valor (R$)</label><input id="val-fixa" placeholder="0,00" required></div>
+                    <button type="submit" class="btn btn-primary" id="btn-submit-fixa">Lançar</button>
+                    <button type="button" class="btn btn-ghost" id="btn-cancel-fixa" style="display:none;" onclick="cancelarFixo('fixa')">Cancelar</button>
+                </form>
+                <div class="fx-acoes">
+                    <button class="filter-btn" onclick="importarFixos('fixa')" title="Copia os lançamentos do mês de trabalho que ainda não estão nesta lista">⇩ Importar das Despesas</button>
+                    <button class="filter-btn active" onclick="abrirEnviar('fixa')" title="Cria ou atualiza os lançamentos ligados a esta lista (mostra antes de gravar)">⇧ Enviar para Despesas</button>
+                </div>
+                <table id="table-fixa">
+                    <thead><tr><th>Descrição</th><th>Dia</th><th class="num-cell">Valor</th><th class="num-cell col-pct">%</th><th width="62"></th></tr></thead>
+                    <tbody></tbody>
+                </table>
             </div>
-            <div class="filter-group">
-                <button class="filter-btn" onclick="importarFixas()" title="Copia as despesas do mês de trabalho que ainda não estão nesta lista">⇩ Importar das Despesas do mês</button>
-                <button class="filter-btn active" onclick="abrirEnviar()" title="Cria ou atualiza na aba Despesas as despesas que vêm desta lista (mostra antes de gravar)">⇧ Enviar para Despesas</button>
+            <div class="fx-box">
+                <div class="fx-head">
+                    <h2 id="titulo-fixar">⬆ Receitas fixas</h2>
+                    <div class="fx-total"><span>Total por mês</span><strong id="tot-fixar">R$ 0,00</strong></div>
+                </div>
+                <form class="form-row fx-form" onsubmit="salvarFixo(event,'fixar')">
+                    <div class="form-field" style="flex:2;min-width:140px;"><label>Descrição</label><input id="desc-fixar" placeholder="Ex: Aluguel da casa" required></div>
+                    <div class="form-field" style="min-width:130px;"><label>Categoria</label><select id="cat-fixar" required></select></div>
+                    <div class="form-field" style="max-width:76px;"><label>Dia</label><input id="dia-fixar" type="number" min="1" max="31" step="1" placeholder="10"></div>
+                    <div class="form-field" style="max-width:130px;"><label>Valor (R$)</label><input id="val-fixar" placeholder="0,00" required></div>
+                    <button type="submit" class="btn btn-primary" id="btn-submit-fixar">Lançar</button>
+                    <button type="button" class="btn btn-ghost" id="btn-cancel-fixar" style="display:none;" onclick="cancelarFixo('fixar')">Cancelar</button>
+                </form>
+                <div class="fx-acoes">
+                    <button class="filter-btn" onclick="importarFixos('fixar')" title="Copia os lançamentos do mês de trabalho que ainda não estão nesta lista">⇩ Importar das Receitas e Locações</button>
+                    <button class="filter-btn active" onclick="abrirEnviar('fixar')" title="Cria ou atualiza os lançamentos ligados a esta lista (mostra antes de gravar)">⇧ Enviar para Receitas</button>
+                </div>
+                <table id="table-fixar">
+                    <thead><tr><th>Descrição</th><th>Dia</th><th class="num-cell">Valor</th><th class="num-cell col-pct">%</th><th width="62"></th></tr></thead>
+                    <tbody></tbody>
+                </table>
             </div>
         </div>
-        <div class="card" style="padding:0;">
-            <table id="table-fixa">
-                <thead><tr><th>Descrição</th><th width="12%">Dia venc.</th><th class="num-cell" width="18%">Valor mensal</th><th class="num-cell" width="12%">% do total</th><th width="10%">Ações</th></tr></thead>
-                <tbody></tbody>
-            </table>
-        </div>
+        <p class="mis-note">Só planejamento: <strong>não entra</strong> nos totais do mês, no Dashboard nem em Atrasadas, e <strong>não é apagado</strong> ao encerrar o mês. O <strong>⇧ Enviar</strong> mostra uma prévia e só mexe nos lançamentos que vieram daqui. Receita fixa com categoria de Locações vai para a aba Locações; as demais vão para Receitas.</p>
     </section>
 
     <!-- NOTAS -->
@@ -743,7 +786,7 @@ body[data-estilo="grafite"] nav button.tab-link.active{ border-bottom-color:var(
         <div class="card">
             <h2>Mês de trabalho</h2>
             <p style="font-size:12px;color:var(--text-muted);margin-bottom:8px;">O app mostra um único mês: <strong id="cfg-mes">—</strong>. Quando tudo estiver quitado, encerre o mês no Dashboard.</p>
-            <p style="font-size:12px;color:var(--text-muted);">Ao encerrar, os lançamentos e anotações do mês são <strong>apagados de vez</strong>. Os recorrentes continuam no mês seguinte, sem o histórico. Dívidas, patrimônio, despesas fixas e contas bancárias não são tocados.</p>
+            <p style="font-size:12px;color:var(--text-muted);">Ao encerrar, os lançamentos e anotações do mês são <strong>apagados de vez</strong>. Os recorrentes continuam no mês seguinte, sem o histórico. Dívidas, patrimônio, despesas e receitas fixas e contas bancárias não são tocados.</p>
         </div>
 
         <div class="card">
@@ -751,7 +794,7 @@ body[data-estilo="grafite"] nav button.tab-link.active{ border-bottom-color:var(
             <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">Escolha quais abas aparecem na navegação. Os dados continuam intactos mesmo com a aba oculta.</p>
             <div style="display:flex;flex-wrap:wrap;gap:12px;">
                 <label class="check-field" style="font-size:13px;font-weight:600;">
-                    <input type="checkbox" id="vis-DespesasFixas" checked onchange="toggleTabVisibility('DespesasFixas',this.checked)"> Despesas Fixas
+                    <input type="checkbox" id="vis-DespesasFixas" checked onchange="toggleTabVisibility('DespesasFixas',this.checked)"> Fixos (despesas e receitas fixas)
                 </label>
                 <label class="check-field" style="font-size:13px;font-weight:600;">
                     <input type="checkbox" id="vis-Dividas" checked onchange="toggleTabVisibility('Dividas',this.checked)"> Dívidas
@@ -848,6 +891,8 @@ const TABS = [
 //   1.1.0 (31/10/2026) Missão: Programação de recebimentos (+ Efetivar em Receitas); versão visível no app
 //   1.2.0 (07/11/2026) Pagamento/recebimento parcial (botão ½), com histórico e quitação automática
 //   1.3.0 (07/11/2026) Aba Missão retirada (vive no app próprio); dados dela preservados no Sheets
+//   1.14.0 (24/11/2026) Aba Fixos: despesas e receitas fixas lado a lado (com contorno), sobra fixa, renda comprometida;
+//                      receita fixa vai para Receitas ou Locações conforme a categoria
 //   1.13.0 (24/11/2026) Linhas de categoria em faixa escura com letra branca (destaque por claridade, não por cor)
 //   1.12.0 (23/11/2026) Botões A− / A+ para diminuir/aumentar a letra (80% a 150%, lembra no aparelho)
 //   1.11.0 (23/11/2026) Patrimônio com rendimento mensal (em % ou em R$), rende por mês, taxa e totais;
@@ -864,7 +909,7 @@ const TABS = [
 //   1.5.0 (20/11/2026) Aparência: 4 estilos visuais (Padrão, Planilha, Windows, Grafite) — Config. ou botão 🎨
 //   1.4.0 (20/11/2026) Mês único de trabalho: sem setas de mês; o mês fica salvo no Sheets e só muda ao "Encerrar o mês"
 // ══════════════════════════════════════════════════════
-const APP_VERSAO = '1.13.0';
+const APP_VERSAO = '1.14.0';
 const APP_VERSAO_DATA = '24/11/2026';
 document.querySelectorAll('[data-versao]').forEach(el => {
     el.textContent = el.dataset.versao === 'longa'
@@ -1896,135 +1941,172 @@ function cancelEdit() {
 }
 
 // ══════════════════════════════════════════════════════
-//  DESPESAS FIXAS  (v1.9.0)
-//  Lista de referência dos custos fixos: type:'fixa', baseMonthKey:'global'.
-//  Fica fora de tudo que é do mês: totais, Dashboard, Atrasadas e
+//  FIXOS  (v1.9.0 → v1.14.0): despesas fixas + receitas fixas
+//  Listas de planejamento, baseMonthKey:'global':
+//    type:'fixa'  → despesa fixa  (categorias de Despesas)
+//    type:'fixar' → receita fixa  (categorias de Receitas e de Locações)
+//  Ficam fora de tudo que é do mês: totais, Dashboard, Atrasadas e
 //  "Encerrar o mês" (limparAte só mexe em despesa/receita/locação/nota).
-//  Campos: description, category (lista de Despesas), value, dia (1-31, opcional).
+//  Campos: description, category, value, dia (1-31, opcional).
 // ══════════════════════════════════════════════════════
-let fixaEditId = null;
-function renderFixas(){
-    const tb = document.querySelector('#table-fixa tbody'); if (!tb) return;
-    const fixas = financialData.filter(i => i.type === 'fixa');
-    const total = r2(fixas.reduce((t,i) => t + Number(i.value||0), 0));
-    $('sum-fixa-total').textContent = fmt(total);
-    $('sum-fixa-ano').textContent = fmt(r2(total*12));
-    $('sum-fixa-n').textContent = fixas.length;
-    if (!fixas.length) {
-        tb.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:22px;color:var(--text-muted);">Nenhuma despesa fixa ainda. Lance acima ou use <strong>⇩ Importar das Despesas do mês</strong>.</td></tr>`;
-        return;
+const ABA_NOME = { despesa:'Despesas', receita:'Receitas', locacao:'Locações' };
+const FX = {
+    fixa:  { tipo:'fixa',  prefixo:'fx', alvos:['despesa'],            umNome:'despesa fixa', nomes:'despesas fixas', lanc:'despesa', lancs:'despesas', aba:'Despesas',
+             cats: () => (categories.despesa || []), destino: () => 'despesa' },
+    fixar: { tipo:'fixar', prefixo:'fr', alvos:['receita','locacao'], umNome:'receita fixa', nomes:'receitas fixas', lanc:'receita', lancs:'receitas', aba:'Receitas',
+             cats: () => [...(categories.receita || []), ...(categories.locacao || []).filter(c => !(categories.receita || []).includes(c))],
+             destino: cat => (categories.locacao || []).includes(cat) && !(categories.receita || []).includes(cat) ? 'locacao' : 'receita' }
+};
+const fxEdit = { fixa: null, fixar: null };
+const somaV = l => r2(l.reduce((t,i) => t + Number(i.value||0), 0));
+function selectFixos(){
+    const sd = $('cat-fixa');
+    if (sd) { const v = sd.value; sd.innerHTML = '<option value="">Selecione...</option>' + (categories.despesa||[]).map(c => `<option value="${escH(c)}">${escH(c)}</option>`).join(''); sd.value = v; }
+    const sr = $('cat-fixar');
+    if (sr) {
+        const v = sr.value, rec = categories.receita || [], loc = (categories.locacao || []).filter(c => !rec.includes(c));
+        sr.innerHTML = '<option value="">Selecione...</option>'
+            + `<optgroup label="Receitas">${rec.map(c => `<option value="${escH(c)}">${escH(c)}</option>`).join('')}</optgroup>`
+            + (loc.length ? `<optgroup label="Locações">${loc.map(c => `<option value="${escH(c)}">${escH(c)}</option>`).join('')}</optgroup>` : '');
+        sr.value = v;
     }
-    const ordem = categories.despesa || [];
-    const pos = c => { const k = ordem.indexOf(c); return k < 0 ? 999 : k; };
+}
+function renderListaFixa(k){
+    const cfg = FX[k], tb = document.querySelector(`#table-${k} tbody`); if (!tb) return 0;
+    const itens = financialData.filter(i => i.type === cfg.tipo);
+    const total = somaV(itens);
+    $(`tot-${k}`).textContent = `${k === 'fixa' ? '−' : '+'} ${fmt(total)}`;
+    if (!itens.length) {
+        tb.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:22px;color:var(--text-muted);">Nenhuma ${cfg.umNome} ainda. Lance acima ou use <strong>⇩ Importar</strong>.</td></tr>`;
+        return total;
+    }
+    const ordem = cfg.cats();
+    const pos = c => { const x = ordem.indexOf(c); return x < 0 ? 999 : x; };
     const grupos = {};
-    fixas.forEach(i => { (grupos[i.category] = grupos[i.category] || []).push(i); });
+    itens.forEach(i => { (grupos[i.category] = grupos[i.category] || []).push(i); });
     const pct = v => total > 0 ? `${fmtN(v/total*100,1)}%` : '—';
     tb.innerHTML = Object.keys(grupos).sort((a,b) => pos(a)-pos(b) || a.localeCompare(b)).map((cat, gi) => {
-        const itens = grupos[cat].sort((a,b) => (Number(a.dia)||99) - (Number(b.dia)||99) || String(a.description).localeCompare(String(b.description)));
-        const sub = r2(itens.reduce((t,i) => t + Number(i.value||0), 0));
-        const cls = `fixa-g${gi}`;
+        const g = grupos[cat].sort((a,b) => (Number(a.dia)||99) - (Number(b.dia)||99) || String(a.description).localeCompare(String(b.description)));
+        const sub = somaV(g), cls = `${k}-g${gi}`;
+        const aLoc = k === 'fixar' && cfg.destino(cat) === 'locacao' ? ' · Locações' : '';
         return `<tr class="cat-row" onclick="toggleRows('${cls}',this)">
-                <td colspan="2"><strong>▾ ${escH(cat)}</strong> <span style="font-weight:500;color:var(--text-muted);">(${itens.length})</span></td>
-                <td class="num-cell"><strong>${fmt(sub)}</strong></td><td class="num-cell">${pct(sub)}</td><td></td></tr>`
-            + itens.map(i => `<tr class="${cls}">
+                <td colspan="2"><strong>▾ ${escH(cat)}</strong> <span>(${g.length})${aLoc}</span></td>
+                <td class="num-cell"><strong>${fmt(sub)}</strong></td><td class="num-cell col-pct">${pct(sub)}</td><td></td></tr>`
+            + g.map(i => `<tr class="${cls}">
                 <td>${escH(i.description)}</td>
-                <td>${i.dia ? `dia ${i.dia}` : '—'}</td>
+                <td style="white-space:nowrap;">${i.dia ? `dia ${i.dia}` : '—'}</td>
                 <td class="num-cell"><strong>${fmt(i.value)}</strong></td>
-                <td class="num-cell">${pct(Number(i.value||0))}</td>
+                <td class="num-cell col-pct">${pct(Number(i.value||0))}</td>
                 <td><div style="display:flex;gap:4px;">
-                    <button class="btn btn-warning btn-sm" onclick="editarFixa('${i.id}')" title="Editar">✎</button>
-                    <button class="btn btn-danger btn-sm" onclick="excluirFixa('${i.id}')" title="Excluir">×</button>
+                    <button class="btn btn-warning btn-sm" onclick="editarFixo('${k}','${i.id}')" title="Editar">✎</button>
+                    <button class="btn btn-danger btn-sm" onclick="excluirFixo('${k}','${i.id}')" title="Excluir">×</button>
                 </div></td></tr>`).join('');
     }).join('');
+    return total;
+}
+function renderFixos(){
+    if (!$('table-fixa')) return;
+    selectFixos();
+    const td = renderListaFixa('fixa'), tr = renderListaFixa('fixar'), sobra = r2(tr - td);
+    $('fxk-rec').textContent = `+ ${fmt(tr)}`;      $('fxk-rec-ano').textContent = fmt(r2(tr*12));
+    $('fxk-desp').textContent = `− ${fmt(td)}`;     $('fxk-desp-ano').textContent = fmt(r2(td*12));
+    $('fxk-sobra-rot').textContent = sobra >= 0 ? '= Sobra fixa / mês' : '= Falta fixa / mês';
+    $('fxk-sobra').textContent = `${sobra >= 0 ? '+' : '−'} ${fmt(Math.abs(sobra))}`;
+    $('fxk-sobra').className = `kpi-value ${sobra >= 0 ? 'c-primary' : 'c-danger'}`;
+    $('fxk-sobra-ano').textContent = `${sobra >= 0 ? '' : '− '}${fmt(Math.abs(r2(sobra*12)))}`;
+    const comp = tr > 0 ? td / tr * 100 : null;
+    $('fxk-comp').textContent = comp == null ? '—' : `${fmtN(comp,1)}%`;
+    $('fxk-barra').style.width = `${comp == null ? 0 : Math.min(100, comp)}%`;
 }
 const diaFixa = v => { const n = parseInt(v, 10); return n >= 1 && n <= 31 ? n : null; };
-async function salvarFixa(e){
+async function salvarFixo(e, k){
     e.preventDefault();
-    const desc = $('desc-fixa').value.trim();
-    const cat  = $('cat-fixa').value;
-    const val  = r2(parseBR($('val-fixa').value));
-    const dia  = diaFixa($('dia-fixa').value);
+    const cfg = FX[k];
+    const desc = $(`desc-${k}`).value.trim(), cat = $(`cat-${k}`).value;
+    const bruto = parseBR($(`val-${k}`).value), val = isNaN(bruto) ? NaN : r2(bruto);
+    const dia = diaFixa($(`dia-${k}`).value);
     if (!desc || !cat || isNaN(val) || val <= 0) return toast('Preencha descrição, categoria e valor. Valor aceita 1.234,56 ou 1234,56.', 'error');
-    if ($('dia-fixa').value && !dia) return toast('Dia de vencimento deve ser de 1 a 31 (ou deixe vazio).', 'error');
-    const id = fixaEditId;
+    if ($(`dia-${k}`).value && !dia) return toast('Dia deve ser de 1 a 31 (ou deixe vazio).', 'error');
+    const id = fxEdit[k];
     const ok = await commit(d => {
         if (id) {
-            const i = d.find(x => x.id === id && x.type === 'fixa'); if (!i) return;
+            const i = d.find(x => x.id === id && x.type === cfg.tipo); if (!i) return;
             i.description = desc; i.category = cat; i.value = val;
             if (dia) i.dia = dia; else delete i.dia;
         } else {
-            const item = { id: 'fx_' + Date.now(), type:'fixa', description: desc, category: cat, value: val,
+            const item = { id: `${cfg.prefixo}_${Date.now()}`, type: cfg.tipo, description: desc, category: cat, value: val,
                            baseMonthKey:'global', recurring:false, paidMonths:[] };
             if (dia) item.dia = dia;
             d.push(item);
         }
     });
     if (!ok) return;
-    cancelarFixa();
-    toast(id ? 'Despesa fixa atualizada.' : 'Despesa fixa adicionada.', 'success');
+    cancelarFixo(k);
+    toast(`${cfg.umNome[0].toUpperCase() + cfg.umNome.slice(1)} ${id ? 'atualizada' : 'adicionada'}.`, 'success');
 }
-function editarFixa(id){
-    const i = financialData.find(x => x.id === id && x.type === 'fixa'); if (!i) return;
-    fixaEditId = id;
-    const fc = $('form-card-fixa'); if (fc && fc.classList.contains('min')) { fc.classList.remove('min'); rotuloMin('fixa'); }
-    $('desc-fixa').value = i.description;
-    $('cat-fixa').value = i.category;
-    $('val-fixa').value = fmtN(Number(i.value));
-    $('dia-fixa').value = i.dia || '';
-    $('btn-submit-fixa').textContent = 'Salvar';
-    $('btn-cancel-fixa').style.display = 'inline-flex';
-    $('fixa-titulo').textContent = 'Editar Despesa Fixa';
-    fc.scrollIntoView({ behavior:'smooth', block:'start' });
-    setTimeout(() => $('desc-fixa').focus({ preventScroll:true }), 300);
+function editarFixo(k, id){
+    const cfg = FX[k], i = financialData.find(x => x.id === id && x.type === cfg.tipo); if (!i) return;
+    fxEdit[k] = id;
+    $(`desc-${k}`).value = i.description;
+    $(`cat-${k}`).value = i.category;
+    $(`val-${k}`).value = fmtN(Number(i.value));
+    $(`dia-${k}`).value = i.dia || '';
+    $(`btn-submit-${k}`).textContent = 'Salvar';
+    $(`btn-cancel-${k}`).style.display = 'inline-flex';
+    $(`titulo-${k}`).textContent = `✎ Editando ${cfg.umNome}`;
+    $(`titulo-${k}`).closest('.fx-box').scrollIntoView({ behavior:'smooth', block:'start' });
+    setTimeout(() => $(`desc-${k}`).focus({ preventScroll:true }), 300);
 }
-function cancelarFixa(){
-    fixaEditId = null;
-    ['desc-fixa','val-fixa','dia-fixa'].forEach(k => { const el = $(k); if (el) el.value = ''; });
-    const c = $('cat-fixa'); if (c) c.value = '';
-    const b = $('btn-submit-fixa'); if (b) b.textContent = 'Lançar';
-    const x = $('btn-cancel-fixa'); if (x) x.style.display = 'none';
-    const t = $('fixa-titulo'); if (t) t.textContent = 'Lançar Despesa Fixa';
+function cancelarFixo(k){
+    fxEdit[k] = null;
+    ['desc','val','dia'].forEach(c => { const el = $(`${c}-${k}`); if (el) el.value = ''; });
+    const c = $(`cat-${k}`); if (c) c.value = '';
+    const b = $(`btn-submit-${k}`); if (b) b.textContent = 'Lançar';
+    const x = $(`btn-cancel-${k}`); if (x) x.style.display = 'none';
+    const t = $(`titulo-${k}`); if (t) t.textContent = k === 'fixa' ? '⬇ Despesas fixas' : '⬆ Receitas fixas';
 }
-async function excluirFixa(id){
-    const i = financialData.find(x => x.id === id && x.type === 'fixa'); if (!i) return;
-    const ligada = financialData.some(d => d.type === 'despesa' && d.fixaId === id);
-    if (!confirm(`Excluir "${i.description}" (${fmt(i.value)}) das despesas fixas?\n\nIsso não mexe na aba Despesas.${ligada ? '\nA despesa ligada a ela continua lá; no próximo "Enviar para Despesas" você escolhe se ela sai ou fica.' : ''}`)) return;
-    const ok = await commit(d => { const k = d.findIndex(x => x.id === id && x.type === 'fixa'); if (k > -1) d.splice(k, 1); });
-    if (ok) { if (fixaEditId === id) cancelarFixa(); toast('Despesa fixa excluída.', 'success'); }
+async function excluirFixo(k, id){
+    const cfg = FX[k], i = financialData.find(x => x.id === id && x.type === cfg.tipo); if (!i) return;
+    const ligada = financialData.some(d => cfg.alvos.includes(d.type) && d.fixaId === id);
+    if (!confirm(`Excluir "${i.description}" (${fmt(i.value)}) das ${cfg.nomes}?\n\nIsso não mexe nas outras abas.${ligada ? `\nO lançamento ligado a ela continua lá; no próximo "Enviar para ${cfg.aba}" você escolhe se ele sai ou fica.` : ''}`)) return;
+    const ok = await commit(d => { const x = d.findIndex(z => z.id === id && z.type === cfg.tipo); if (x > -1) d.splice(x, 1); });
+    if (ok) { if (fxEdit[k] === id) cancelarFixo(k); toast(`${cfg.umNome[0].toUpperCase() + cfg.umNome.slice(1)} excluída.`, 'success'); }
 }
-// Copia as despesas do mês de trabalho para a lista (só as que ainda não estão lá, pela descrição)
+// Copia os lançamentos do mês de trabalho para a lista (só os que ainda não estão lá, pela descrição)
 const normDesc = t => String(t||'').trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/\s+/g,' ');
-async function importarFixas(){
+const ativosNoMes = (tipos, mk) => { const [y,m] = mk.split('-').map(Number); return financialData.filter(i => tipos.includes(i.type) && !(i.skipMonths && i.skipMonths.includes(mk))
+    && (i.recurring ? monthValid(i.baseMonthKey, y, m, i.endMonthKey) : i.baseMonthKey === mk)); };
+async function importarFixos(k){
+    const cfg = FX[k];
     if (!dataLoaded) return toast('Aguarde os dados do Sheets carregarem.', 'error');
-    const y = currentDate.getFullYear(), m = currentDate.getMonth(), mk = `${y}-${m}`;
-    const doMes = financialData.filter(i => i.type === 'despesa' && !(i.skipMonths && i.skipMonths.includes(mk))
-        && (i.recurring ? monthValid(i.baseMonthKey, y, m, i.endMonthKey) : i.baseMonthKey === mk));
-    const ja = new Set(financialData.filter(i => i.type === 'fixa').map(i => normDesc(i.description)));
+    const mk = mkDe(currentDate);
+    const doMes = ativosNoMes(cfg.alvos, mk);
+    const ja = new Set(financialData.filter(i => i.type === cfg.tipo).map(i => normDesc(i.description)));
     const vistos = new Set(), novas = [];
     doMes.forEach(i => {
-        const k = normDesc(i.description);
-        if (!k || ja.has(k) || vistos.has(k)) return;
-        vistos.add(k);
+        const key = normDesc(i.description);
+        if (!key || ja.has(key) || vistos.has(key)) return;
+        vistos.add(key);
         const dia = i.dueDate ? diaFixa(String(i.dueDate).slice(8, 10)) : null;   // sem vencimento lançado: fica sem dia
         novas.push({ desc: i.description, cat: i.category, val: r2(i.value), dia });
     });
-    if (!novas.length) return toast(doMes.length ? 'Todas as despesas do mês já estão na lista.' : `Não há despesas lançadas em ${nomeMes(mk)}.`, 'info', 6000);
+    if (!novas.length) return toast(doMes.length ? `Todas as ${cfg.lancs} do mês já estão na lista.` : `Não há ${cfg.lancs} lançadas em ${nomeMes(mk)}.`, 'info', 6000);
     const soma = r2(novas.reduce((t,n) => t + n.val, 0));
-    if (!confirm(`Importar ${novas.length} ${novas.length===1?'despesa':'despesas'} de ${nomeMes(mk)} para Despesas Fixas (total ${fmt(soma)})?\n\n`
+    if (!confirm(`Importar ${novas.length} ${novas.length===1?cfg.lanc:cfg.lancs} de ${nomeMes(mk)} para ${cfg.nomes[0].toUpperCase() + cfg.nomes.slice(1)} (total ${fmt(soma)})?\n\n`
         + novas.slice(0, 8).map(n => `• ${n.desc} — ${fmt(n.val)}`).join('\n') + (novas.length > 8 ? `\n… e mais ${novas.length - 8}` : '')
-        + `\n\nA aba Despesas não muda. Depois é só ajustar ou excluir o que não for fixo.`)) return;
+        + `\n\nAs outras abas não mudam. Depois é só ajustar ou excluir o que não for fixo.`)) return;
     const base = Date.now();
     const ok = await commit(d => {
-        const jaAgora = new Set(d.filter(i => i.type === 'fixa').map(i => normDesc(i.description)));   // trava contra clique duplo
-        novas.forEach((n, k) => {
+        const jaAgora = new Set(d.filter(i => i.type === cfg.tipo).map(i => normDesc(i.description)));   // trava contra clique duplo
+        novas.forEach((n, x) => {
             if (jaAgora.has(normDesc(n.desc))) return;
-            const item = { id: `fx_${base}_${k}`, type:'fixa', description: n.desc, category: n.cat, value: n.val,
+            const item = { id: `${cfg.prefixo}_${base}_${x}`, type: cfg.tipo, description: n.desc, category: n.cat, value: n.val,
                            baseMonthKey:'global', recurring:false, paidMonths:[] };
             if (n.dia) item.dia = n.dia;
             d.push(item);
         });
     });
-    if (ok) toast(`${novas.length} ${novas.length===1?'despesa importada':'despesas importadas'} para Despesas Fixas.`, 'success', 6000);
+    if (ok) toast(`${novas.length} ${novas.length===1?'importada':'importadas'} para ${cfg.nomes[0].toUpperCase() + cfg.nomes.slice(1)}.`, 'success', 6000);
 }
 
 // ══════════════════════════════════════════════════════
@@ -2146,23 +2228,25 @@ async function excluirPatrimonio(id){
 }
 
 // ══════════════════════════════════════════════════════
-//  ENVIAR DESPESAS FIXAS PARA DESPESAS  (v1.10.0)
-//  Vínculo: a despesa guarda fixaId = id da fixa de origem.
+//  ENVIAR FIXOS PARA AS ABAS DO MÊS  (v1.10.0 → v1.14.0)
+//  Vínculo: o lançamento guarda fixaId = id da fixa de origem.
+//  Despesa fixa → aba Despesas. Receita fixa → Receitas ou Locações,
+//  conforme a categoria (categoria de Locações vai para Locações).
 //  Regras:
-//   - só cria/altera/remove despesas LIGADAS a uma fixa; as demais nunca
-//     são lidas para alteração (avulsas, mercado etc. ficam intactas);
-//   - 1º envio: fixa sem vínculo procura uma despesa do mês com a mesma
-//     descrição (sem vínculo) e se liga a ela, em vez de duplicar;
-//   - despesa criada/ligada fica RECORRENTE (segue de mês a mês);
-//   - despesa já paga (ou com parcial) no mês não muda de valor agora;
-//   - fixa excluída: a despesa ligada só sai se você marcar;
+//   - só cria/altera/remove lançamentos LIGADOS a uma fixa; os demais
+//     nunca são alterados (avulsos, mercado etc. ficam intactos);
+//   - 1º envio: fixa sem vínculo procura um lançamento do mês com a mesma
+//     descrição (sem vínculo) e se liga a ele, em vez de duplicar;
+//   - lançamento criado/ligado fica RECORRENTE (segue de mês a mês);
+//   - já pago/recebido (ou com parcial) no mês não muda de valor agora;
+//   - fixa excluída: o lançamento ligado só sai se você marcar;
 //   - tudo passa por uma prévia com caixa de seleção por item.
 // ══════════════════════════════════════════════════════
 let envPlano = null;
 const ateMk = (d, mk) => !d.endMonthKey || mkIdx(d.endMonthKey) >= mkIdx(mk);
-// "Linha" da despesa ligada que vale neste mês em diante
-function linhaDaFixa(fid, mk){
-    const l = financialData.filter(d => d.type === 'despesa' && d.fixaId === fid &&
+// "Linha" do lançamento ligado que vale neste mês em diante
+function linhaDaFixa(fid, mk, alvos){
+    const l = financialData.filter(d => alvos.includes(d.type) && d.fixaId === fid &&
         (d.recurring ? ateMk(d, mk) && mkIdx(d.baseMonthKey) <= mkIdx(mk) : d.baseMonthKey === mk));
     return l.find(d => d.recurring) || l[0] || null;
 }
@@ -2172,26 +2256,28 @@ function dataNoMes(mk, dia){
     const d = Math.min(dia, new Date(y, m+1, 0).getDate());
     return `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
 }
-function montarPlanoEnvio(){
-    const mk = mkDe(currentDate), [y,m] = mk.split('-').map(Number);
-    const fixas = financialData.filter(i => i.type === 'fixa');
+function montarPlanoEnvio(k){
+    const cfg = FX[k], mk = mkDe(currentDate);
+    const fixas = financialData.filter(i => i.type === cfg.tipo);
     const idsFixa = new Set(fixas.map(f => f.id));
-    const doMes = financialData.filter(d => d.type === 'despesa' && !(d.skipMonths && d.skipMonths.includes(mk))
-        && (d.recurring ? monthValid(d.baseMonthKey, y, m, d.endMonthKey) : d.baseMonthKey === mk));
+    const doMes = ativosNoMes(cfg.alvos, mk);
     const usadas = new Set();
-    const plano = { mk, novas: [], alts: [], orfas: [], iguais: 0, ligar: [] };
+    const pagoTxt = k === 'fixa' ? 'paga' : 'recebida', parcTxt = k === 'fixa' ? 'pagamento' : 'recebimento';
+    const plano = { k, mk, novas: [], alts: [], orfas: [], iguais: 0, ligar: [] };
     fixas.forEach(f => {
-        let d = linhaDaFixa(f.id, mk), ligar = false;
+        const dest = cfg.destino(f.category);
+        let d = linhaDaFixa(f.id, mk, cfg.alvos), ligar = false;
         if (!d) {
-            const k = normDesc(f.description);
-            const cands = doMes.filter(x => !x.fixaId && !usadas.has(x.id) && normDesc(x.description) === k);
-            d = cands.find(x => x.recurring) || cands[0] || null;
+            const key = normDesc(f.description);
+            const cands = doMes.filter(x => !x.fixaId && !usadas.has(x.id) && normDesc(x.description) === key);
+            d = cands.find(x => x.type === dest && x.recurring) || cands.find(x => x.type === dest) || cands.find(x => x.recurring) || cands[0] || null;
             if (d) ligar = true;
         }
-        if (!d) { plano.novas.push({ f }); return; }
+        if (!d) { plano.novas.push({ f, dest }); return; }
         usadas.add(d.id);
         const pago = estaQuitado(d, mk) || parcList(d, mk).length > 0;
         const mud = [], txt = [];
+        if (d.type !== dest) { mud.push('tipo'); txt.push(`Muda de aba: ${ABA_NOME[d.type]} → <strong>${ABA_NOME[dest]}</strong>`); }
         if (d.description !== f.description) { mud.push('description'); txt.push(`Descrição: "${escH(d.description)}" → "${escH(f.description)}"`); }
         if (d.category !== f.category) { mud.push('category'); txt.push(`Categoria: ${escH(d.category)} → ${escH(f.category)}`); }
         const diaD = diaDe(d.dueDate);
@@ -2199,41 +2285,44 @@ function montarPlanoEnvio(){
         if (!d.recurring) { mud.push('recurring'); txt.push('Passa a ser recorrente (segue nos próximos meses)'); }
         let aviso = '';
         if (r2(d.value) !== r2(f.value)) {
-            if (pago) aviso = `Já ${estaQuitado(d, mk) ? 'paga' : 'com pagamento parcial'} em ${nomeMes(mk).split(' ')[0]}: o valor continua ${fmt(d.value)} (fixa: ${fmt(f.value)}). Envie de novo depois de encerrar o mês.`;
+            if (pago) aviso = `Já ${estaQuitado(d, mk) ? pagoTxt : 'com ' + parcTxt + ' parcial'} em ${nomeMes(mk).split(' ')[0]}: o valor continua ${fmt(d.value)} (fixa: ${fmt(f.value)}). Envie de novo depois de encerrar o mês.`;
             else { mud.push('value'); txt.push(`Valor: ${fmt(d.value)} → <strong>${fmt(f.value)}</strong>`); }
         }
-        if (mud.length) plano.alts.push({ f, d, mud, txt, aviso, ligar });
-        else { plano.iguais++; if (ligar) plano.ligar.push({ f, d }); if (aviso) plano.alts.push({ f, d, mud, txt, aviso, ligar, soAviso: true }); }
+        if (mud.length) plano.alts.push({ f, d, dest, mud, txt, aviso, ligar });
+        else { plano.iguais++; if (ligar) plano.ligar.push({ f, d }); if (aviso) plano.alts.push({ f, d, dest, mud, txt, aviso, ligar, soAviso: true }); }
     });
-    // Despesas ligadas a uma fixa que não existe mais (só as que ainda valem a partir deste mês)
+    // Lançamentos ligados a uma fixa que não existe mais (só os que ainda valem a partir deste mês)
     const vistas = new Set();
     financialData.forEach(d => {
-        if (d.type !== 'despesa' || !d.fixaId || idsFixa.has(d.fixaId)) return;
+        if (!cfg.alvos.includes(d.type) || !d.fixaId || idsFixa.has(d.fixaId)) return;
         if (!(d.recurring ? ateMk(d, mk) : d.baseMonthKey === mk)) return;
         if (vistas.has(d.id)) return; vistas.add(d.id);
         plano.orfas.push({ d, pago: estaQuitado(d, mk) });
     });
     return plano;
 }
-function abrirEnviar(){
+function abrirEnviar(k){
+    const cfg = FX[k];
     if (!dataLoaded) return toast('Aguarde os dados do Sheets carregarem.', 'error');
-    if (!financialData.some(i => i.type === 'fixa')) return toast('Não há despesas fixas para enviar.', 'info');
-    envPlano = montarPlanoEnvio();
-    const p = envPlano, mesN = nomeMes(p.mk);
+    if (!financialData.some(i => i.type === cfg.tipo)) return toast(`Não há ${cfg.nomes} para enviar.`, 'info');
+    envPlano = montarPlanoEnvio(k);
+    const p = envPlano, mesN = nomeMes(p.mk), mes1 = mesN.split(' ')[0];
+    const pagoTxt = k === 'fixa' ? 'paga' : 'recebida';
+    const abas = k === 'fixa' ? 'aba Despesas' : 'abas Receitas e Locações';
     const nada = !p.novas.length && !p.alts.filter(a => !a.soAviso).length && !p.orfas.length;
-    const chk = (grp, k, on) => `<input type="checkbox" data-env="${grp}" data-k="${k}" ${on ? 'checked' : ''}>`;
+    const chk = (grp, x, on) => `<input type="checkbox" data-env="${grp}" data-k="${x}" ${on ? 'checked' : ''}>`;
     const sec = (titulo, html) => html ? `<div class="env-sec"><h4>${titulo}</h4>${html}</div>` : '';
     $('enviar-card').innerHTML = `
-        <h3>⇧ Enviar para Despesas · ${mesN}</h3>
-        <p style="margin-bottom:12px;">Confira e desmarque o que não quiser. Só as despesas que vieram das fixas são mexidas; as outras da aba Despesas ficam como estão.</p>
-        ${sec(`Novas na aba Despesas (${p.novas.length})`, p.novas.map((n,k) => `<label class="env-item">${chk('nova',k,true)}<span><strong>${escH(n.f.description)}</strong> — ${fmt(n.f.value)}
-            <small>${escH(n.f.category)} · ${n.f.dia ? 'vence dia ' + n.f.dia : 'vencimento padrão (dia ' + DIA_VENC_PADRAO + ')'} · recorrente</small></span></label>`).join(''))}
-        ${sec(`Diferentes da fixa (${p.alts.filter(a=>!a.soAviso).length})`, p.alts.filter(a=>!a.soAviso).map(a => `<label class="env-item">${chk('alt',p.alts.indexOf(a),true)}<span><strong>${escH(a.d.description)}</strong>
+        <h3>⇧ Enviar ${cfg.nomes} · ${mesN}</h3>
+        <p style="margin-bottom:12px;">Confira e desmarque o que não quiser. Só os lançamentos que vieram das ${cfg.nomes} são mexidos; os outros das ${abas} ficam como estão.</p>
+        ${sec(`Novas (${p.novas.length})`, p.novas.map((n,x) => `<label class="env-item">${chk('nova',x,true)}<span><strong>${escH(n.f.description)}</strong> — ${fmt(n.f.value)}
+            <small>Vai para <strong>${ABA_NOME[n.dest]}</strong> · ${escH(n.f.category)} · ${n.f.dia ? 'dia ' + n.f.dia : 'dia padrão (' + DIA_VENC_PADRAO + ')'} · recorrente</small></span></label>`).join(''))}
+        ${sec(`Diferentes da fixa (${p.alts.filter(a=>!a.soAviso).length})`, p.alts.filter(a=>!a.soAviso).map(a => `<label class="env-item">${chk('alt',p.alts.indexOf(a),true)}<span><strong>${escH(a.d.description)}</strong> <span style="color:var(--mut);font-size:12px;">(${ABA_NOME[a.d.type]})</span>
             <small>${a.txt.join('<br>')}${a.aviso ? `<br><span class="env-aviso">⚠ ${a.aviso}</span>` : ''}</small></span></label>`).join(''))}
         ${sec('Avisos', p.alts.filter(a=>a.soAviso).map(a => `<div class="env-item" style="cursor:default;"><span><strong>${escH(a.d.description)}</strong><small class="env-aviso">⚠ ${a.aviso}</small></span></div>`).join(''))}
-        ${sec(`Ligadas a fixas que você excluiu (${p.orfas.length})`, p.orfas.map((o,k) => `<label class="env-item">${chk('orfa',k,false)}<span>Remover <strong>${escH(o.d.description)}</strong> (${fmt(o.d.value)}) da aba Despesas
-            <small>${o.pago ? `Já paga em ${mesN.split(' ')[0]}: fica neste mês e para de repetir a partir do próximo.` : `Sai a partir de ${mesN.split(' ')[0]}.`} Desmarcada: a despesa fica e passa a ser uma despesa comum.</small></span></label>`).join(''))}
-        <p class="mis-note" style="margin:0 0 14px;">${p.iguais} ${p.iguais===1?'despesa já está igual':'despesas já estão iguais'} à fixa${p.ligar.length ? ` (${p.ligar.length} ${p.ligar.length===1?'será ligada':'serão ligadas'} à sua fixa, sem mudar nada)` : ''}.${nada && !p.ligar.length ? ' <strong>Nada a enviar.</strong>' : ''}</p>
+        ${sec(`Ligadas a fixas que você excluiu (${p.orfas.length})`, p.orfas.map((o,x) => `<label class="env-item">${chk('orfa',x,false)}<span>Remover <strong>${escH(o.d.description)}</strong> (${fmt(o.d.value)}) da aba ${ABA_NOME[o.d.type]}
+            <small>${o.pago ? `Já ${pagoTxt} em ${mes1}: fica neste mês e para de repetir a partir do próximo.` : `Sai a partir de ${mes1}.`} Desmarcada: o lançamento fica e passa a ser comum.</small></span></label>`).join(''))}
+        <p class="mis-note" style="margin:0 0 14px;">${p.iguais} ${p.iguais===1?'lançamento já está igual':'lançamentos já estão iguais'} à fixa${p.ligar.length ? ` (${p.ligar.length} ${p.ligar.length===1?'será ligado':'serão ligados'} à sua fixa, sem mudar nada)` : ''}.${nada && !p.ligar.length ? ' <strong>Nada a enviar.</strong>' : ''}</p>
         <div class="modal-btns">
             ${nada && !p.ligar.length ? '' : `<button class="btn btn-primary" id="env-btn" onclick="confirmarEnviar()">Confirmar e gravar</button>`}
             <button class="btn btn-ghost" onclick="fecharEnviar()">${nada && !p.ligar.length ? 'Fechar' : 'Cancelar'}</button>
@@ -2245,52 +2334,53 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape' && envPlano) 
 let enviando = false;
 async function confirmarEnviar(){
     if (!envPlano || enviando) return;
-    const p = envPlano, mk = p.mk;
-    const marcado = (g, k) => !!document.querySelector(`#enviar-card input[data-env="${g}"][data-k="${k}"]:checked`);
-    const novas = p.novas.filter((_,k) => marcado('nova', k)).map(n => n.f.id);
-    const alts  = p.alts.map((a,k) => (!a.soAviso && marcado('alt', k)) ? { fid: a.f.id, did: a.d.id, mud: a.mud } : null).filter(Boolean);
-    const liga  = [...p.ligar.map(l => ({ fid: l.f.id, did: l.d.id })), ...p.alts.filter((a,k) => a.ligar && (a.soAviso || !marcado('alt', k))).map(a => ({ fid: a.f.id, did: a.d.id }))];
-    const orfas = p.orfas.map((o,k) => ({ did: o.d.id, remove: marcado('orfa', k) }));
+    const p = envPlano, mk = p.mk, cfg = FX[p.k];
+    const marcado = (g, x) => !!document.querySelector(`#enviar-card input[data-env="${g}"][data-k="${x}"]:checked`);
+    const novas = p.novas.filter((_,x) => marcado('nova', x)).map(n => n.f.id);
+    const alts  = p.alts.map((a,x) => (!a.soAviso && marcado('alt', x)) ? { fid: a.f.id, did: a.d.id, mud: a.mud } : null).filter(Boolean);
+    const liga  = [...p.ligar.map(l => ({ fid: l.f.id, did: l.d.id })), ...p.alts.filter((a,x) => a.ligar && (a.soAviso || !marcado('alt', x))).map(a => ({ fid: a.f.id, did: a.d.id }))];
+    const orfas = p.orfas.map((o,x) => ({ did: o.d.id, remove: marcado('orfa', x) }));
     enviando = true;
     const b = $('env-btn'); if (b) { b.disabled = true; b.textContent = 'Gravando...'; }
     let nN = 0, nA = 0, nR = 0;
     const base = Date.now();
     const ok = await commit(d => {
         nN = nA = nR = 0;
-        const fx = id => d.find(x => x.id === id && x.type === 'fixa');
-        const dp = id => d.find(x => x.id === id && x.type === 'despesa');
-        novas.forEach((fid, k) => {
+        const fx = id => d.find(x => x.id === id && x.type === cfg.tipo);
+        const dp = id => d.find(x => x.id === id && cfg.alvos.includes(x.type));
+        novas.forEach((fid, x) => {
             const f = fx(fid); if (!f) return;
-            if (d.some(x => x.type === 'despesa' && x.fixaId === fid && (x.recurring ? ateMk(x, mk) : x.baseMonthKey === mk))) return;   // trava contra clique duplo
-            d.push({ id: `${base}_fx${k}`, type:'despesa', description: f.description, category: f.category, value: r2(f.value),
+            if (d.some(z => cfg.alvos.includes(z.type) && z.fixaId === fid && (z.recurring ? ateMk(z, mk) : z.baseMonthKey === mk))) return;   // trava contra clique duplo
+            d.push({ id: `${base}_${cfg.prefixo}${x}`, type: cfg.destino(f.category), description: f.description, category: f.category, value: r2(f.value),
                      baseMonthKey: mk, recurring: true, paidMonths: [], dueDate: f.dia ? dataNoMes(mk, f.dia) : vencPadrao(), fixaId: fid });
             nN++;
         });
         alts.forEach(a => {
-            const f = fx(a.fid), x = dp(a.did); if (!f || !x) return;
-            x.fixaId = f.id;
-            if (a.mud.includes('description')) x.description = f.description;
-            if (a.mud.includes('category'))    x.category = f.category;
-            if (a.mud.includes('dia') && f.dia) x.dueDate = dataNoMes(mk, f.dia);
-            if (a.mud.includes('recurring'))   { x.recurring = true; delete x.endMonthKey; }
-            if (a.mud.includes('value') && !estaQuitado(x, mk) && !parcList(x, mk).length) x.value = r2(f.value);
+            const f = fx(a.fid), z = dp(a.did); if (!f || !z) return;
+            z.fixaId = f.id;
+            if (a.mud.includes('tipo'))        z.type = cfg.destino(f.category);
+            if (a.mud.includes('description')) z.description = f.description;
+            if (a.mud.includes('category'))    z.category = f.category;
+            if (a.mud.includes('dia') && f.dia) z.dueDate = dataNoMes(mk, f.dia);
+            if (a.mud.includes('recurring'))   { z.recurring = true; delete z.endMonthKey; }
+            if (a.mud.includes('value') && !estaQuitado(z, mk) && !parcList(z, mk).length) z.value = r2(f.value);
             nA++;
         });
-        liga.forEach(l => { const x = dp(l.did); if (x && fx(l.fid)) x.fixaId = l.fid; });
+        liga.forEach(l => { const z = dp(l.did); if (z && fx(l.fid)) z.fixaId = l.fid; });
         orfas.forEach(o => {
-            const x = dp(o.did); if (!x) return;
-            if (!o.remove) { delete x.fixaId; return; }
+            const z = dp(o.did); if (!z) return;
+            if (!o.remove) { delete z.fixaId; return; }
             nR++;
-            if (estaQuitado(x, mk)) { if (x.recurring) x.endMonthKey = mk; delete x.fixaId; return; }   // paga: fica neste mês
-            if (!x.recurring || mkIdx(x.baseMonthKey) >= mkIdx(mk)) { d.splice(d.indexOf(x), 1); return; }
-            x.endMonthKey = mkSoma(mk, -1);
+            if (estaQuitado(z, mk)) { if (z.recurring) z.endMonthKey = mk; delete z.fixaId; return; }   // paga/recebida: fica neste mês
+            if (!z.recurring || mkIdx(z.baseMonthKey) >= mkIdx(mk)) { d.splice(d.indexOf(z), 1); return; }
+            z.endMonthKey = mkSoma(mk, -1);
         });
     });
     enviando = false;
     if (!ok) { if (b) { b.disabled = false; b.textContent = 'Confirmar e gravar'; } return; }
     fecharEnviar();
     const partes = [nN && `${nN} ${nN===1?'nova':'novas'}`, nA && `${nA} ${nA===1?'atualizada':'atualizadas'}`, nR && `${nR} ${nR===1?'removida':'removidas'}`].filter(Boolean);
-    toast(partes.length ? `Despesas: ${partes.join(', ')}.` : 'Vínculos gravados. Nenhuma despesa mudou.', 'success', 7000);
+    toast(partes.length ? `${cfg.nomes[0].toUpperCase() + cfg.nomes.slice(1)} enviadas: ${partes.join(', ')}.` : 'Vínculos gravados. Nenhum lançamento mudou.', 'success', 7000);
 }
 
 // ══════════════════════════════════════════════════════
@@ -2329,7 +2419,8 @@ async function deleteBank(id) {
 function syncCategories() {
     financialData.forEach(i => {
         if(i.type&&i.category&&i.type!=='conta'&&i.type!=='nota'){
-            const t = i.type==='fixa' ? 'despesa' : i.type;   // Despesas Fixas usam as categorias de Despesas
+            // Fixos usam as categorias das abas do mês: despesa fixa → Despesas; receita fixa → Receitas ou Locações
+            const t = i.type==='fixa' ? 'despesa' : i.type==='fixar' ? ((categories.receita||[]).includes(i.category)||!(categories.locacao||[]).includes(i.category) ? 'receita' : 'locacao') : i.type;
             if(!categories[t]) categories[t]=[];
             if(!categories[t].includes(i.category)) categories[t].push(i.category);
         }
@@ -2366,8 +2457,7 @@ function updateDropdowns() {
     });
     const sp=$('cat-patrimonio');
     if(sp){ const v=sp.value; sp.innerHTML='<option value="">Selecione...</option>'+(categories.patrimonio||[]).map(c=>`<option value="${escH(c)}">${escH(c)}</option>`).join(''); sp.value=v; }
-    const sf=$('cat-fixa');
-    if(sf){ const v=sf.value; sf.innerHTML='<option value="">Selecione...</option>'+(categories.despesa||[]).map(c=>`<option value="${escH(c)}">${escH(c)}</option>`).join(''); sf.value=v; }
+    if (typeof selectFixos === 'function') selectFixos();
 }
 // Move uma categoria na lista de ordenação e grava no Sheets
 async function moveCategory(type, idx, dir) {
@@ -2391,11 +2481,11 @@ function addCategory(type) {
 async function renameCategory(type, old) {
     const n=prompt('Renomear para:',old); if(!n||n===old)return;
     const idx=(categories[type]||[]).indexOf(old); if(idx>-1) categories[type][idx]=n;
-    await commit(d=>d.forEach(i=>{if((i.type===type||(type==='despesa'&&i.type==='fixa'))&&i.category===old)i.category=n;}));
+    await commit(d=>d.forEach(i=>{if((i.type===type||(type==='despesa'&&i.type==='fixa')||((type==='receita'||type==='locacao')&&i.type==='fixar'))&&i.category===old)i.category=n;}));
     renderCategories();
 }
 function removeCategory(type, name) {
-    const emUso = financialData.filter(i => (i.type === type || (type === 'despesa' && i.type === 'fixa')) && i.category === name).length;
+    const emUso = financialData.filter(i => (i.type === type || (type === 'despesa' && i.type === 'fixa') || ((type === 'receita' || type === 'locacao') && i.type === 'fixar')) && i.category === name).length;
     if (emUso) return toast(`"${escH(name)}" está em ${emUso} ${emUso===1?'lançamento':'lançamentos'}. Use ✎ para renomear ou mude a categoria deles antes de excluir.`, 'error', 8000);
     if(!confirm(`Excluir "${name}"?`))return;
     categories[type]=(categories[type]||[]).filter(c=>c!==name);
@@ -2435,7 +2525,7 @@ function updateView() {
     // ATRASADAS
     let atrasadas=[], totReceber=0, totPagar=0;
     financialData.forEach(item=>{
-        if(item.type==='conta'||item.type==='patrimonio'||item.type==='nota'||item.type==='fixa')return;
+        if(item.type==='conta'||item.type==='patrimonio'||item.type==='nota'||item.type==='fixa'||item.type==='fixar')return;
         const isIncome=item.type==='receita'||item.type==='locacao';
         if(item.type==='divida'){
             // Dívida não tem mês: fica "atrasada" pela data de vencimento (se houver) e não paga.
@@ -2510,12 +2600,12 @@ function updateView() {
         sel.innerHTML=opts;
     });
 
-    renderFixas();
+    renderFixos();
     renderPatrimonio();
 
     // MÉTRICAS
     const monthData=financialData.filter(i=>{
-        if(i.type==='conta' || i.type==='nota' || i.type==='fixa') return false;
+        if(i.type==='conta' || i.type==='nota' || i.type==='fixa' || i.type==='fixar') return false;
         if(GLOBAL_TYPES.includes(i.type)) return true;
         // skipMonths: meses substituídos por uma edição pontual — não devem aparecer
         if(i.skipMonths && i.skipMonths.includes(mk)) return false;
@@ -2719,7 +2809,7 @@ function rotuloMin(type){
     const min = card.classList.contains('min');
     { b.textContent = min ? '▾ Abrir' : '▴ Recolher'; b.setAttribute('aria-expanded', String(!min)); b.title = min ? 'Abrir a caixa de lançamento' : 'Recolher a caixa de lançamento'; }
 }
-function aplicarFormMin(){ const pref = formMinPref(); TABS.forEach(t => { if (pref[t.type]) minForm(t.type, true); }); if (pref.fixa) minForm('fixa', true); if (pref.patrimonio) minForm('patrimonio', true); }
+function aplicarFormMin(){ const pref = formMinPref(); TABS.forEach(t => { if (pref[t.type]) minForm(t.type, true); }); if (pref.patrimonio) minForm('patrimonio', true); }
 
 function renderTabs() {
     $('dynamic-tabs').innerHTML=TABS.map(tab=>`
@@ -2887,7 +2977,7 @@ async function encerrarMes(){
     const resp = prompt(`ENCERRAR ${nomeMes(mk).toUpperCase()} — NÃO TEM VOLTA\n\n`
         + `• ${antes - depois} ${antes - depois === 1 ? 'registro será APAGADO' : 'registros serão APAGADOS'} (lançamentos pagos/recebidos e anotações de ${mes} e meses anteriores).\n`
         + `• ${recs} ${recs === 1 ? 'lançamento recorrente continua' : 'lançamentos recorrentes continuam'} em ${nomeMes(prox)}, sem o histórico.\n`
-        + `• Dívidas, patrimônio, despesas fixas e contas bancárias não mudam.`
+        + `• Dívidas, patrimônio, despesas e receitas fixas e contas bancárias não mudam.`
         + (futuro ? `\n\nAtenção: ${nomeMes(prox)} ainda não começou no calendário.` : '')
         + `\n\nPara confirmar, digite ENCERRAR:`);
     if (resp === null) return;
@@ -3122,6 +3212,20 @@ function exportExcel() {
         const wsF = XLSX.utils.aoa_to_sheet(rowsF);
         wsF['!cols'] = [{ wch: 36 }, { wch: 20 }, { wch: 10 }, { wch: 18 }];
         XLSX.utils.book_append_sheet(wb, wsF, 'Despesas Fixas');
+    }
+
+    // ── Aba Receitas Fixas ──
+    const fixasR = financialData.filter(i => i.type === 'fixar');
+    if (fixasR.length) {
+        const rowsR = [['Descrição', 'Categoria', 'Vai para', 'Dia', 'Valor mensal (R$)']];
+        fixasR.slice().sort((a,b) => String(a.category).localeCompare(String(b.category)) || String(a.description).localeCompare(String(b.description)))
+            .forEach(i => rowsR.push([i.description, i.category, ABA_NOME[FX.fixar.destino(i.category)], i.dia || '—', i.value]));
+        const tR = r2(fixasR.reduce((t,i) => t + Number(i.value||0), 0)), tD = r2(financialData.filter(i => i.type === 'fixa').reduce((t,i) => t + Number(i.value||0), 0));
+        rowsR.push(['TOTAL', '', '', '', tR]);
+        rowsR.push([]); rowsR.push(['Sobra fixa por mês (receitas − despesas fixas)', '', '', '', r2(tR - tD)]);
+        const wsR = XLSX.utils.aoa_to_sheet(rowsR);
+        wsR['!cols'] = [{ wch: 40 }, { wch: 20 }, { wch: 12 }, { wch: 8 }, { wch: 18 }];
+        XLSX.utils.book_append_sheet(wb, wsR, 'Receitas Fixas');
     }
 
     // ── Aba Anotações ──
