@@ -25,6 +25,7 @@
   --zebra:#f5f7fa; --hov:#dde9f5;
   --neg:#b42318;
   --cat:#e2e7ee;
+  --catb:#2a4378; --catb-txt:#ffffff; --catb-hov:#36518b;   /* faixa das categorias (v1.13.0): escura, contraste por claridade */
   --sombra:0 1px 2px rgba(16,24,40,.05),0 4px 14px rgba(16,24,40,.06); --r:14px;
 }
 [data-theme="dark"]{
@@ -37,6 +38,7 @@
   --zebra:#20262f; --hov:#1b3040;
   --neg:#fda29b;
   --cat:#252c37;
+  --catb:#5b6f99; --catb-txt:#ffffff; --catb-hov:#6a7ea8;
   --sombra:0 1px 2px rgba(0,0,0,.3),0 4px 14px rgba(0,0,0,.25);
 }
 /* nomes antigos apontando para os tokens da agenda — mantém o JS intacto */
@@ -172,9 +174,12 @@ th{text-align:left;padding:7px 10px;font-size:11.5px;font-weight:700;letter-spac
 td{padding:4px 10px;border-bottom:1px solid var(--bor);vertical-align:middle;color:var(--txt);font-weight:400}
 tbody tr:last-child td{border-bottom:none}
 tbody tr:hover td{background:var(--hov)}
-.cat-row{background:var(--cat);cursor:pointer}
-.cat-row td{font-weight:700;font-size:12px;color:var(--mut);text-transform:uppercase;letter-spacing:.06em;border-top:1px solid var(--bor);padding-top:6px;padding-bottom:6px}
-.cat-row:hover td{background:var(--hov)}
+.cat-row{background:var(--catb);cursor:pointer}
+.cat-row td{background:var(--catb);font-weight:800;font-size:12.5px;color:var(--catb-txt);text-transform:uppercase;letter-spacing:.06em;border-top:6px solid var(--sup);padding-top:8px;padding-bottom:8px}
+.cat-row td strong{color:var(--catb-txt)}
+.cat-row td span{color:var(--catb-txt)!important;opacity:.85}
+.cat-row:first-child td{border-top:none}
+.cat-row:hover td{background:var(--catb-hov)}
 .row-paid td{color:var(--mut);background:var(--sup2);opacity:.42}
 .row-paid:hover td{background:var(--hov);opacity:.9}
 .row-paid.row-starred td{opacity:.6}
@@ -342,7 +347,7 @@ body[data-estilo="planilha"]:not([data-theme="dark"]){
   --bg:#ffffff; --sup:#ffffff; --sup2:#f3f3f3; --txt:#000000; --mut:#3f3f3f; --bor:#c8c8c8;
   --acc:#1f5fbf; --acc-soft:#dbe6f6;
   --nav:#1f3a5f; --nav-mut:#c9d4e3;
-  --tit:#1f3a5f; --cab:#e7e6e6; --zebra:#ffffff; --hov:#cfe0f5; --cat:#dde5f0;
+  --tit:#1f3a5f; --cab:#e7e6e6; --zebra:#ffffff; --hov:#cfe0f5; --cat:#dde5f0; --catb:#1f3a5f; --catb-hov:#2b4a74;
   --sombra:none;
 }
 body[data-estilo="planilha"]{ --r:0px; font-family:Calibri,Carlito,"Segoe UI",Arial,sans-serif; font-size:14px }
@@ -358,7 +363,7 @@ body[data-estilo="planilha"] th{ text-transform:none; letter-spacing:0; font-siz
 body[data-estilo="planilha"] th.num-cell{ text-align:right }
 body[data-estilo="planilha"] td{ padding:3px 8px }
 body[data-estilo="planilha"] tbody tr:last-child td{ border-bottom:1px solid var(--bor) }
-body[data-estilo="planilha"] .cat-row td{ text-transform:none; letter-spacing:0; font-size:13px; color:var(--txt) }
+body[data-estilo="planilha"] .cat-row td{ text-transform:none; letter-spacing:0; font-size:13px; border-top:4px solid var(--sup) }
 body[data-estilo="planilha"] .kpi-label, body[data-estilo="planilha"] .form-field label{ text-transform:none; letter-spacing:0; font-size:12.5px }
 body[data-estilo="planilha"] .kpi{ padding:12px 14px }
 body[data-estilo="planilha"] .kpi-value{ font-size:19px }
@@ -370,7 +375,7 @@ body[data-estilo="windows"]:not([data-theme="dark"]){
   --bg:#f3f3f3; --sup:#fbfbfb; --sup2:#f6f6f6; --txt:#1b1b1b; --mut:#5d5d5d; --bor:#e1e1e1;
   --acc:#005fb8; --acc-soft:#dfecf9;
   --nav:#ffffff; --nav-txt:#1b1b1b; --nav-mut:#5d5d5d; --nav-bor:#d6d6d6; --nav-hov:rgba(0,0,0,.05);
-  --tit:#1b1b1b; --cab:#f6f6f6; --zebra:#f9f9f9; --hov:#eaf2fb; --cat:#f0f0f0;
+  --tit:#1b1b1b; --cab:#f6f6f6; --zebra:#f9f9f9; --hov:#eaf2fb; --cat:#f0f0f0; --catb:#3a3f47; --catb-hov:#4a505a;
   --sombra:0 1px 2px rgba(0,0,0,.04),0 2px 6px rgba(0,0,0,.04);
 }
 body[data-estilo="windows"]{ --r:8px; font-family:"Segoe UI Variable","Segoe UI",system-ui,sans-serif }
@@ -397,7 +402,7 @@ body[data-estilo="grafite"]:not([data-theme="dark"]){
   --bg:#e9ecf0; --sup:#ffffff; --sup2:#f4f5f7; --txt:#1d232b; --mut:#626b78; --bor:#e3e6eb;
   --acc:#3366cc; --acc-soft:#e1e9f8;
   --nav:#232a33; --nav-mut:#a9b2bf;
-  --tit:#232a33; --cab:#ffffff; --zebra:#f7f8fa; --hov:#eef2f8; --cat:#f1f3f6;
+  --tit:#232a33; --cab:#ffffff; --zebra:#f7f8fa; --hov:#eef2f8; --cat:#f1f3f6; --catb:#2c343f; --catb-hov:#3a4350;
   --sombra:0 1px 3px rgba(20,25,35,.06);
 }
 body[data-estilo="grafite"]{ --r:6px }
@@ -843,6 +848,7 @@ const TABS = [
 //   1.1.0 (31/10/2026) Missão: Programação de recebimentos (+ Efetivar em Receitas); versão visível no app
 //   1.2.0 (07/11/2026) Pagamento/recebimento parcial (botão ½), com histórico e quitação automática
 //   1.3.0 (07/11/2026) Aba Missão retirada (vive no app próprio); dados dela preservados no Sheets
+//   1.13.0 (24/11/2026) Linhas de categoria em faixa escura com letra branca (destaque por claridade, não por cor)
 //   1.12.0 (23/11/2026) Botões A− / A+ para diminuir/aumentar a letra (80% a 150%, lembra no aparelho)
 //   1.11.0 (23/11/2026) Patrimônio com rendimento mensal (em % ou em R$), rende por mês, taxa e totais;
 //                      sai o checkbox de pago/recorrente da aba (lançamentos antigos preservados)
@@ -858,8 +864,8 @@ const TABS = [
 //   1.5.0 (20/11/2026) Aparência: 4 estilos visuais (Padrão, Planilha, Windows, Grafite) — Config. ou botão 🎨
 //   1.4.0 (20/11/2026) Mês único de trabalho: sem setas de mês; o mês fica salvo no Sheets e só muda ao "Encerrar o mês"
 // ══════════════════════════════════════════════════════
-const APP_VERSAO = '1.12.0';
-const APP_VERSAO_DATA = '23/11/2026';
+const APP_VERSAO = '1.13.0';
+const APP_VERSAO_DATA = '24/11/2026';
 document.querySelectorAll('[data-versao]').forEach(el => {
     el.textContent = el.dataset.versao === 'longa'
         ? `Controle Financeiro · versão ${APP_VERSAO} · ${APP_VERSAO_DATA}`
