@@ -236,8 +236,12 @@ td select{padding:3px 6px;font-size:12px}
 
 /* ── Contas bancárias (card integrado ao Dashboard — v1.17.0 / compacto v1.17.1) ── */
 .kpi-banks{grid-column:span 2}
-.kpi-head-row{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
-.btn-kpi-add{padding:2px 8px;font-size:11px;line-height:1.25;border-radius:6px;min-height:0!important;letter-spacing:0;text-transform:none;margin:-3px 0}
+.kpi-head-row{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:8px}
+.kpi-head-ctrl{display:inline-flex;align-items:center;gap:2px;flex:none;margin:-3px 0}
+.btn-kpi-add{padding:2px 8px;font-size:11px;line-height:1.25;border-radius:6px;min-height:0!important;letter-spacing:0;text-transform:none;margin-right:3px}
+.kpi-mv{width:20px;height:20px;display:inline-grid;place-items:center;border:1px solid transparent;border-radius:5px;background:transparent;color:var(--mut);font-size:10px;line-height:1;opacity:.65;transition:all .15s}
+.kpi-mv:hover:not(:disabled){opacity:1;border-color:var(--bor);background:var(--acc-soft);color:var(--acc)}
+.kpi-mv:disabled{opacity:.18;cursor:default}
 .bank-add-box{margin-top:8px;padding:8px;background:var(--sup2);border:1px solid var(--bor);border-radius:8px;display:flex;flex-direction:column;gap:6px}
 .bank-add-row{display:flex;gap:6px;flex-wrap:wrap}
 .bank-add-row input{flex:1;min-width:100px;padding:4px 8px;font-size:12.5px}
@@ -520,6 +524,7 @@ body[data-estilo="grafite"] nav button.tab-link.active{ border-bottom-color:var(
   .filter-btn { flex: none; padding: 8px 12px; font-size: 13px; min-height: 38px; }
   .filter-divider { display: none; }
   .kpi-banks { grid-column: 1 / -1; }
+  .kpi-mv { width: 28px; height: 28px; font-size: 11px; border-color: var(--bor); opacity: .85; }
   .bank-kpi-list { max-height: none; gap: 6px; }
   .bank-row { gap: 6px; padding: 4px 0; border-bottom: 1px solid var(--bor); }
   .bank-row:last-child { border-bottom: none; }
@@ -855,6 +860,7 @@ body[data-estilo="grafite"] nav button.tab-link.active{ border-bottom-color:var(
     <!-- DASHBOARD -->
     <section id="Dashboard" class="tab-content active">
         <div class="acoes-dash">
+            <button class="btn btn-ghost" id="btn-dash-reset" style="display:none;" onclick="resetDashOrder()" title="Voltar as caixas do Dashboard para a ordem original">↺ Ordem padrão</button>
             <button class="btn btn-primary" onclick="forceSave()" title="Grava todos os dados no Google Sheets agora">💾 Salvar no Sheets</button>
             <button class="btn btn-success" onclick="exportExcel()">📊 Exportar para Excel</button>
         </div>
@@ -1172,6 +1178,7 @@ const TABS = [
 //   1.1.0 (31/10/2026) Missão: Programação de recebimentos (+ Efetivar em Receitas); versão visível no app
 //   1.2.0 (07/11/2026) Pagamento/recebimento parcial (botão ½), com histórico e quitação automática
 //   1.3.0 (07/11/2026) Aba Missão retirada (vive no app próprio); dados dela preservados no Sheets
+//   1.18.0 (25/11/2026) Dashboard com botões ◀ ▶ para reordenar as caixas (salvo por aparelho) e botão ↺ Ordem padrão
 //   1.17.1 (25/11/2026) Card Saldos Bancários compactado no Dashboard para manter todas as caixas proporcionais
 //   1.17.0 (25/11/2026) Remoção da aba Locações com migração automática para Receitas; Contas Bancárias integradas ao card Saldos Bancários no Dashboard
 //   1.16.2 (25/11/2026) Gastos diários: daysLeft() passa a contar os dias reais de hoje até o último dia do mês de trabalho (inclusive quando o mês de trabalho está adiantado)
@@ -1198,7 +1205,7 @@ const TABS = [
 //   1.5.0 (20/11/2026) Aparência: 4 estilos visuais (Padrão, Planilha, Windows, Grafite) — Config. ou botão 🎨
 //   1.4.0 (20/11/2026) Mês único de trabalho: sem setas de mês; o mês fica salvo no Sheets e só muda ao "Encerrar o mês"
 // ══════════════════════════════════════════════════════
-const APP_VERSAO = '1.17.1';
+const APP_VERSAO = '1.18.0';
 const APP_VERSAO_DATA = '25/11/2026';
 document.querySelectorAll('[data-versao]').forEach(el => {
     el.textContent = el.dataset.versao === 'longa'
@@ -2910,34 +2917,46 @@ function updateView() {
                 <button class="btn btn-danger btn-sm" onclick="deleteBank('${b.id}')" title="Remover conta">×</button>
             </div></div>`).join('')}</div>`;
 
-    const kg=$('kpi-grid');
-    if(kg) kg.innerHTML=`
-        ${kpi('Receitas',metrics.receita,'Recebido','A Receber','c-success','c-warning','c-primary')}
-        ${kpi('Despesas',metrics.despesa,'Pago','A Pagar','c-success','c-danger','c-danger',true)}
-        <div class="kpi kpi-banks">
+    const order = getDashOrder();
+    const btnReset = $('btn-dash-reset');
+    if (btnReset) btnReset.style.display = isDashCustomOrder(order) ? 'inline-flex' : 'none';
+    const mvBtns = (id, idx) => `<button type="button" class="kpi-mv" onclick="moveDashCard('${id}',-1)" ${idx===0?'disabled':''} title="Mover para esquerda" aria-label="Mover para esquerda">◀</button><button type="button" class="kpi-mv" onclick="moveDashCard('${id}',1)" ${idx===order.length-1?'disabled':''} title="Mover para direita" aria-label="Mover para direita">▶</button>`;
+
+    const kpiCards = {
+        receitas:  idx => kpi('Receitas',metrics.receita,'Recebido','A Receber','c-success','c-warning','c-primary',false,mvBtns('receitas',idx)),
+        despesas:  idx => kpi('Despesas',metrics.despesa,'Pago','A Pagar','c-success','c-danger','c-danger',true,mvBtns('despesas',idx)),
+        bancos:    idx => `<div class="kpi kpi-banks">
             <div class="kpi-label kpi-head-row">
                 <span>💳 Saldos Bancários</span>
-                <button type="button" class="btn btn-ghost btn-kpi-add" onclick="toggleBankForm()" title="${bankFormOpen?'Fechar formulário':'Adicionar nova conta bancária'}">${bankFormOpen?'▴ Fechar':'＋ Nova'}</button>
+                <span class="kpi-head-ctrl">
+                    <button type="button" class="btn btn-ghost btn-kpi-add" onclick="toggleBankForm()" title="${bankFormOpen?'Fechar formulário':'Adicionar nova conta bancária'}">${bankFormOpen?'▴ Fechar':'＋ Nova'}</button>
+                    ${mvBtns('bancos',idx)}
+                </span>
             </div>
             <div class="kpi-value ${totalBank>=0?'c-primary':'c-danger'}">${fmtSigned(totalBank)}</div>
             ${bankFormHtml}
             ${bankRowsHtml}
-        </div>
-        <div class="kpi kpi-danger"><div class="kpi-label">📅 Gastos Diários</div>
+        </div>`,
+        diarios:   idx => `<div class="kpi kpi-danger">
+            <div class="kpi-label kpi-head-row"><span>📅 Gastos Diários</span><span class="kpi-head-ctrl">${mvBtns('diarios',idx)}</span></div>
             <div class="kpi-value c-danger">- ${fmt(prev)}</div>
             <div class="kpi-sub">
                 <div class="kpi-sub-row"><span>Dias restantes</span><strong>${dl}</strong></div>
                 <div class="kpi-sub-row"><span>Meta diária</span><strong>${fmt(dr)}</strong></div>
-            </div></div>
-        <div class="kpi kpi-highlight"><div class="kpi-label">📊 Resultado do Mês</div>
+            </div></div>`,
+        resultado: idx => `<div class="kpi kpi-highlight">
+            <div class="kpi-label kpi-head-row"><span>📊 Resultado do Mês</span><span class="kpi-head-ctrl">${mvBtns('resultado',idx)}</span></div>
             <div class="kpi-value ${saldo>=0?'c-primary':'c-danger'}">${fmtSigned(saldo)}</div>
             <div class="kpi-sub">
                 <div class="kpi-sub-row"><span>A Receber</span><strong class="c-success">${fmt(metrics.receita.aPagar)}</strong></div>
                 <div class="kpi-sub-row"><span>Despesas</span><strong class="c-danger">- ${fmt(metrics.despesa.aPagar)}</strong></div>
                 <div class="kpi-sub-row"><span>Saldos Bancários</span><strong class="${totalBank>=0?'c-success':'c-danger'}">${fmtSigned(totalBank)}</strong></div>
                 <div class="kpi-sub-row"><span>Gastos Diários</span><strong class="c-danger">- ${fmt(prev)}</strong></div>
-            </div></div>
-`;
+            </div></div>`
+    };
+
+    const kg=$('kpi-grid');
+    if(kg) kg.innerHTML = order.map((id, idx) => kpiCards[id](idx)).join('');
 }
 
 // ── Soma um tipo num mês específico (respeita recorrência e encerramento) ──
@@ -2956,11 +2975,42 @@ function sumTypeInMonth(type, y, m) {
     return total;
 }
 
-function kpi(label,m,l1,l2,c1,c2,mainColor,isExpense){
+// ── Ordem personalizável das caixas do Dashboard (v1.18.0) ──
+const DASH_DEFAULT_ORDER = ['receitas', 'despesas', 'bancos', 'diarios', 'resultado'];
+function getDashOrder() {
+    try {
+        const saved = JSON.parse(localStorage.getItem('dashOrder') || 'null');
+        if (Array.isArray(saved)) {
+            const valid = saved.filter(id => DASH_DEFAULT_ORDER.includes(id));
+            const missing = DASH_DEFAULT_ORDER.filter(id => !valid.includes(id));
+            return [...valid, ...missing];
+        }
+    } catch (e) {}
+    return [...DASH_DEFAULT_ORDER];
+}
+function isDashCustomOrder(order) {
+    return order.some((id, i) => id !== DASH_DEFAULT_ORDER[i]);
+}
+function moveDashCard(id, dir) {
+    const order = getDashOrder();
+    const idx = order.indexOf(id);
+    const target = idx + dir;
+    if (idx < 0 || target < 0 || target >= order.length) return;
+    [order[idx], order[target]] = [order[target], order[idx]];
+    localStorage.setItem('dashOrder', JSON.stringify(order));
+    updateView();
+}
+function resetDashOrder() {
+    localStorage.removeItem('dashOrder');
+    updateView();
+    toast('Ordem padrão das caixas restaurada.', 'info', 2000);
+}
+
+function kpi(label,m,l1,l2,c1,c2,mainColor,isExpense,mvHtml=''){
     // Valor principal = o que ainda falta (aPagar/A Receber), cor fixa por tipo
     // Despesas mostram sinal de menos pois representam saída de dinheiro
     const mainVal = isExpense ? `- ${fmt(m.aPagar)}` : fmt(m.aPagar);
-    return`<div class="kpi"><div class="kpi-label">${label}</div>
+    return`<div class="kpi"><div class="kpi-label kpi-head-row"><span>${label}</span><span class="kpi-head-ctrl">${mvHtml}</span></div>
         <div class="kpi-value ${mainColor}">${mainVal}</div>
         <div class="kpi-sub">
             <div class="kpi-sub-row"><span>${l1}</span><strong class="${c1}">${fmt(m.pago)}</strong></div>
