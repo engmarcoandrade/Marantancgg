@@ -234,11 +234,20 @@ td select{padding:3px 6px;font-size:12px}
 .filter-btn-star.active{color:var(--acc-txt)}
 .filter-btn-group.active{background:var(--acc);color:var(--acc-txt);border-color:var(--acc)}
 
-/* ── Contas bancárias ── */
-.bank-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 4px;border-bottom:1px solid var(--bor)}
+/* ── Contas bancárias (card integrado ao Dashboard — v1.17.0) ── */
+.kpi-banks{grid-column:span 2}
+.kpi-head-row{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
+.btn-kpi-add{padding:4px 9px;font-size:11.5px;border-radius:8px;min-height:0!important;letter-spacing:0;text-transform:none}
+.bank-add-box{margin-top:10px;padding:10px;background:var(--sup2);border:1px solid var(--bor);border-radius:10px;display:flex;flex-direction:column;gap:8px}
+.bank-add-row{display:flex;gap:6px;flex-wrap:wrap}
+.bank-add-row input{flex:1;min-width:110px;padding:6px 9px;font-size:13px}
+.bank-add-actions{display:flex;gap:6px;justify-content:flex-end}
+.bank-kpi-list{margin-top:10px;padding-top:8px;border-top:1px solid var(--bor);display:flex;flex-direction:column;gap:6px}
+.bank-row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid var(--bor)}
 .bank-row:last-child{border-bottom:none}
-.bank-row input{width:150px;text-align:right;font-weight:700;padding:8px 10px}
-.bank-val{font-weight:700;cursor:pointer;color:var(--acc);text-decoration:underline dotted}
+.bank-row-name{font-size:13px;font-weight:600;color:var(--txt);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0}
+.bank-row-ctrl{display:flex;align-items:center;gap:4px;flex:none}
+.bank-row input{width:120px;text-align:right;font-weight:700;font-size:13px;padding:4px 7px;border-radius:8px}
 
 /* ── Categorias ── */
 .cat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
@@ -368,6 +377,7 @@ body[data-estilo="planilha"] .form-card-head h2{border:none;padding:0}
   /* minmax(0,1fr) deixa a coluna encolher abaixo do conteudo — sem 1fr puro
      o valor largo empurrava o grid para fora da tela */
   .kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+  .kpi-banks{grid-column:1/-1}
   .kpi{padding:14px}
   .kpi-value{font-size:18px}
   .status-pill{font-size:11px;padding:3px 9px}
@@ -508,8 +518,11 @@ body[data-estilo="grafite"] nav button.tab-link.active{ border-bottom-color:var(
   .filter-group { width: 100%; overflow-x: auto; flex-wrap: nowrap; padding-bottom: 2px; -webkit-overflow-scrolling: touch; }
   .filter-btn { flex: none; padding: 8px 12px; font-size: 13px; min-height: 38px; }
   .filter-divider { display: none; }
-  .bank-row { flex-wrap: wrap; gap: 8px; }
-  .bank-row input { width: 135px !important; }
+  .kpi-banks { grid-column: 1 / -1; }
+  .bank-row { gap: 6px; padding: 6px 0; }
+  .bank-row input { width: 126px !important; min-height: 38px; padding: 6px 8px; font-size: 15px; }
+  .bank-row .btn-sm { width: 34px; height: 34px; min-height: 34px; padding: 0; border: 1px solid var(--bor); background: var(--sup2); }
+  .bank-add-row input { min-height: 40px; font-size: 16px; }
   .mes-card .mes-acoes { width: 100%; }
   .mes-card .mes-acoes .btn { width: 100%; }
   .pat-rend select { max-width: 112px; }
@@ -648,7 +661,7 @@ body[data-estilo="grafite"] nav button.tab-link.active{ border-bottom-color:var(
   /* ── BARRA INFERIOR FIXA (BOTTOM NAV) ── */
   #mobile-nav {
     display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     position: fixed; left: 0; right: 0; bottom: 0; z-index: 950;
     background: var(--sup);
     border-top: 1px solid var(--bor);
@@ -824,7 +837,6 @@ body[data-estilo="grafite"] nav button.tab-link.active{ border-bottom-color:var(
         <button class="tab-link" data-tab="Despesas" onclick="openTab(event,'Despesas')">Despesas</button>
         <button class="tab-link" id="nav-DespesasFixas" data-tab="DespesasFixas" onclick="openTab(event,'DespesasFixas')">Fixos</button>
         <button class="tab-link" data-tab="Receitas" onclick="openTab(event,'Receitas')">Receitas</button>
-        <button class="tab-link" data-tab="Locacoes" onclick="openTab(event,'Locacoes')">Locações</button>
         <button class="tab-link" id="nav-Dividas" data-tab="Dividas" onclick="openTab(event,'Dividas')">Dívidas</button>
         <button class="tab-link" id="nav-Patrimonio" data-tab="Patrimonio" onclick="openTab(event,'Patrimonio')">Patrimônio</button>
         <button class="tab-link" data-tab="Notas" onclick="openTab(event,'Notas')">📝 Anotações</button>
@@ -844,19 +856,6 @@ body[data-estilo="grafite"] nav button.tab-link.active{ border-bottom-color:var(
         </div>
         <div class="mes-box" id="mes-card"></div>
         <div class="kpi-grid" id="kpi-grid"></div>
-
-        <div class="flex-row">
-            <div class="card flex-col">
-                <h2>Contas Bancárias</h2>
-                <div class="form-row" style="margin-bottom:12px;">
-                    <div class="form-field"><label>Banco</label><input id="bank-name" placeholder="Ex: Nubank"></div>
-                    <div class="form-field"><label>Saldo</label><input id="bank-val" inputmode="decimal" placeholder="Ex: 1500,50"></div>
-                    <button class="btn btn-primary" onclick="addBank()">Adicionar</button>
-                </div>
-                <div id="bank-list"></div>
-                <div style="text-align:right;margin-top:10px;font-size:13px;">Total: <strong id="total-banks" class="c-primary">R$ 0,00</strong></div>
-            </div>
-        </div>
     </section>
 
     <!-- TABS DINÂMICAS -->
@@ -969,7 +968,7 @@ body[data-estilo="grafite"] nav button.tab-link.active{ border-bottom-color:var(
                         </div>
                     </form>
                     <div class="fx-acoes">
-                        <button class="filter-btn" onclick="importarFixos('fixar')" title="Copia os lançamentos do mês de trabalho que ainda não estão nesta lista">⇩ Importar das Receitas e Locações</button>
+                        <button class="filter-btn" onclick="importarFixos('fixar')" title="Copia os lançamentos do mês de trabalho que ainda não estão nesta lista">⇩ Importar das Receitas</button>
                         <button class="filter-btn active" onclick="abrirEnviar('fixar')" title="Cria ou atualiza os lançamentos ligados a esta lista (mostra antes de gravar)">⇧ Enviar para Receitas</button>
                     </div>
                 </div>
@@ -979,7 +978,7 @@ body[data-estilo="grafite"] nav button.tab-link.active{ border-bottom-color:var(
                 </table>
             </div>
         </div>
-        <p class="mis-note">Só planejamento: <strong>não entra</strong> nos totais do mês nem no Dashboard, e <strong>não é apagado</strong> ao encerrar o mês. Use <strong>＋ Lançar</strong> para abrir a caixa de lançamento, importar ou enviar. O <strong>⇧ Enviar</strong> mostra uma prévia e só mexe nos lançamentos que vieram daqui; receita fixa com categoria de Locações vai para Locações, as demais para Receitas.</p>
+        <p class="mis-note">Só planejamento: <strong>não entra</strong> nos totais do mês nem no Dashboard, e <strong>não é apagado</strong> ao encerrar o mês. Use <strong>＋ Lançar</strong> para abrir a caixa de lançamento, importar ou enviar. O <strong>⇧ Enviar</strong> mostra uma prévia e só mexe nos lançamentos que vieram daqui.</p>
     </section>
 
     <!-- NOTAS -->
@@ -1106,7 +1105,6 @@ body[data-estilo="grafite"] nav button.tab-link.active{ border-bottom-color:var(
     <button data-tab="Dashboard" class="active" onclick="openTab(event,'Dashboard')"><span class="m-ico">📊</span><span>Início</span></button>
     <button data-tab="Despesas" onclick="openTab(event,'Despesas')"><span class="m-ico">💸</span><span>Despesas</span></button>
     <button data-tab="Receitas" onclick="openTab(event,'Receitas')"><span class="m-ico">💰</span><span>Receitas</span></button>
-    <button data-tab="Locacoes" onclick="openTab(event,'Locacoes')"><span class="m-ico">🏠</span><span>Locações</span></button>
     <button id="mob-btn-mais" onclick="toggleMoreSheet()"><span class="m-ico">☰</span><span>Mais</span></button>
 </nav>
 
@@ -1135,12 +1133,12 @@ body[data-estilo="grafite"] nav button.tab-link.active{ border-bottom-color:var(
 //  ESTADO
 // ══════════════════════════════════════════════════════
 let financialData = [];
-let categories    = { despesa:['Moradia','Alimentação','Transporte','Lazer','Saúde'], receita:['Salário','Serviços Extras'], locacao:['Aluguel Recebido'], divida:['Empréstimos','Cartão de Crédito'], patrimonio:['Imóveis','Veículos','Investimentos'] };
+let categories    = { despesa:['Moradia','Alimentação','Transporte','Lazer','Saúde'], receita:['Salário','Serviços Extras','Aluguel Recebido'], divida:['Empréstimos','Cartão de Crédito'], patrimonio:['Imóveis','Veículos','Investimentos'] };
 let currentDate   = new Date();
 let editModeId    = null;
-let tabFilters    = { despesa:'all', receita:'all', locacao:'all', divida:'all', patrimonio:'all' };
+let tabFilters    = { despesa:'all', receita:'all', divida:'all', patrimonio:'all' };
 // Exibição agrupada por categoria (true) ou lista simples (false)
-let tabGrouping   = { despesa:true, receita:true, locacao:true, divida:true, patrimonio:true };
+let tabGrouping   = { despesa:true, receita:true, divida:true, patrimonio:true };
 
 let isSaving      = false;
 // Trava de segurança: só permite gravar depois de uma leitura confirmada.
@@ -1156,7 +1154,6 @@ const GLOBAL_TYPES = ['divida', 'patrimonio'];
 const TABS = [
     { id:'Despesas',  type:'despesa',    title:'Lançar Despesa'  },
     { id:'Receitas',  type:'receita',    title:'Lançar Receita'  },
-    { id:'Locacoes',  type:'locacao',    title:'Lançar Locação'  },
     { id:'Dividas',   type:'divida',     title:'Lançar Dívida'   },
 ];
 
@@ -1171,6 +1168,7 @@ const TABS = [
 //   1.1.0 (31/10/2026) Missão: Programação de recebimentos (+ Efetivar em Receitas); versão visível no app
 //   1.2.0 (07/11/2026) Pagamento/recebimento parcial (botão ½), com histórico e quitação automática
 //   1.3.0 (07/11/2026) Aba Missão retirada (vive no app próprio); dados dela preservados no Sheets
+//   1.17.0 (25/11/2026) Remoção da aba Locações com migração automática para Receitas; Contas Bancárias integradas ao card Saldos Bancários no Dashboard
 //   1.16.2 (25/11/2026) Gastos diários: daysLeft() passa a contar os dias reais de hoje até o último dia do mês de trabalho (inclusive quando o mês de trabalho está adiantado)
 //   1.16.1 (25/11/2026) Remoção da aba Atrasadas (o app já trabalha exclusivamente com o mês corrente)
 //   1.16.0 (25/11/2026) Versão responsiva para celular + PWA: navegação inferior, menu Mais, tabelas em cartões, botão flutuante + Lançar, teclado numérico e manifest.json
@@ -1195,7 +1193,7 @@ const TABS = [
 //   1.5.0 (20/11/2026) Aparência: 4 estilos visuais (Padrão, Planilha, Windows, Grafite) — Config. ou botão 🎨
 //   1.4.0 (20/11/2026) Mês único de trabalho: sem setas de mês; o mês fica salvo no Sheets e só muda ao "Encerrar o mês"
 // ══════════════════════════════════════════════════════
-const APP_VERSAO = '1.16.2';
+const APP_VERSAO = '1.17.0';
 const APP_VERSAO_DATA = '25/11/2026';
 document.querySelectorAll('[data-versao]').forEach(el => {
     el.textContent = el.dataset.versao === 'longa'
@@ -1346,7 +1344,7 @@ function itemRow(item, cc, mk, tipo){
     const starred  = item.starred ? 'row-starred' : '';
     const base     = item.paid ? `row-paid ${cc}` : cc;
     const rowClass = [base, starred].filter(Boolean).join(' ').trim();
-    const inc      = tipo === 'receita' || tipo === 'locacao';
+    const inc      = tipo === 'receita';
     const parcial  = !item.paid && item.parc > 0;
     // 99,6% não pode aparecer como "100%" sem estar quitado: fica entre 1 e 99
     const pct      = parcial && item.value > 0 ? Math.min(99, Math.max(1, Math.round(item.parc / item.value * 100))) : 0;
@@ -1566,7 +1564,7 @@ async function loadFromSheets() {
         if (res.status !== 'ok') throw new Error(res.message || 'Erro ao ler');
         financialData = Array.isArray(res.data) ? res.data : [];
         if (res.categories) categories = { ...categories, ...res.categories };
-        migrateLegacy();
+        const mig = migrateLegacy();
         modoPrivado = !!(cfgGet() || {}).privado;   // preferência salva no Sheets
         aplicarMesTrabalho();                         // mês de trabalho salvo no Sheets
         aplicarPrivado();
@@ -1575,7 +1573,18 @@ async function loadFromSheets() {
         setStatus('online');
         syncCategories();
         updateView();
-        toast('Dados carregados.', 'success');
+        if (mig.migrouLocacao > 0 || mig.migrouCat) {
+            showLoading('Transferindo Locações para Receitas no Sheets...');
+            const salvou = await saveToSheets();
+            if (salvou) {
+                const msg = mig.migrouLocacao > 0
+                    ? `${mig.migrouLocacao} ${mig.migrouLocacao === 1 ? 'lançamento de Locações transferido' : 'lançamentos de Locações transferidos'} para Receitas e salvo no Sheets.`
+                    : 'Categorias de Locações unificadas em Receitas e salvas no Sheets.';
+                toast(msg, 'success', 7000);
+            }
+        } else {
+            toast('Dados carregados.', 'success');
+        }
     } catch(e) {
         console.error('loadFromSheets:', e);
         dataLoaded = false;  // mantém gravações bloqueadas
@@ -1707,7 +1716,17 @@ function init() {
 }
 
 function migrateLegacy() {
-    financialData.forEach(i => { if(i.type==='atrasada') i.type='divida'; });
+    let migrouLocacao = 0, migrouCat = false;
+    financialData.forEach(i => {
+        if (i.type === 'atrasada') i.type = 'divida';
+        if (i.type === 'locacao') { i.type = 'receita'; migrouLocacao++; }
+    });
+    if (Array.isArray(categories.locacao)) {
+        if (!Array.isArray(categories.receita)) categories.receita = [];
+        categories.locacao.forEach(c => { if (c && !categories.receita.includes(c)) categories.receita.push(c); });
+        delete categories.locacao;
+        migrouCat = true;
+    }
     // Dívidas/Patrimônio antigos controlavam "pago" por mês (paidMonths). Agora é um
     // flag único por lançamento: se foi marcado pago em algum mês, considera pago.
     financialData.forEach(i => {
@@ -1715,6 +1734,7 @@ function migrateLegacy() {
             i.paid = !!(i.paidMonths && i.paidMonths.length);
         }
     });
+    return { migrouLocacao, migrouCat };
 }
 
 // ══════════════════════════════════════════════════════
@@ -1960,7 +1980,7 @@ async function togglePaid(id, mk) {
 //  Campo opcional: lançamentos sem parcial seguem exatamente como antes.
 //  Quando a soma chega ao valor total, quita sozinho (mesmo efeito do checkbox).
 // ══════════════════════════════════════════════════════
-const PARC_TYPES = ['despesa','receita','locacao','divida'];
+const PARC_TYPES = ['despesa','receita','divida'];
 const r2 = v => Math.round(Number(v||0)*100)/100;
 const parcKey  = (item, mk) => GLOBAL_TYPES.includes(item.type) ? 'global' : mk;
 const parcList = (item, mk) => (item && item.partials && item.partials[parcKey(item, mk)]) || [];
@@ -2011,7 +2031,7 @@ function renderParcial(){
     const item = financialData.find(x => x.id === parcCtx.id);
     if (!item) { fecharParcial(); return; }
     const mk = parcCtx.mk;
-    const inc = item.type === 'receita' || item.type === 'locacao';
+    const inc = item.type === 'receita';
     const quitado = estaQuitado(item, mk);
     const lista = parcList(item, mk).slice().sort((a,b) => String(a.data).localeCompare(String(b.data)));
     const soma = parcSoma(item, mk);
@@ -2052,7 +2072,7 @@ async function registrarParcial(){
     const { id, mk } = parcCtx;
     const item = financialData.find(x => x.id === id);
     if (!item) return;
-    const inc = item.type === 'receita' || item.type === 'locacao';
+    const inc = item.type === 'receita';
     const valorBruto = parseBR($('parc-valor').value);
     const valor = isNaN(valorBruto) ? NaN : r2(valorBruto);
     const data = $('parc-data').value;
@@ -2178,13 +2198,12 @@ function cancelEdit() {
 //  "Encerrar o mês" (limparAte só mexe em despesa/receita/locação/nota).
 //  Campos: description, category, value, dia (1-31, opcional).
 // ══════════════════════════════════════════════════════
-const ABA_NOME = { despesa:'Despesas', receita:'Receitas', locacao:'Locações' };
+const ABA_NOME = { despesa:'Despesas', receita:'Receitas' };
 const FX = {
-    fixa:  { tipo:'fixa',  prefixo:'fx', alvos:['despesa'],            umNome:'despesa fixa', nomes:'despesas fixas', lanc:'despesa', lancs:'despesas', aba:'Despesas',
+    fixa:  { tipo:'fixa',  prefixo:'fx', alvos:['despesa'], umNome:'despesa fixa', nomes:'despesas fixas', lanc:'despesa', lancs:'despesas', aba:'Despesas',
              cats: () => (categories.despesa || []), destino: () => 'despesa' },
-    fixar: { tipo:'fixar', prefixo:'fr', alvos:['receita','locacao'], umNome:'receita fixa', nomes:'receitas fixas', lanc:'receita', lancs:'receitas', aba:'Receitas',
-             cats: () => [...(categories.receita || []), ...(categories.locacao || []).filter(c => !(categories.receita || []).includes(c))],
-             destino: cat => (categories.locacao || []).includes(cat) && !(categories.receita || []).includes(cat) ? 'locacao' : 'receita' }
+    fixar: { tipo:'fixar', prefixo:'fr', alvos:['receita'], umNome:'receita fixa', nomes:'receitas fixas', lanc:'receita', lancs:'receitas', aba:'Receitas',
+             cats: () => (categories.receita || []), destino: () => 'receita' }
 };
 const fxEdit = { fixa: null, fixar: null };
 // Caixa de lançamento das fixas: fechada por padrão (v1.15.0)
@@ -2203,10 +2222,8 @@ function selectFixos(){
     if (sd) { const v = sd.value; sd.innerHTML = '<option value="">Selecione...</option>' + (categories.despesa||[]).map(c => `<option value="${escH(c)}">${escH(c)}</option>`).join(''); sd.value = v; }
     const sr = $('cat-fixar');
     if (sr) {
-        const v = sr.value, rec = categories.receita || [], loc = (categories.locacao || []).filter(c => !rec.includes(c));
-        sr.innerHTML = '<option value="">Selecione...</option>'
-            + `<optgroup label="Receitas">${rec.map(c => `<option value="${escH(c)}">${escH(c)}</option>`).join('')}</optgroup>`
-            + (loc.length ? `<optgroup label="Locações">${loc.map(c => `<option value="${escH(c)}">${escH(c)}</option>`).join('')}</optgroup>` : '');
+        const v = sr.value;
+        sr.innerHTML = '<option value="">Selecione...</option>' + (categories.receita||[]).map(c => `<option value="${escH(c)}">${escH(c)}</option>`).join('');
         sr.value = v;
     }
 }
@@ -2227,9 +2244,8 @@ function renderListaFixa(k){
     tb.innerHTML = Object.keys(grupos).sort((a,b) => pos(a)-pos(b) || a.localeCompare(b)).map((cat, gi) => {
         const g = grupos[cat].sort((a,b) => (Number(a.dia)||99) - (Number(b.dia)||99) || String(a.description).localeCompare(String(b.description)));
         const sub = somaV(g), cls = `${k}-g${gi}`;
-        const aLoc = k === 'fixar' && cfg.destino(cat) === 'locacao' ? ' · Locações' : '';
         return `<tr class="cat-row" onclick="toggleRows('${cls}',this)">
-                <td colspan="2"><strong>▾ ${escH(cat)}</strong> <span>(${g.length})${aLoc}</span></td>
+                <td colspan="2"><strong>▾ ${escH(cat)}</strong> <span>(${g.length})</span></td>
                 <td class="num-cell" data-label="Total"><strong>${fmt(sub)}</strong></td><td class="num-cell col-pct" data-label="%">${pct(sub)}</td><td></td></tr>`
             + g.map(i => `<tr class="${cls}">
                 <td class="fx-desc">${escH(i.description)}</td>
@@ -2548,7 +2564,7 @@ function abrirEnviar(k){
     envPlano = montarPlanoEnvio(k);
     const p = envPlano, mesN = nomeMes(p.mk), mes1 = mesN.split(' ')[0];
     const pagoTxt = k === 'fixa' ? 'paga' : 'recebida';
-    const abas = k === 'fixa' ? 'aba Despesas' : 'abas Receitas e Locações';
+    const abas = k === 'fixa' ? 'aba Despesas' : 'aba Receitas';
     const nada = !p.novas.length && !p.alts.filter(a => !a.soAviso).length && !p.orfas.length;
     const chk = (grp, x, on) => `<input type="checkbox" data-env="${grp}" data-k="${x}" ${on ? 'checked' : ''}>`;
     const sec = (titulo, html) => html ? `<div class="env-sec"><h4>${titulo}</h4>${html}</div>` : '';
@@ -2626,29 +2642,40 @@ async function confirmarEnviar(){
 // ══════════════════════════════════════════════════════
 //  BANCOS
 // ══════════════════════════════════════════════════════
-async function addBank() {
-    const name=$('bank-name').value.trim();
-    const valBruto=parseBR($('bank-val').value);
-    const val=isNaN(valBruto)?NaN:r2(valBruto);
-    if(!name||isNaN(val)) return toast('Preencha nome e saldo.','error');
-    await commit(d => d.push({id:Date.now().toString(),type:'conta',description:name,value:val,baseMonthKey:'global',recurring:false,paidMonths:[]}));
-    $('bank-name').value=''; $('bank-val').value='';
-    toast(`Conta "${escH(name)}" adicionada.`,'success');
+let bankFormOpen = false;
+function toggleBankForm(abrir) {
+    bankFormOpen = abrir === undefined ? !bankFormOpen : !!abrir;
+    updateView();
+    if (bankFormOpen) setTimeout(() => $('bank-name')?.focus({ preventScroll: true }), 40);
 }
-async function saveBankInline(id) {
+async function addBank() {
+    const nameEl = $('bank-name'), valEl = $('bank-val');
+    if (!nameEl || !valEl) return;
+    const name = nameEl.value.trim();
+    const valBruto = parseBR(valEl.value);
+    const val = isNaN(valBruto) ? NaN : r2(valBruto);
+    if (!name || isNaN(val)) return toast('Preencha o nome do banco e o saldo.', 'error');
+    bankFormOpen = false;
+    const ok = await commit(d => d.push({id:Date.now().toString(),type:'conta',description:name,value:val,baseMonthKey:'global',recurring:false,paidMonths:[]}));
+    if (ok) toast(`Conta "${escH(name)}" adicionada.`, 'success');
+}
+async function saveBankInline(id, avisarSeIgual) {
     const input = $(`bank-input-${id}`);
     if (!input) return;
     const valBruto = parseBR(input.value);
     const val = isNaN(valBruto) ? NaN : r2(valBruto);
+    const current = financialData.find(i => i.id === id);
     if (isNaN(val)) {
-        // Restaura valor original
-        const b = financialData.find(i=>i.id===id);
-        if (b) input.value = b.value.toFixed(2).replace('.',',');
-        return toast('Valor inválido.','error');
+        if (current) input.value = fmt(current.value);
+        return toast('Valor inválido.', 'error');
     }
-    const current = financialData.find(i=>i.id===id);
-    if (current && current.value === val) return; // sem mudança
-    await commit(d=>{ const i=d.find(x=>x.id===id); if(i)i.value=val; });
+    if (current && current.value === val) {
+        input.value = fmt(current.value);
+        if (avisarSeIgual) toast('Saldo já está atualizado.', 'info', 2000);
+        return;
+    }
+    const ok = await commit(d => { const i = d.find(x => x.id === id); if (i) i.value = val; });
+    if (ok && current) toast(`Saldo de "${escH(current.description)}" atualizado.`, 'success', 2500);
 }
 async function deleteBank(id) {
     if(!confirm('Remover conta?')) return;
@@ -2662,7 +2689,7 @@ function syncCategories() {
     financialData.forEach(i => {
         if(i.type&&i.category&&i.type!=='conta'&&i.type!=='nota'){
             // Fixos usam as categorias das abas do mês: despesa fixa → Despesas; receita fixa → Receitas ou Locações
-            const t = i.type==='fixa' ? 'despesa' : i.type==='fixar' ? ((categories.receita||[]).includes(i.category)||!(categories.locacao||[]).includes(i.category) ? 'receita' : 'locacao') : i.type;
+            const t = i.type==='fixa' ? 'despesa' : i.type==='fixar' ? 'receita' : i.type;
             if(!categories[t]) categories[t]=[];
             if(!categories[t].includes(i.category)) categories[t].push(i.category);
         }
@@ -2671,7 +2698,7 @@ function syncCategories() {
 }
 function renderCategories() {
     const c=$('cat-container'); if(!c)return;
-    const names={despesa:'Despesas',receita:'Receitas',locacao:'Locações',divida:'Dívidas',patrimonio:'Patrimônio'};
+    const names={despesa:'Despesas',receita:'Receitas',divida:'Dívidas',patrimonio:'Patrimônio'};
     c.innerHTML=Object.keys(names).map(type=>`
         <div class="cat-card">
             <h4>${names[type]}</h4>
@@ -2734,13 +2761,13 @@ async function renameCategory(type, idx) {
     await commit(d => {
         const pos=(categories[type]||[]).indexOf(old);
         if(pos>-1) categories[type][pos]=n;
-        d.forEach(i=>{if((i.type===type||(type==='despesa'&&i.type==='fixa')||((type==='receita'||type==='locacao')&&i.type==='fixar'))&&i.category===old)i.category=n;});
+        d.forEach(i=>{if((i.type===type||(type==='despesa'&&i.type==='fixa')||(type==='receita'&&i.type==='fixar'))&&i.category===old)i.category=n;});
         renderCategories();
     });
 }
 async function removeCategory(type, idx) {
     const name=(categories[type]||[])[idx]; if(!name)return;
-    const emUso = financialData.filter(i => (i.type === type || (type === 'despesa' && i.type === 'fixa') || ((type === 'receita' || type === 'locacao') && i.type === 'fixar')) && i.category === name).length;
+    const emUso = financialData.filter(i => (i.type === type || (type === 'despesa' && i.type === 'fixa') || (type === 'receita' && i.type === 'fixar')) && i.category === name).length;
     if (emUso) return toast(`"${escH(name)}" está em ${emUso} ${emUso===1?'lançamento':'lançamentos'}. Use ✎ para renomear ou mude a categoria deles antes de excluir.`, 'error', 8000);
     if(!confirm(`Excluir "${name}"?`))return;
     await commit(() => {
@@ -2756,28 +2783,9 @@ function updateView() {
     if(!Array.isArray(financialData)) return;
     const y=currentDate.getFullYear(), m=currentDate.getMonth(), mk=`${y}-${m}`;
 
-    // BANCOS
+    // BANCOS (renderizados dentro do card Saldos Bancários no Dashboard)
     const banks=financialData.filter(i=>i.type==='conta');
     const totalBank=banks.reduce((s,i)=>s+i.value,0);
-    const bl=$('bank-list');
-    if(bl) bl.innerHTML=banks.length===0
-        ? '<p style="font-size:12px;color:var(--text-muted);">Nenhuma conta cadastrada.</p>'
-        : banks.map(b=>`<div class="bank-row">
-            <span style="font-weight:600;">${escH(b.description)}</span>
-            <div style="display:flex;align-items:center;gap:6px;">
-                <input
-                    id="bank-input-${b.id}"
-                    type="text"
-                    value="${fmt(b.value)}"
-                    style="width:140px;text-align:right;font-weight:700;font-size:14px;color:${b.value>=0?'var(--primary)':'var(--danger)'};"
-                    onfocus="this.value=String(${b.value}).replace('.',',')"
-                    onkeydown="if(event.key==='Enter'){saveBankInline('${b.id}');event.target.blur();}if(event.key==='Escape'){this.value='${fmt(b.value)}';this.blur();}"
-                    onblur="saveBankInline('${b.id}')"
-                >
-                <button class="btn btn-danger btn-sm" onclick="deleteBank('${b.id}')">×</button>
-            </div></div>`).join('');
-    const tb=$('total-banks');
-    if(tb){tb.textContent=fmt(totalBank);tb.className=totalBank>=0?'c-primary':'c-danger';}
 
     renderFixos();
     renderPatrimonio();
@@ -2865,19 +2873,51 @@ function updateView() {
     // KPIs
     const dr=daily(), dl=daysLeft(), prev=dl*dr;
     // Resultado do Mês usa o que AINDA FALTA (aPagar), não os totais
-    const saldo=(metrics.receita.aPagar+metrics.locacao.aPagar+totalBank)-(metrics.despesa.aPagar+prev);
+    const saldo=(metrics.receita.aPagar+totalBank)-(metrics.despesa.aPagar+prev);
     renderNota();
     aplicarVencPadraoTodas();
     renderUso();
     renderMesTrabalho();
 
+    const bankFormHtml = bankFormOpen ? `
+        <div class="bank-add-box">
+            <div class="bank-add-row">
+                <input id="bank-name" placeholder="Nome do banco (ex: Nubank)" onkeydown="if(event.key==='Enter')addBank()">
+                <input id="bank-val" inputmode="decimal" placeholder="Saldo (ex: 1.500,00)" onkeydown="if(event.key==='Enter')addBank()">
+            </div>
+            <div class="bank-add-actions">
+                <button class="btn btn-ghost btn-sm" onclick="toggleBankForm(false)">Cancelar</button>
+                <button class="btn btn-primary btn-sm" onclick="addBank()">Salvar conta</button>
+            </div>
+        </div>` : '';
+
+    const bankRowsHtml = banks.length === 0
+        ? `<div class="bank-kpi-list"><span style="font-size:12px;color:var(--mut);">Nenhuma conta cadastrada. Toque em <strong>＋ Nova</strong> para adicionar.</span></div>`
+        : `<div class="bank-kpi-list">${banks.map(b => `<div class="bank-row">
+            <span class="bank-row-name" title="${escH(b.description)}">${escH(b.description)}</span>
+            <div class="bank-row-ctrl">
+                <input id="bank-input-${b.id}" type="text" inputmode="decimal" value="${fmt(b.value)}"
+                    style="color:${b.value>=0?'var(--primary)':'var(--danger)'};"
+                    onfocus="this.value='${fmtN(Number(b.value)||0)}';this.select();"
+                    onkeydown="if(event.key==='Enter'){saveBankInline('${b.id}',true);this.blur();}if(event.key==='Escape'){this.value='${fmt(b.value)}';this.blur();}"
+                    onblur="saveBankInline('${b.id}')">
+                <button class="btn btn-ghost btn-sm" onmousedown="event.preventDefault()" onclick="saveBankInline('${b.id}',true)" title="Salvar novo saldo">✓</button>
+                <button class="btn btn-danger btn-sm" onclick="deleteBank('${b.id}')" title="Remover conta">×</button>
+            </div></div>`).join('')}</div>`;
+
     const kg=$('kpi-grid');
     if(kg) kg.innerHTML=`
         ${kpi('Receitas',metrics.receita,'Recebido','A Receber','c-success','c-warning','c-primary')}
-        ${kpi('Locações',metrics.locacao,'Recebido','A Receber','c-success','c-warning','c-primary')}
         ${kpi('Despesas',metrics.despesa,'Pago','A Pagar','c-success','c-danger','c-danger',true)}
-        <div class="kpi"><div class="kpi-label">💳 Saldos Bancários</div>
-            <div class="kpi-value ${totalBank>=0?'c-primary':'c-danger'}">${fmtSigned(totalBank)}</div></div>
+        <div class="kpi kpi-banks">
+            <div class="kpi-label kpi-head-row">
+                <span>💳 Saldos Bancários</span>
+                <button type="button" class="btn btn-ghost btn-kpi-add" onclick="toggleBankForm()" title="${bankFormOpen?'Fechar formulário':'Adicionar nova conta bancária'}">${bankFormOpen?'▴ Fechar':'＋ Nova'}</button>
+            </div>
+            <div class="kpi-value ${totalBank>=0?'c-primary':'c-danger'}">${fmtSigned(totalBank)}</div>
+            ${bankFormHtml}
+            ${bankRowsHtml}
+        </div>
         <div class="kpi kpi-danger"><div class="kpi-label">📅 Gastos Diários</div>
             <div class="kpi-value c-danger">- ${fmt(prev)}</div>
             <div class="kpi-sub">
@@ -2888,7 +2928,6 @@ function updateView() {
             <div class="kpi-value ${saldo>=0?'c-primary':'c-danger'}">${fmtSigned(saldo)}</div>
             <div class="kpi-sub">
                 <div class="kpi-sub-row"><span>A Receber</span><strong class="c-success">${fmt(metrics.receita.aPagar)}</strong></div>
-                <div class="kpi-sub-row"><span>Locações</span><strong class="c-success">${fmt(metrics.locacao.aPagar)}</strong></div>
                 <div class="kpi-sub-row"><span>Despesas</span><strong class="c-danger">- ${fmt(metrics.despesa.aPagar)}</strong></div>
                 <div class="kpi-sub-row"><span>Saldos Bancários</span><strong class="${totalBank>=0?'c-success':'c-danger'}">${fmtSigned(totalBank)}</strong></div>
                 <div class="kpi-sub-row"><span>Gastos Diários</span><strong class="c-danger">- ${fmt(prev)}</strong></div>
@@ -3039,8 +3078,8 @@ function renderTabs() {
 //  NAVEGAÇÃO
 // ══════════════════════════════════════════════════════
 let activeTabName = 'Dashboard';
-const MOB_MAIN_TABS = ['Dashboard','Despesas','Receitas','Locacoes'];
-const FAB_TAB_MAP = { Despesas:'despesa', Receitas:'receita', Locacoes:'locacao', Dividas:'divida', Patrimonio:'patrimonio', DespesasFixas:'fixa' };
+const MOB_MAIN_TABS = ['Dashboard','Despesas','Receitas'];
+const FAB_TAB_MAP = { Despesas:'despesa', Receitas:'receita', Dividas:'divida', Patrimonio:'patrimonio', DespesasFixas:'fixa' };
 
 function toggleMoreSheet(forcar){
     const s = $('mobile-more-sheet'); if (!s) return;
@@ -3106,7 +3145,7 @@ function pendenciasDoMes(mk){
     const [y,m] = mk.split('-').map(Number);
     let n = 0, rec = 0, pag = 0;
     financialData.forEach(i => {
-        if (!['despesa','receita','locacao'].includes(i.type)) return;
+        if (!['despesa','receita'].includes(i.type)) return;
         if (i.skipMonths && i.skipMonths.includes(mk)) return;
         const vale = i.recurring ? monthValid(i.baseMonthKey, y, m, i.endMonthKey) : i.baseMonthKey === mk;
         if (!vale || estaQuitado(i, mk)) return;
@@ -3120,7 +3159,7 @@ function pendenciasDoMes(mk){
 function abertosAte(mk){
     const lim = mkIdx(mk), out = [];
     financialData.forEach(i => {
-        if (!['despesa','receita','locacao'].includes(i.type) || !/^\d{4}-\d{1,2}$/.test(i.baseMonthKey || '')) return;
+        if (!['despesa','receita'].includes(i.type) || !/^\d{4}-\d{1,2}$/.test(i.baseMonthKey || '')) return;
         const ini = mkIdx(i.baseMonthKey);
         const fim = i.recurring ? Math.min(lim, i.endMonthKey ? mkIdx(i.endMonthKey) : lim) : ini;
         for (let k = ini; k <= fim && k <= lim; k++) {
@@ -3142,7 +3181,7 @@ function limparAte(d, mk, prox){
     for (let n = d.length - 1; n >= 0; n--) {
         const i = d[n];
         if (i.type === 'nota') { if (antigo(i.baseMonthKey)) d.splice(n, 1); continue; }
-        if (!['despesa','receita','locacao'].includes(i.type) || !antigo(i.baseMonthKey)) continue;
+        if (!['despesa','receita'].includes(i.type) || !antigo(i.baseMonthKey)) continue;
         if (!i.recurring || (i.endMonthKey && mkIdx(i.endMonthKey) <= lim)) { d.splice(n, 1); continue; }
         i.baseMonthKey = prox;
         i.paidMonths = (i.paidMonths || []).filter(x => !antigo(x));
@@ -3164,10 +3203,10 @@ async function encerrarMes(){
     }
     // Conta o que vai sumir, para mostrar antes
     const copia = JSON.parse(JSON.stringify(financialData));
-    const antes = copia.filter(i => ['despesa','receita','locacao','nota'].includes(i.type)).length;
+    const antes = copia.filter(i => ['despesa','receita','nota'].includes(i.type)).length;
     limparAte(copia, mk, prox);
-    const depois = copia.filter(i => ['despesa','receita','locacao','nota'].includes(i.type)).length;
-    const recs = copia.filter(i => i.recurring && ['despesa','receita','locacao'].includes(i.type)).length;
+    const depois = copia.filter(i => ['despesa','receita','nota'].includes(i.type)).length;
+    const recs = copia.filter(i => i.recurring && ['despesa','receita'].includes(i.type)).length;
     const futuro = mkIdx(prox) > mkIdx(mkDe(new Date()));
     const resp = prompt(`ENCERRAR ${nomeMes(mk).toUpperCase()} — NÃO TEM VOLTA\n\n`
         + `• ${antes - depois} ${antes - depois === 1 ? 'registro será APAGADO' : 'registros serão APAGADOS'} (lançamentos pagos/recebidos e anotações de ${mes} e meses anteriores).\n`
@@ -3334,7 +3373,6 @@ function exportExcel() {
     const tipos = [
         { key: 'despesa',    label: 'Despesas'   },
         { key: 'receita',    label: 'Receitas'   },
-        { key: 'locacao',    label: 'Locações'   },
         { key: 'divida',     label: 'Dívidas'    },
         { key: 'conta',      label: 'Contas Bancárias' },
     ];
@@ -3431,20 +3469,20 @@ function exportExcel() {
 
     // ── Aba Resumo Mensal ──
     // Do primeiro mês com lançamento até o mês de trabalho (ou o último lançado, se for depois)
-    const idxs = financialData.filter(i => /^\d{4}-\d{1,2}$/.test(i.baseMonthKey || '') && ['despesa','receita','locacao'].includes(i.type)).map(i => mkIdx(i.baseMonthKey));
+    const idxs = financialData.filter(i => /^\d{4}-\d{1,2}$/.test(i.baseMonthKey || '') && ['despesa','receita'].includes(i.type)).map(i => mkIdx(i.baseMonthKey));
     const sortedMonths = [];
     if (idxs.length) { const fim = Math.max(...idxs, mkIdx(mkDe(currentDate))); for (let k = Math.min(...idxs); k <= fim; k++) sortedMonths.push(`${Math.floor(k/12)}-${k%12}`); }
 
-    const resumoRows = [['Mês', 'Receitas (R$)', 'Locações (R$)', 'Despesas (R$)', 'Resultado (R$)']];
+    const resumoRows = [['Mês', 'Receitas (R$)', 'Despesas (R$)', 'Resultado (R$)']];
     sortedMonths.forEach(mk => {
         const [y, m] = mk.split('-').map(Number);
         const label = `${meses[m]}/${y}`;
-        const rec = sumTypeInMonth('receita', y, m), loc = sumTypeInMonth('locacao', y, m), desp = sumTypeInMonth('despesa', y, m);
-        resumoRows.push([label, rec, loc, desp, rec + loc - desp]);
+        const rec = sumTypeInMonth('receita', y, m), desp = sumTypeInMonth('despesa', y, m);
+        resumoRows.push([label, rec, desp, rec - desp]);
     });
 
     const wsResumo = XLSX.utils.aoa_to_sheet(resumoRows);
-    wsResumo['!cols'] = [{ wch: 12 }, { wch: 16 }, { wch: 16 }, { wch: 16 }, { wch: 16 }];
+    wsResumo['!cols'] = [{ wch: 12 }, { wch: 16 }, { wch: 16 }, { wch: 16 }];
     XLSX.utils.book_append_sheet(wb, wsResumo, 'Resumo Mensal');
 
     const date = new Date().toLocaleDateString('pt-BR').replace(/\//g, '-');
