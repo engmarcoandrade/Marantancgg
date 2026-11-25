@@ -1171,6 +1171,7 @@ const TABS = [
 //   1.1.0 (31/10/2026) Missão: Programação de recebimentos (+ Efetivar em Receitas); versão visível no app
 //   1.2.0 (07/11/2026) Pagamento/recebimento parcial (botão ½), com histórico e quitação automática
 //   1.3.0 (07/11/2026) Aba Missão retirada (vive no app próprio); dados dela preservados no Sheets
+//   1.16.2 (25/11/2026) Gastos diários: daysLeft() passa a contar os dias reais de hoje até o último dia do mês de trabalho (inclusive quando o mês de trabalho está adiantado)
 //   1.16.1 (25/11/2026) Remoção da aba Atrasadas (o app já trabalha exclusivamente com o mês corrente)
 //   1.16.0 (25/11/2026) Versão responsiva para celular + PWA: navegação inferior, menu Mais, tabelas em cartões, botão flutuante + Lançar, teclado numérico e manifest.json
 //   1.15.2 (25/11/2026) Ordem das colunas nas tabelas ajustada para Total, Pago/Rec., A Pagar/Rec.
@@ -1194,7 +1195,7 @@ const TABS = [
 //   1.5.0 (20/11/2026) Aparência: 4 estilos visuais (Padrão, Planilha, Windows, Grafite) — Config. ou botão 🎨
 //   1.4.0 (20/11/2026) Mês único de trabalho: sem setas de mês; o mês fica salvo no Sheets e só muda ao "Encerrar o mês"
 // ══════════════════════════════════════════════════════
-const APP_VERSAO = '1.16.1';
+const APP_VERSAO = '1.16.2';
 const APP_VERSAO_DATA = '25/11/2026';
 document.querySelectorAll('[data-versao]').forEach(el => {
     el.textContent = el.dataset.versao === 'longa'
@@ -1332,10 +1333,10 @@ document.addEventListener('keydown', e => {
 });
 
 function daysLeft() {
-    const n=new Date(), y=currentDate.getFullYear(), m=currentDate.getMonth();
-    if(y===n.getFullYear()&&m===n.getMonth()) return (new Date(y,m+1,0).getDate()-n.getDate())+1;
-    if(y<n.getFullYear()||(y===n.getFullYear()&&m<n.getMonth())) return 0;
-    return new Date(y,m+1,0).getDate();
+    const n = new Date();
+    const hoje = Date.UTC(n.getFullYear(), n.getMonth(), n.getDate());
+    const fimMes = Date.UTC(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+    return Math.max(0, Math.round((fimMes - hoje) / 86400000) + 1);
 }
 // Decide se um item aparece sob o filtro atual (usada pelo somatorio e pela tabela)
 // Monta a linha de um lançamento. cc = classe da categoria (vazia na lista simples)
