@@ -469,8 +469,6 @@ body[data-estilo="grafite"] nav button.tab-link.active{ border-bottom-color:var(
 </head>
 <body>
 
-<!-- Login removido -->
-
 <!-- LOGIN -->
 <div id="login-screen">
     <div class="login-card">
@@ -838,7 +836,7 @@ body[data-estilo="grafite"] nav button.tab-link.active{ border-bottom-color:var(
 
         <div class="card">
             <h2>Uso do armazenamento</h2>
-            <p style="font-size:12px;color:var(--text-muted);">Todos os lançamentos ficam num único bloco de texto na célula A1 da aba "Dados". O Google Sheets aceita no máximo <strong>50.000 caracteres por célula</strong>. Acima disso a gravação falha.</p>
+            <p style="font-size:12px;color:var(--text-muted);">Cada lançamento fica na sua própria linha da aba "Dados" (com uma célula JSON por item). O Google Sheets aceita no máximo <strong>50.000 caracteres por célula</strong>, então o limite vale por lançamento, e não pelo total de dados.</p>
             <div class="uso-bar" id="uso-bar"><i style="width:0%"></i></div>
             <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:13px;">
                 <span id="uso-txt">—</span>
@@ -922,6 +920,7 @@ const TABS = [
 //   1.1.0 (31/10/2026) Missão: Programação de recebimentos (+ Efetivar em Receitas); versão visível no app
 //   1.2.0 (07/11/2026) Pagamento/recebimento parcial (botão ½), com histórico e quitação automática
 //   1.3.0 (07/11/2026) Aba Missão retirada (vive no app próprio); dados dela preservados no Sheets
+//   1.15.1 (24/11/2026) Correções: fila de salvamento (evita rollback falso), rollback de categorias, validação de valores > 0, escape seguro de categorias, limpeza de código morto
 //   1.15.0 (24/11/2026) Fixos compacto: caixa de lançamento fechada por padrão (＋ Lançar), formulário em uma linha, cards menores
 //   1.14.0 (24/11/2026) Aba Fixos: despesas e receitas fixas lado a lado (com contorno), sobra fixa, renda comprometida;
 //                      receita fixa vai para Receitas ou Locações conforme a categoria
@@ -941,7 +940,7 @@ const TABS = [
 //   1.5.0 (20/11/2026) Aparência: 4 estilos visuais (Padrão, Planilha, Windows, Grafite) — Config. ou botão 🎨
 //   1.4.0 (20/11/2026) Mês único de trabalho: sem setas de mês; o mês fica salvo no Sheets e só muda ao "Encerrar o mês"
 // ══════════════════════════════════════════════════════
-const APP_VERSAO = '1.15.0';
+const APP_VERSAO = '1.15.1';
 const APP_VERSAO_DATA = '24/11/2026';
 document.querySelectorAll('[data-versao]').forEach(el => {
     el.textContent = el.dataset.versao === 'longa'
@@ -1283,19 +1282,6 @@ function toast(msg,type='info',ms=3500){
     $('toast-container').appendChild(el);
     setTimeout(()=>el.remove(),ms);
 }
-// Aviso com botão (ex.: Desfazer). Fica mais tempo na tela.
-function toastAcao(msg, rotulo, acao, ms=15000){
-    const el=document.createElement('div');
-    el.className='toast';
-    el.innerHTML=`<span>✅</span><span style="flex:1;">${msg}</span>`;
-    const b=document.createElement('button');
-    b.textContent=rotulo;
-    b.style.cssText='border:1.5px solid currentColor;background:none;color:inherit;border-radius:8px;padding:5px 12px;font-weight:700;white-space:nowrap;';
-    b.onclick=()=>{ el.remove(); acao(); };
-    el.appendChild(b);
-    $('toast-container').appendChild(el);
-    setTimeout(()=>el.remove(),ms);
-}
 function showLoading(msg='Carregando...'){$('loading-msg').textContent=msg;$('loading-overlay').classList.remove('hidden');}
 function hideLoading(){$('loading-overlay').classList.add('hidden');}
 
@@ -1421,23 +1407,32 @@ async function forceSync() {
 }
 
 // ══════════════════════════════════════════════════════
-//  COMMIT COM ROLLBACK
+//  COMMIT COM FILA DE SALVAMENTO E ROLLBACK
 // ══════════════════════════════════════════════════════
-async function commit(mutateFn) {
-    if (!dataLoaded) {
-        toast('Não é possível alterar: os dados ainda não foram carregados do Sheets.', 'error', 8000);
-        return false;
-    }
-    const snapshot = JSON.parse(JSON.stringify(financialData));
-    mutateFn(financialData);
-    updateView();
-    const ok = await saveToSheets();
-    if (!ok) {
-        financialData = snapshot;
+let commitQueue = Promise.resolve();
+function commit(mutateFn) {
+    const run = async () => {
+        if (!dataLoaded) {
+            toast('Não é possível alterar: os dados ainda não foram carregados do Sheets.', 'error', 8000);
+            return false;
+        }
+        const snapshot = JSON.parse(JSON.stringify(financialData));
+        const catSnapshot = JSON.parse(JSON.stringify(categories));
+        mutateFn(financialData);
         updateView();
-        toast('Alteração desfeita por falha no Sheets.', 'error', 6000);
-    }
-    return ok;
+        const ok = await saveToSheets();
+        if (!ok) {
+            financialData = snapshot;
+            categories = catSnapshot;
+            renderCategories();
+            updateView();
+            toast('Alteração desfeita por falha no Sheets.', 'error', 6000);
+        }
+        return ok;
+    };
+    const p = commitQueue.then(run, run);
+    commitQueue = p.catch(() => {});
+    return p;
 }
 
 // ══════════════════════════════════════════════════════
@@ -1542,13 +1537,14 @@ async function handleSubmit(e, type) {
     e.preventDefault();
     const desc     = $(`desc-${type}`).value.trim();
     const cat      = $(`cat-${type}`).value;
-    const val      = r2(parseBR($(`val-${type}`).value));
+    const valBruto = parseBR($(`val-${type}`).value);
+    const val      = isNaN(valBruto) ? NaN : r2(valBruto);
     const rec      = $(`rec-${type}`).checked;
     const parInput = $(`parcelas-${type}`);
     const parcelas = parInput ? parseInt(parInput.value) || null : null;
     const vencEl   = $(`venc-${type}`);
     const venc     = vencEl && vencEl.value ? vencEl.value : vencPadrao();
-    if(!desc||!cat||isNaN(val)) return toast('Preencha todos os campos. Valor aceita 1.234,56 ou 1234,56.','error');
+    if(!desc||!cat||isNaN(val)||val<=0) return toast('Preencha todos os campos com valor maior que zero. Valor aceita 1.234,56 ou 1234,56.','error');
 
     const mk = `${currentDate.getFullYear()}-${currentDate.getMonth()}`;
 
@@ -1802,7 +1798,8 @@ async function registrarParcial(){
     const item = financialData.find(x => x.id === id);
     if (!item) return;
     const inc = item.type === 'receita' || item.type === 'locacao';
-    const valor = r2(parseBR($('parc-valor').value));
+    const valorBruto = parseBR($('parc-valor').value);
+    const valor = isNaN(valorBruto) ? NaN : r2(valorBruto);
     const data = $('parc-data').value;
     if (isNaN(valor) || valor <= 0) return toast('Informe um valor maior que zero.', 'error');
     if (dataI(data) == null) return toast('Informe a data.', 'error');
@@ -1935,7 +1932,7 @@ function editEntry(id, type) {
     editModeId=id;
     const fc=$(`form-card-${type}`); if(fc && fc.classList.contains('min')){ fc.classList.add('min-temp'); fc.classList.remove('min'); rotuloMin(type); }
     $(`desc-${type}`).value=item.description;
-    $(`val-${type}`).value=item.value;
+    $(`val-${type}`).value=fmtN(Number(item.value)||0);
     $(`rec-${type}`).checked=item.recurring;
     const vEl=$(`venc-${type}`);
     if(vEl){ vEl.value = vencNoMes(item, currentDate.getFullYear(), currentDate.getMonth()); vEl.dataset.auto='0'; }
@@ -2116,7 +2113,7 @@ async function excluirFixo(k, id){
     if (ok) { if (fxEdit[k] === id) cancelarFixo(k); toast(`${cfg.umNome[0].toUpperCase() + cfg.umNome.slice(1)} excluída.`, 'success'); }
 }
 // Copia os lançamentos do mês de trabalho para a lista (só os que ainda não estão lá, pela descrição)
-const normDesc = t => String(t||'').trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/\s+/g,' ');
+const normDesc = t => String(t||'').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' ');
 const ativosNoMes = (tipos, mk) => { const [y,m] = mk.split('-').map(Number); return financialData.filter(i => tipos.includes(i.type) && !(i.skipMonths && i.skipMonths.includes(mk))
     && (i.recurring ? monthValid(i.baseMonthKey, y, m, i.endMonthKey) : i.baseMonthKey === mk)); };
 async function importarFixos(k){
@@ -2431,7 +2428,8 @@ async function confirmarEnviar(){
 // ══════════════════════════════════════════════════════
 async function addBank() {
     const name=$('bank-name').value.trim();
-    const val=r2(parseBR($('bank-val').value));
+    const valBruto=parseBR($('bank-val').value);
+    const val=isNaN(valBruto)?NaN:r2(valBruto);
     if(!name||isNaN(val)) return toast('Preencha nome e saldo.','error');
     await commit(d => d.push({id:Date.now().toString(),type:'conta',description:name,value:val,baseMonthKey:'global',recurring:false,paidMonths:[]}));
     $('bank-name').value=''; $('bank-val').value='';
@@ -2440,7 +2438,8 @@ async function addBank() {
 async function saveBankInline(id) {
     const input = $(`bank-input-${id}`);
     if (!input) return;
-    const val = r2(parseBR(input.value));
+    const valBruto = parseBR(input.value);
+    const val = isNaN(valBruto) ? NaN : r2(valBruto);
     if (isNaN(val)) {
         // Restaura valor original
         const b = financialData.find(i=>i.id===id);
@@ -2480,8 +2479,8 @@ function renderCategories() {
                 <li><span>${escH(cat)}</span><div style="display:flex;gap:3px;">
                     <button class="btn btn-ghost btn-sm" onclick="moveCategory('${type}',${idx},-1)" ${idx===0?'disabled style="opacity:.3;cursor:default;"':''} title="Mover para cima">▲</button>
                     <button class="btn btn-ghost btn-sm" onclick="moveCategory('${type}',${idx},1)" ${idx===arr.length-1?'disabled style="opacity:.3;cursor:default;"':''} title="Mover para baixo">▼</button>
-                    <button class="btn btn-warning btn-sm" onclick="renameCategory('${type}','${escH(cat).replace(/'/g,"\\'")}')">✎</button>
-                    <button class="btn btn-danger btn-sm" onclick="removeCategory('${type}','${escH(cat).replace(/'/g,"\\'")}')">×</button>
+                    <button class="btn btn-warning btn-sm" onclick="renameCategory('${type}',${idx})">✎</button>
+                    <button class="btn btn-danger btn-sm" onclick="removeCategory('${type}',${idx})">×</button>
                 </div></li>`).join('')}
             </ul>
             <p style="font-size:11px;color:var(--text-muted);margin:-4px 0 8px;">A ordem acima define como as categorias aparecem nas abas.</p>
@@ -2508,31 +2507,46 @@ async function moveCategory(type, idx, dir) {
     if (!lista) return;
     const destino = idx + dir;
     if (destino < 0 || destino >= lista.length) return;
-    [lista[idx], lista[destino]] = [lista[destino], lista[idx]];
-    renderCategories();
-    await commit(d => d);   // persiste a nova ordem junto aos dados
+    await commit(() => {
+        const l = categories[type];
+        if (!l || destino < 0 || destino >= l.length) return;
+        [l[idx], l[destino]] = [l[destino], l[idx]];
+        renderCategories();
+    });
 }
 
-function addCategory(type) {
+async function addCategory(type) {
     const inp=$(`newcat-${type}`), name=inp.value.trim(); if(!name)return;
-    if(!categories[type]) categories[type]=[];
-    if(categories[type].includes(name)) return toast('Categoria já existe.','info');
-    categories[type].push(name); inp.value='';
-    commit(d=>d); // salva com categorias atualizadas
-    renderCategories();
+    if((categories[type]||[]).includes(name)) return toast('Categoria já existe.','info');
+    const ok = await commit(() => {
+        if(!categories[type]) categories[type]=[];
+        if(!categories[type].includes(name)) categories[type].push(name);
+        renderCategories();
+    });
+    if(ok) inp.value='';
 }
-async function renameCategory(type, old) {
-    const n=prompt('Renomear para:',old); if(!n||n===old)return;
-    const idx=(categories[type]||[]).indexOf(old); if(idx>-1) categories[type][idx]=n;
-    await commit(d=>d.forEach(i=>{if((i.type===type||(type==='despesa'&&i.type==='fixa')||((type==='receita'||type==='locacao')&&i.type==='fixar'))&&i.category===old)i.category=n;}));
-    renderCategories();
+async function renameCategory(type, idx) {
+    const old=(categories[type]||[])[idx]; if(!old)return;
+    const raw=prompt('Renomear para:',old);
+    const n=raw ? raw.trim() : '';
+    if(!n||n===old)return;
+    if((categories[type]||[]).includes(n)) return toast('Já existe uma categoria com esse nome.','info');
+    await commit(d => {
+        const pos=(categories[type]||[]).indexOf(old);
+        if(pos>-1) categories[type][pos]=n;
+        d.forEach(i=>{if((i.type===type||(type==='despesa'&&i.type==='fixa')||((type==='receita'||type==='locacao')&&i.type==='fixar'))&&i.category===old)i.category=n;});
+        renderCategories();
+    });
 }
-function removeCategory(type, name) {
+async function removeCategory(type, idx) {
+    const name=(categories[type]||[])[idx]; if(!name)return;
     const emUso = financialData.filter(i => (i.type === type || (type === 'despesa' && i.type === 'fixa') || ((type === 'receita' || type === 'locacao') && i.type === 'fixar')) && i.category === name).length;
     if (emUso) return toast(`"${escH(name)}" está em ${emUso} ${emUso===1?'lançamento':'lançamentos'}. Use ✎ para renomear ou mude a categoria deles antes de excluir.`, 'error', 8000);
     if(!confirm(`Excluir "${name}"?`))return;
-    categories[type]=(categories[type]||[]).filter(c=>c!==name);
-    commit(d=>d); renderCategories();
+    await commit(() => {
+        categories[type]=(categories[type]||[]).filter(c=>c!==name);
+        renderCategories();
+    });
 }
 
 // ══════════════════════════════════════════════════════
@@ -2657,7 +2671,6 @@ function updateView() {
     let metrics={};
     TABS.forEach(t=>metrics[t.type]={total:0,pago:0,aPagar:0});
 
-    let groupsDespesa = {};   // reaproveitado pelo gráfico de categorias
     TABS.forEach(tab=>{
         const tbody=document.querySelector(`#table-${tab.type} tbody`); if(!tbody)return;
         tbody.innerHTML='';
@@ -2684,7 +2697,6 @@ function updateView() {
                 visible.aPagar+=vOpen;
             }
         });
-        if(tab.type==='despesa') groupsDespesa = groups;
         const el=id=>document.getElementById(id);
         if(el(`sum-total-${tab.type}`)) el(`sum-total-${tab.type}`).textContent=fmt(visible.total);
         if(el(`sum-pago-${tab.type}`))  el(`sum-pago-${tab.type}`).textContent=fmt(visible.pago);
@@ -2731,7 +2743,6 @@ function updateView() {
     // KPIs
     const dr=daily(), dl=daysLeft(), prev=dl*dr;
     // Resultado do Mês usa o que AINDA FALTA (aPagar), não os totais
-    const resultado=(metrics.receita.aPagar+metrics.locacao.aPagar)-metrics.despesa.aPagar;
     const saldo=(metrics.receita.aPagar+metrics.locacao.aPagar+totalBank)-(metrics.despesa.aPagar+prev);
     renderNota();
     aplicarVencPadraoTodas();
@@ -2948,22 +2959,6 @@ function pendenciasDoMes(mk){
     return { n, rec, pag };
 }
 
-async function gravarMesTrabalho(mk){
-    if (!dataLoaded) { toast('Não é possível mudar o mês: os dados ainda não foram carregados do Sheets.', 'error', 8000); return false; }
-    if (notaAlterada) await salvarNota(true);
-    const anterior = mkDe(currentDate);
-    const [y,m] = mk.split('-').map(Number);
-    currentDate = new Date(y, m, 1);
-    updateMonthDisplay();
-    const ok = await commit(d => {
-        let cfg = d.find(i => i.type === 'config');
-        if (!cfg) { cfg = { id:'config', type:'config' }; d.push(cfg); }
-        cfg.mesTrabalho = mk;
-    });
-    if (!ok) { const [ay,am] = anterior.split('-').map(Number); currentDate = new Date(ay, am, 1); updateMonthDisplay(); }
-    return ok;
-}
-
 // Tudo que está em aberto no mês de trabalho e nos anteriores (despesa, receita, locação)
 function abertosAte(mk){
     const lim = mkIdx(mk), out = [];
@@ -3065,12 +3060,6 @@ function renderMesTrabalho(){
     }
 }
 
-async function changeMonth(o){
-    // Não perde o que estiver digitado ao navegar entre meses
-    if (notaAlterada) await salvarNota(true);
-    currentDate.setMonth(currentDate.getMonth()+o);
-    updateMonthDisplay();
-}
 // Mes por extenso: so a primeira letra maiuscula ('Setembro de 2026')
 function mesExtenso(){const s=currentDate.toLocaleDateString('pt-BR',{month:'long',year:'numeric'});return s.charAt(0).toUpperCase()+s.slice(1);}
 function updateMonthDisplay(){$('current-month').textContent=mesExtenso();updateView();}
@@ -3167,6 +3156,7 @@ function applyTabVisibility() {
 async function forceSave() {
     if (!financialData.length) return toast('Nenhum dado carregado ainda.', 'error');
     showLoading('Gravando no Google Sheets...');
+    await commitQueue;
     const ok = await saveToSheets();
     hideLoading();
     if (ok) toast('Dados gravados com sucesso no Sheets!', 'success');
@@ -3182,10 +3172,6 @@ function exportExcel() {
         if (!baseMonthKey || baseMonthKey === 'global') return '—';
         const [y, m] = baseMonthKey.split('-').map(Number);
         return `${meses[m]}/${y}`;
-    }
-
-    function isPaidInMonth(item, mk) {
-        return item.paidMonths && item.paidMonths.includes(mk);
     }
 
     // ── Aba por tipo ──
