@@ -2,7 +2,15 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#1e3a8a">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Financeiro">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='40' fill='%231e3a8a'/%3E%3Ctext x='96' y='122' font-family='system-ui,Arial,sans-serif' font-size='84' font-weight='800' fill='%23ffffff' text-anchor='middle'%3ER$%3C/text%3E%3C/svg%3E">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='40' fill='%231e3a8a'/%3E%3Ctext x='96' y='122' font-family='system-ui,Arial,sans-serif' font-size='84' font-weight='800' fill='%23ffffff' text-anchor='middle'%3ER$%3C/text%3E%3C/svg%3E">
     <title>Controle Financeiro</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -138,8 +146,6 @@ nav{background:var(--nav);overflow-x:auto;scrollbar-width:thin}
 nav button.tab-link{display:inline-flex;align-items:center;gap:5px;padding:9px 10px 8px;border:none;border-bottom:3px solid transparent;background:none;color:var(--nav-mut);font-weight:700;font-size:11.5px;letter-spacing:.02em;text-transform:uppercase;white-space:nowrap;transition:color .15s,background .15s}
 nav button.tab-link:hover{color:var(--nav-txt);background:var(--nav-hov)}
 nav button.tab-link.active{color:var(--nav-txt);border-bottom-color:var(--nav-txt)}
-.pending-badge{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 5px;background:rgba(255,255,255,.2);color:var(--nav-txt);border-radius:999px;font-size:10px;font-weight:700;letter-spacing:0;vertical-align:middle}
-.tab-link.active .pending-badge{background:var(--nav-txt);color:var(--nav)}
 
 /* ── Conteúdo ── */
 main{max-width:1280px;margin:0 auto;padding:22px 24px 80px}
@@ -423,7 +429,6 @@ body[data-estilo="windows"] input, body[data-estilo="windows"] select, body[data
 body[data-estilo="windows"] input:focus, body[data-estilo="windows"] select:focus, body[data-estilo="windows"] textarea:focus{ box-shadow:none; border-bottom-color:var(--acc) }
 body[data-estilo="windows"] input[type=checkbox]{ border:none }
 body[data-estilo="windows"] .status-pill, body[data-estilo="windows"] .month-nav{ background:var(--sup2) }
-body[data-estilo="windows"] .pending-badge{ background:var(--acc); color:#fff }
 body[data-estilo="windows"] nav button.tab-link{ text-transform:none; letter-spacing:0; font-size:13.5px; font-weight:500 }
 body[data-estilo="windows"] nav button.tab-link.active{ border-bottom-color:var(--acc); font-weight:600 }
 body[data-estilo="windows"] th, body[data-estilo="windows"] .kpi-label, body[data-estilo="windows"] .cat-row td,
@@ -464,6 +469,238 @@ body[data-estilo="grafite"] nav button.tab-link.active{ border-bottom-color:var(
 .estilo-prev b{display:block;margin:6px 8px 0;height:8px;border-radius:2px}
 .estilo-prev u{display:grid;grid-template-columns:repeat(3,1fr);margin:6px 8px 0;flex:1;text-decoration:none}
 .estilo-prev u s{border:1px solid #c8c8c8;background:#fff;text-decoration:none}
+
+/* ══════════════════════════════════════════════════════════════
+   VERSÃO CELULAR + PWA (v1.16.0)
+   No computador (>720px) os elementos mobile ficam invisíveis
+   e o layout desktop permanece inalterado.
+   ══════════════════════════════════════════════════════════════ */
+#mobile-nav, #mobile-more-sheet, #fab-lancar { display: none; }
+
+@media (max-width: 720px) {
+  /* Barra superior limpa no celular: esconde nav horizontal e botões secundários (vão para ☰ Mais) */
+  header nav { display: none !important; }
+  .header-inner { padding: 10px 14px; gap: 8px; }
+  .header-brand { gap: 8px; flex: 1; min-width: 0; }
+  .header-brand h1 { font-size: 16.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .header-brand .ver-badge { display: none; }
+  .header-actions { width: 100%; justify-content: space-between; gap: 6px; }
+  .header-actions .fonte, .header-actions button[onclick="proximoEstilo()"] { display: none; }
+  .month-nav { flex: 1; justify-content: center; padding: 6px 10px; }
+  #current-month { font-size: 13px; }
+  .icon-btn { width: 40px; height: 40px; flex: none; }
+
+  /* Espaço inferior para a barra de navegação fixa e o botão flutuante */
+  main { padding: 14px 12px calc(104px + env(safe-area-inset-bottom)); }
+  .app-rodape { padding-bottom: calc(92px + env(safe-area-inset-bottom)); }
+  #toast-container { bottom: calc(76px + env(safe-area-inset-bottom)); }
+
+  /* Formulários confortáveis ao toque (16px evita zoom automático no iPhone) */
+  input, select, textarea { font-size: 16px; min-height: 44px; padding: 10px 12px; }
+  input[type=checkbox] { width: 22px; height: 22px; min-height: 0; }
+  .btn { min-height: 42px; padding: 10px 14px; }
+  .btn-sm { min-height: 36px; padding: 6px 10px; }
+  .form-row { gap: 10px; }
+  .form-field { min-width: 100% !important; max-width: none !important; flex: 1 1 100% !important; }
+  .check-field { width: 100%; justify-content: flex-start; min-height: 44px; }
+  .toolbar { gap: 10px; }
+  .summary-strip { width: 100%; justify-content: space-between; gap: 8px 12px; padding: 10px 12px; font-size: 13px; }
+  .filter-group { width: 100%; overflow-x: auto; flex-wrap: nowrap; padding-bottom: 2px; -webkit-overflow-scrolling: touch; }
+  .filter-btn { flex: none; padding: 8px 12px; font-size: 13px; min-height: 38px; }
+  .filter-divider { display: none; }
+  .bank-row { flex-wrap: wrap; gap: 8px; }
+  .bank-row input { width: 135px !important; }
+  .mes-card .mes-acoes { width: 100%; }
+  .mes-card .mes-acoes .btn { width: 100%; }
+  .pat-rend select { max-width: 112px; }
+  .fx-head { flex-wrap: wrap; gap: 8px; }
+  .fx-head-dir { width: 100%; justify-content: space-between; }
+  .fx-form { grid-template-columns: 1fr !important; padding: 10px 12px 6px; gap: 8px; }
+  .fx-form input, .fx-form select, .fx-form .btn { height: 42px; font-size: 16px; }
+  .fx-acoes .filter-btn { flex: 1; text-align: center; justify-content: center; }
+
+  /* Modais no estilo bottom-sheet / toque confortável */
+  #modal-recorrente, #modal-parcial, #modal-excluir, #modal-enviar, #setup-wizard { padding: 10px; align-items: end; }
+  .modal-card, .wizard-card { border-radius: 18px 18px 14px 14px; padding: 18px 16px calc(18px + env(safe-area-inset-bottom)); max-width: 100%; }
+  .modal-btns .btn { min-height: 46px; font-size: 15px; }
+  .parc-info { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+  .parc-info strong { font-size: 13.5px; }
+
+  /* ── TABELAS EM FORMATO DE CARTÃO NO CELULAR ── */
+  table.tbl-lanc, table.tbl-lanc tbody,
+  #table-patrimonio, #table-patrimonio tbody,
+  #table-fixa, #table-fixa tbody,
+  #table-fixar, #table-fixar tbody { display: block; width: 100%; }
+
+  table.tbl-lanc thead,
+  #table-patrimonio thead, #table-fixa thead, #table-fixar thead { display: none; }
+
+  /* Sobrescreve bordas de célula do estilo Planilha dentro dos cartões mobile */
+  body[data-estilo="planilha"] table.tbl-lanc td,
+  body[data-estilo="planilha"] #table-patrimonio td,
+  body[data-estilo="planilha"] #table-fixa td,
+  body[data-estilo="planilha"] #table-fixar td { border: none !important; }
+
+  /* Cabeçalho de categoria em formato de faixa limpa */
+  table.tbl-lanc tr.cat-row,
+  #table-patrimonio tr.cat-row,
+  #table-fixa tr.cat-row,
+  #table-fixar tr.cat-row {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 4px 8px;
+    padding: 10px 12px;
+    margin-top: 8px;
+    border-radius: 0;
+  }
+  table.tbl-lanc tr.cat-row:first-child,
+  #table-patrimonio tr.cat-row:first-child,
+  #table-fixa tr.cat-row:first-child,
+  #table-fixar tr.cat-row:first-child { margin-top: 0; }
+  table.tbl-lanc tr.cat-row td,
+  #table-patrimonio tr.cat-row td,
+  #table-fixa tr.cat-row td,
+  #table-fixar tr.cat-row td {
+    display: block; padding: 0; border: none; text-align: left !important; background: transparent !important;
+  }
+  table.tbl-lanc tr.cat-row td:first-child,
+  #table-patrimonio tr.cat-row td:first-child,
+  #table-fixa tr.cat-row td:first-child,
+  #table-fixar tr.cat-row td:first-child { grid-column: 1 / -1; margin-bottom: 4px; font-size: 13px; }
+  table.tbl-lanc tr.cat-row td:last-child,
+  #table-patrimonio tr.cat-row td:empty,
+  #table-fixa tr.cat-row td:last-child,
+  #table-fixar tr.cat-row td:last-child { display: none; }
+  table.tbl-lanc tr.cat-row td[data-label]::before,
+  #table-patrimonio tr.cat-row td[data-label]::before,
+  #table-fixa tr.cat-row td[data-label]::before,
+  #table-fixar tr.cat-row td[data-label]::before {
+    content: attr(data-label); display: block; font-size: 9.5px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .04em; opacity: .78; margin-bottom: 1px;
+  }
+
+  /* Cartões de lançamentos (Despesas, Receitas, Locações, Dívidas) */
+  table.tbl-lanc tr:not(.cat-row) {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px 6px;
+    padding: 12px;
+    border-bottom: 1px solid var(--bor);
+    align-items: start;
+  }
+  table.tbl-lanc tr:not(.cat-row) td { display: block; padding: 0; border: none; }
+  table.tbl-lanc td.col-chk { grid-column: 1; grid-row: 1; justify-self: start; align-self: start; z-index: 2; padding-top: 1px; }
+  table.tbl-lanc td.col-desc { grid-column: 1 / 3; grid-row: 1; padding-left: 32px; font-size: 14.5px; font-weight: 500; line-height: 1.35; }
+  table.tbl-lanc td.col-venc {
+    grid-column: 3; grid-row: 1; justify-self: end; align-self: start;
+    font-size: 12px; font-weight: 600; color: var(--mut); background: var(--sup2);
+    border: 1px solid var(--bor); border-radius: 8px; padding: 2px 8px;
+  }
+  table.tbl-lanc td.col-tot,
+  table.tbl-lanc td.col-pago,
+  table.tbl-lanc td.col-aberto {
+    grid-row: 2; text-align: left !important; font-size: 13.5px; font-weight: 600;
+    background: var(--sup2); border-radius: 8px; padding: 6px 8px;
+  }
+  table.tbl-lanc td.col-tot::before,
+  table.tbl-lanc td.col-pago::before,
+  table.tbl-lanc td.col-aberto::before {
+    content: attr(data-label); display: block; font-size: 9.5px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .04em; color: var(--mut); margin-bottom: 2px;
+  }
+  table.tbl-lanc td.col-acoes { grid-column: 1 / -1; grid-row: 3; padding-top: 2px; }
+  table.tbl-lanc td.col-acoes > div { justify-content: flex-end; gap: 8px !important; }
+  table.tbl-lanc td.col-acoes .btn-sm {
+    width: auto; min-width: 44px; height: 36px; padding: 0 12px;
+    border: 1px solid var(--bor); background: var(--sup); color: var(--txt); font-size: 14px;
+  }
+
+  /* Cartões de Patrimônio */
+  #table-patrimonio tr:not(.cat-row) {
+    display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px;
+    padding: 12px; border-bottom: 1px solid var(--bor);
+  }
+  #table-patrimonio tr:has(td[colspan]) { display: block; }
+  #table-patrimonio tr:not(.cat-row) td { display: block; padding: 0; border: none; text-align: left !important; }
+  #table-patrimonio td.pat-desc { grid-column: 1 / -1; font-size: 15px; font-weight: 600; }
+  #table-patrimonio td[data-label] { background: var(--sup2); border-radius: 8px; padding: 6px 8px; font-size: 13.5px; }
+  #table-patrimonio td[data-label]::before {
+    content: attr(data-label); display: block; font-size: 9.5px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .04em; color: var(--mut); margin-bottom: 2px;
+  }
+  #table-patrimonio td.pat-acoes { grid-column: 1 / -1; }
+  #table-patrimonio td.pat-acoes > div { justify-content: flex-end; gap: 8px !important; }
+  #table-patrimonio td.pat-acoes .btn-sm { width: auto; min-width: 44px; height: 36px; padding: 0 12px; border: 1px solid var(--bor); background: var(--sup); color: var(--txt); }
+
+  /* Cartões de Fixos */
+  #table-fixa tr:not(.cat-row), #table-fixar tr:not(.cat-row) {
+    display: grid; grid-template-columns: 1fr auto; gap: 6px 8px;
+    padding: 11px 12px; border-bottom: 1px solid var(--bor); align-items: center;
+  }
+  #table-fixa tr:has(td[colspan]), #table-fixar tr:has(td[colspan]) { display: block; }
+  #table-fixa tr:not(.cat-row) td, #table-fixar tr:not(.cat-row) td { display: block; padding: 0; border: none; }
+  #table-fixa td.fx-desc, #table-fixar td.fx-desc { grid-column: 1; grid-row: 1; font-size: 14.5px; font-weight: 500; }
+  #table-fixa td.fx-val, #table-fixar td.fx-val { grid-column: 2; grid-row: 1; font-size: 14.5px; text-align: right; }
+  #table-fixa td.fx-dia, #table-fixar td.fx-dia { grid-column: 1; grid-row: 2; font-size: 12px; color: var(--mut); }
+  #table-fixa td.fx-acoes, #table-fixar td.fx-acoes { grid-column: 2; grid-row: 2; justify-self: end; }
+  #table-fixa td.fx-acoes .btn-sm, #table-fixar td.fx-acoes .btn-sm { width: auto; min-width: 40px; height: 34px; padding: 0 10px; border: 1px solid var(--bor); background: var(--sup2); color: var(--txt); }
+
+  /* ── BARRA INFERIOR FIXA (BOTTOM NAV) ── */
+  #mobile-nav {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 950;
+    background: var(--sup);
+    border-top: 1px solid var(--bor);
+    box-shadow: 0 -2px 12px rgba(15, 23, 42, .08);
+    padding: 4px 4px calc(6px + env(safe-area-inset-bottom));
+  }
+  #mobile-nav button {
+    position: relative;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+    background: none; border: none; padding: 6px 2px; border-radius: 10px;
+    color: var(--mut); font-size: 10.5px; font-weight: 600; min-height: 50px;
+    transition: color .15s, background .15s;
+  }
+  #mobile-nav button .m-ico { font-size: 19px; line-height: 1.1; }
+  #mobile-nav button.active { color: var(--acc); background: var(--acc-soft); font-weight: 700; }
+
+  /* ── MENU "MAIS" (BOTTOM SHEET) ── */
+  #mobile-more-sheet {
+    position: fixed; inset: 0; z-index: 960;
+    background: rgba(10, 14, 20, .5); backdrop-filter: blur(2px);
+    display: none; align-items: flex-end; justify-content: center;
+  }
+  #mobile-more-sheet.open { display: flex; }
+  .more-panel {
+    width: 100%; background: var(--sup); border-top: 1px solid var(--bor);
+    border-radius: 20px 20px 0 0; padding: 14px 16px calc(20px + env(safe-area-inset-bottom));
+    box-shadow: 0 -10px 40px rgba(0,0,0,.25); animation: entra .18s;
+  }
+  .more-handle { width: 42px; height: 4px; border-radius: 999px; background: var(--bor); margin: 0 auto 14px; }
+  .more-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-bottom: 14px; }
+  .more-item {
+    position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+    padding: 14px 8px; border-radius: 12px; border: 1.5px solid var(--bor); background: var(--sup2);
+    color: var(--txt); font-size: 12.5px; font-weight: 600; text-align: center;
+  }
+  .more-item .m-ico { font-size: 22px; line-height: 1; }
+  .more-item.active { border-color: var(--acc); background: var(--acc-soft); color: var(--acc); }
+  .more-tools {
+    display: flex; gap: 8px; flex-wrap: wrap; padding-top: 12px; border-top: 1px solid var(--bor);
+  }
+  .more-tools .btn { flex: 1; min-width: 72px; font-size: 13px; padding: 8px 6px; min-height: 40px; }
+
+  /* ── BOTÃO FLUTUANTE "+ LANÇAR" ── */
+  #fab-lancar {
+    display: inline-flex; align-items: center; gap: 6px;
+    position: fixed; right: 16px; bottom: calc(74px + env(safe-area-inset-bottom)); z-index: 940;
+    background: var(--acc); color: var(--acc-txt); border: none; border-radius: 999px;
+    padding: 12px 18px; font-size: 14px; font-weight: 700;
+    box-shadow: 0 6px 20px rgba(15, 23, 42, .28);
+  }
+  #fab-lancar.hidden { display: none !important; }
+}
     </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
@@ -583,16 +820,15 @@ body[data-estilo="grafite"] nav button.tab-link.active{ border-bottom-color:var(
     <!-- ABAS -->
     <nav>
     <div class="nav-inner">
-        <button class="tab-link active" onclick="openTab(event,'Dashboard')">Dashboard</button>
-        <button class="tab-link" onclick="openTab(event,'Despesas')">Despesas</button>
-        <button class="tab-link" id="nav-DespesasFixas" onclick="openTab(event,'DespesasFixas')">Fixos</button>
-        <button class="tab-link" onclick="openTab(event,'Receitas')">Receitas</button>
-        <button class="tab-link" onclick="openTab(event,'Locacoes')">Locações</button>
-        <button class="tab-link" id="nav-Dividas" onclick="openTab(event,'Dividas')">Dívidas</button>
-        <button class="tab-link" onclick="openTab(event,'Atrasadas')">Atrasadas <span id="badge-atrasadas" class="pending-badge" style="display:none">!</span></button>
-        <button class="tab-link" id="nav-Patrimonio" onclick="openTab(event,'Patrimonio')">Patrimônio</button>
-        <button class="tab-link" onclick="openTab(event,'Notas')">📝 Anotações</button>
-        <button class="tab-link" onclick="openTab(event,'Configuracoes')">⚙ Config.</button>
+        <button class="tab-link active" data-tab="Dashboard" onclick="openTab(event,'Dashboard')">Dashboard</button>
+        <button class="tab-link" data-tab="Despesas" onclick="openTab(event,'Despesas')">Despesas</button>
+        <button class="tab-link" id="nav-DespesasFixas" data-tab="DespesasFixas" onclick="openTab(event,'DespesasFixas')">Fixos</button>
+        <button class="tab-link" data-tab="Receitas" onclick="openTab(event,'Receitas')">Receitas</button>
+        <button class="tab-link" data-tab="Locacoes" onclick="openTab(event,'Locacoes')">Locações</button>
+        <button class="tab-link" id="nav-Dividas" data-tab="Dividas" onclick="openTab(event,'Dividas')">Dívidas</button>
+        <button class="tab-link" id="nav-Patrimonio" data-tab="Patrimonio" onclick="openTab(event,'Patrimonio')">Patrimônio</button>
+        <button class="tab-link" data-tab="Notas" onclick="openTab(event,'Notas')">📝 Anotações</button>
+        <button class="tab-link" data-tab="Configuracoes" onclick="openTab(event,'Configuracoes')">⚙ Config.</button>
     </div>
     </nav>
 </header>
@@ -614,29 +850,12 @@ body[data-estilo="grafite"] nav button.tab-link.active{ border-bottom-color:var(
                 <h2>Contas Bancárias</h2>
                 <div class="form-row" style="margin-bottom:12px;">
                     <div class="form-field"><label>Banco</label><input id="bank-name" placeholder="Ex: Nubank"></div>
-                    <div class="form-field"><label>Saldo</label><input id="bank-val" placeholder="Ex: 1500,50"></div>
+                    <div class="form-field"><label>Saldo</label><input id="bank-val" inputmode="decimal" placeholder="Ex: 1500,50"></div>
                     <button class="btn btn-primary" onclick="addBank()">Adicionar</button>
                 </div>
                 <div id="bank-list"></div>
                 <div style="text-align:right;margin-top:10px;font-size:13px;">Total: <strong id="total-banks" class="c-primary">R$ 0,00</strong></div>
             </div>
-        </div>
-    </section>
-
-    <!-- ATRASADAS -->
-    <section id="Atrasadas" class="tab-content">
-        <div class="card">
-            <h2>Pendências de Meses Anteriores</h2>
-            <div class="toolbar">
-                <div class="summary-strip">
-                    <span>A Receber: <strong id="sum-atr-rec" class="c-success">R$ 0,00</strong></span>
-                    <span>A Pagar: <strong id="sum-atr-pag" class="c-danger">R$ 0,00</strong></span>
-                </div>
-            </div>
-        </div>
-        <div class="card" style="padding:0;">
-            <table><thead><tr><th width="5%">✔</th><th width="13%">Mês Original</th><th width="18%">Tipo/Cat.</th><th>Descrição</th><th width="14%" class="num-cell">Valor</th><th width="18%">Mover Para</th></tr></thead>
-            <tbody id="tbody-atrasadas"></tbody></table>
         </div>
     </section>
 
@@ -654,11 +873,11 @@ body[data-estilo="grafite"] nav button.tab-link.active{ border-bottom-color:var(
                 <div class="form-row" style="align-items:flex-start;">
                     <div class="form-field" style="flex:2;min-width:150px;"><label>Descrição</label><input id="desc-patrimonio" placeholder="Ex: CDB Banco X, Casa da Rua Y" required></div>
                     <div class="form-field"><label>Categoria</label><select id="cat-patrimonio" required></select></div>
-                    <div class="form-field"><label>Valor do patrimônio (R$)</label><input id="val-patrimonio" placeholder="0,00" required oninput="prevPatrimonio()"></div>
+                    <div class="form-field"><label>Valor do patrimônio (R$)</label><input id="val-patrimonio" inputmode="decimal" placeholder="0,00" required oninput="prevPatrimonio()"></div>
                     <div class="form-field" style="min-width:200px;"><label>Rendimento mensal</label>
                         <div class="pat-rend">
                             <select id="rendtipo-patrimonio" onchange="prevPatrimonio()"><option value="pct" title="Percentual ao mês">% a.m.</option><option value="valor" title="Valor em reais por mês">R$ /mês</option></select>
-                            <input id="rend-patrimonio" placeholder="Ex: 1,00" oninput="prevPatrimonio()">
+                            <input id="rend-patrimonio" inputmode="decimal" placeholder="Ex: 1,00" oninput="prevPatrimonio()">
                         </div>
                         <div class="pat-prev" id="pat-prev"></div>
                     </div>
@@ -714,7 +933,7 @@ body[data-estilo="grafite"] nav button.tab-link.active{ border-bottom-color:var(
                         <div class="form-field"><label>Descrição</label><input id="desc-fixa" placeholder="Ex: Condomínio" required></div>
                         <div class="form-field"><label>Categoria</label><select id="cat-fixa" required></select></div>
                         <div class="form-field"><label>Dia</label><input id="dia-fixa" type="number" min="1" max="31" step="1" placeholder="10"></div>
-                        <div class="form-field"><label>Valor (R$)</label><input id="val-fixa" placeholder="0,00" required></div>
+                        <div class="form-field"><label>Valor (R$)</label><input id="val-fixa" inputmode="decimal" placeholder="0,00" required></div>
                         <div class="fx-btns">
                             <button type="submit" class="btn btn-primary" id="btn-submit-fixa">Lançar</button>
                             <button type="button" class="btn btn-ghost" id="btn-cancel-fixa" style="display:none;" onclick="cancelarFixo('fixa')">Cancelar</button>
@@ -743,7 +962,7 @@ body[data-estilo="grafite"] nav button.tab-link.active{ border-bottom-color:var(
                         <div class="form-field"><label>Descrição</label><input id="desc-fixar" placeholder="Ex: Aluguel da casa" required></div>
                         <div class="form-field"><label>Categoria</label><select id="cat-fixar" required></select></div>
                         <div class="form-field"><label>Dia</label><input id="dia-fixar" type="number" min="1" max="31" step="1" placeholder="10"></div>
-                        <div class="form-field"><label>Valor (R$)</label><input id="val-fixar" placeholder="0,00" required></div>
+                        <div class="form-field"><label>Valor (R$)</label><input id="val-fixar" inputmode="decimal" placeholder="0,00" required></div>
                         <div class="fx-btns">
                             <button type="submit" class="btn btn-primary" id="btn-submit-fixar">Lançar</button>
                             <button type="button" class="btn btn-ghost" id="btn-cancel-fixar" style="display:none;" onclick="cancelarFixo('fixar')">Cancelar</button>
@@ -760,7 +979,7 @@ body[data-estilo="grafite"] nav button.tab-link.active{ border-bottom-color:var(
                 </table>
             </div>
         </div>
-        <p class="mis-note">Só planejamento: <strong>não entra</strong> nos totais do mês, no Dashboard nem em Atrasadas, e <strong>não é apagado</strong> ao encerrar o mês. Use <strong>＋ Lançar</strong> para abrir a caixa de lançamento, importar ou enviar. O <strong>⇧ Enviar</strong> mostra uma prévia e só mexe nos lançamentos que vieram daqui; receita fixa com categoria de Locações vai para Locações, as demais para Receitas.</p>
+        <p class="mis-note">Só planejamento: <strong>não entra</strong> nos totais do mês nem no Dashboard, e <strong>não é apagado</strong> ao encerrar o mês. Use <strong>＋ Lançar</strong> para abrir a caixa de lançamento, importar ou enviar. O <strong>⇧ Enviar</strong> mostra uma prévia e só mexe nos lançamentos que vieram daqui; receita fixa com categoria de Locações vai para Locações, as demais para Receitas.</p>
     </section>
 
     <!-- NOTAS -->
@@ -879,6 +1098,38 @@ body[data-estilo="grafite"] nav button.tab-link.active{ border-bottom-color:var(
 </main>
 <footer class="app-rodape" data-versao="longa"></footer>
 
+<!-- BOTÃO FLUTUANTE CELULAR -->
+<button id="fab-lancar" class="hidden" onclick="fabAcao()" aria-label="Novo lançamento">＋ Lançar</button>
+
+<!-- BARRA INFERIOR CELULAR -->
+<nav id="mobile-nav" aria-label="Navegação principal">
+    <button data-tab="Dashboard" class="active" onclick="openTab(event,'Dashboard')"><span class="m-ico">📊</span><span>Início</span></button>
+    <button data-tab="Despesas" onclick="openTab(event,'Despesas')"><span class="m-ico">💸</span><span>Despesas</span></button>
+    <button data-tab="Receitas" onclick="openTab(event,'Receitas')"><span class="m-ico">💰</span><span>Receitas</span></button>
+    <button data-tab="Locacoes" onclick="openTab(event,'Locacoes')"><span class="m-ico">🏠</span><span>Locações</span></button>
+    <button id="mob-btn-mais" onclick="toggleMoreSheet()"><span class="m-ico">☰</span><span>Mais</span></button>
+</nav>
+
+<!-- MENU "MAIS" CELULAR -->
+<div id="mobile-more-sheet" onclick="if(event.target===this)toggleMoreSheet(false)">
+    <div class="more-panel">
+        <div class="more-handle"></div>
+        <div class="more-grid">
+            <button class="more-item" id="mob-nav-DespesasFixas" data-tab="DespesasFixas" onclick="openTab(event,'DespesasFixas')"><span class="m-ico">📌</span><span>Fixos</span></button>
+            <button class="more-item" id="mob-nav-Dividas" data-tab="Dividas" onclick="openTab(event,'Dividas')"><span class="m-ico">💳</span><span>Dívidas</span></button>
+            <button class="more-item" id="mob-nav-Patrimonio" data-tab="Patrimonio" onclick="openTab(event,'Patrimonio')"><span class="m-ico">🏛</span><span>Patrimônio</span></button>
+            <button class="more-item" data-tab="Notas" onclick="openTab(event,'Notas')"><span class="m-ico">📝</span><span>Anotações</span></button>
+            <button class="more-item" data-tab="Configuracoes" onclick="openTab(event,'Configuracoes')"><span class="m-ico">⚙</span><span>Config.</span></button>
+        </div>
+        <div class="more-tools">
+            <button class="btn btn-ghost" onclick="mudarFonte(-1)">A− Letra</button>
+            <button class="btn btn-ghost" onclick="mudarFonte(1)">A+ Letra</button>
+            <button class="btn btn-ghost" onclick="proximoEstilo()">🎨 Estilo</button>
+            <button class="btn btn-ghost" onclick="toggleMoreSheet(false)">Fechar</button>
+        </div>
+    </div>
+</div>
+
 <script>
 // ══════════════════════════════════════════════════════
 //  ESTADO
@@ -920,6 +1171,8 @@ const TABS = [
 //   1.1.0 (31/10/2026) Missão: Programação de recebimentos (+ Efetivar em Receitas); versão visível no app
 //   1.2.0 (07/11/2026) Pagamento/recebimento parcial (botão ½), com histórico e quitação automática
 //   1.3.0 (07/11/2026) Aba Missão retirada (vive no app próprio); dados dela preservados no Sheets
+//   1.16.1 (25/11/2026) Remoção da aba Atrasadas (o app já trabalha exclusivamente com o mês corrente)
+//   1.16.0 (25/11/2026) Versão responsiva para celular + PWA: navegação inferior, menu Mais, tabelas em cartões, botão flutuante + Lançar, teclado numérico e manifest.json
 //   1.15.2 (25/11/2026) Ordem das colunas nas tabelas ajustada para Total, Pago/Rec., A Pagar/Rec.
 //   1.15.1 (24/11/2026) Correções: fila de salvamento (evita rollback falso), rollback de categorias, validação de valores > 0, escape seguro de categorias, limpeza de código morto
 //   1.15.0 (24/11/2026) Fixos compacto: caixa de lançamento fechada por padrão (＋ Lançar), formulário em uma linha, cards menores
@@ -941,7 +1194,7 @@ const TABS = [
 //   1.5.0 (20/11/2026) Aparência: 4 estilos visuais (Padrão, Planilha, Windows, Grafite) — Config. ou botão 🎨
 //   1.4.0 (20/11/2026) Mês único de trabalho: sem setas de mês; o mês fica salvo no Sheets e só muda ao "Encerrar o mês"
 // ══════════════════════════════════════════════════════
-const APP_VERSAO = '1.15.2';
+const APP_VERSAO = '1.16.1';
 const APP_VERSAO_DATA = '25/11/2026';
 document.querySelectorAll('[data-versao]').forEach(el => {
     el.textContent = el.dataset.versao === 'longa'
@@ -1099,20 +1352,20 @@ function itemRow(item, cc, mk, tipo){
     const mark     = item.paid ? ['mark-paid','✓','Quitado'] : parcial ? ['mark-parc','½','Parcial'] : ['mark-open','○','Em aberto'];
     const temParc  = PARC_TYPES.includes(item.type) && (!item.paid || parcList(item, mk).length > 0);
     return `<tr class="${rowClass}">
-        <td><input type="checkbox" ${item.paid?'checked':''} onchange="togglePaid('${item.id}','${mk}')"></td>
-        <td>
+        <td class="col-chk"><input type="checkbox" ${item.paid?'checked':''} onchange="togglePaid('${item.id}','${mk}')"></td>
+        <td class="col-desc">
             <span class="status-mark ${mark[0]}" title="${mark[2]}">${mark[1]}</span>
             <button class="star-btn ${item.starred?'active':''}" onclick="toggleStar('${item.id}')" title="${item.starred?'Remover destaque':'Destacar'}">◈</button>
             ${escH(item.description)}${item.recurring?' 🔄':''}${parcial?`<span class="parcial-tag" title="Já ${inc?'recebido':'pago'}: ${fmt(item.parc)}">parcial ${pct}%</span>`:''}
         </td>
-        <td style="white-space:nowrap;">${fmtVenc(venc)}</td>
-        <td class="num-cell">${fmt(item.value)}</td>
-        <td class="num-cell">${fmt(item.vPaid)}</td>
-        <td class="num-cell">${fmt(item.vOpen)}</td>
-        <td><div style="display:flex;gap:4px;">
+        <td class="col-venc" style="white-space:nowrap;" data-label="Venc.">${fmtVenc(venc)}</td>
+        <td class="num-cell col-tot" data-label="Total">${fmt(item.value)}</td>
+        <td class="num-cell col-pago" data-label="${inc?'Recebido':'Pago'}">${fmt(item.vPaid)}</td>
+        <td class="num-cell col-aberto" data-label="${inc?'A Receber':'A Pagar'}">${fmt(item.vOpen)}</td>
+        <td class="col-acoes"><div style="display:flex;gap:4px;">
             ${temParc?`<button class="btn btn-warning btn-sm" onclick="abrirParcial('${item.id}','${mk}')" title="${inc?'Receber parte':'Pagar parte'} / histórico de parciais">½</button>`:''}
-            <button class="btn btn-warning btn-sm" onclick="editEntry('${item.id}','${tipo}')">✎</button>
-            <button class="btn btn-danger btn-sm"  onclick="deleteEntry('${item.id}')">×</button>
+            <button class="btn btn-warning btn-sm" onclick="editEntry('${item.id}','${tipo}')" title="Editar">✎</button>
+            <button class="btn btn-danger btn-sm"  onclick="deleteEntry('${item.id}')" title="Excluir">×</button>
         </div></td></tr>`;
 }
 
@@ -1846,61 +2099,6 @@ async function removerParcial(pid){
     renderParcial();
 }
 
-/**
- * Move um lançamento atrasado para outro mês.
- * - Item não-recorrente: apenas muda o baseMonthKey.
- * - Item recorrente: marca o mês antigo como pago (resolve a pendência
- *   daquele mês específico) e cria uma cópia avulsa (não recorrente)
- *   no mês de destino, preservando a recorrência original.
- */
-// Mesmo dia do vencimento, no mês de destino
-function vencMovido(item, mk){
-    const [y, m] = mk.split('-').map(Number);
-    const dia = item.dueDate ? Number(item.dueDate.split('-')[2]) : DIA_VENC_PADRAO;
-    const d = Math.min(dia, new Date(y, m+1, 0).getDate());
-    return `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-}
-async function moveOverdueItem(id, pastMonthKey, selId) {
-    const sel = $(selId);
-    if (!sel) return;
-    const targetMk = sel.value; // formato "YYYY-M"
-    if (!targetMk || targetMk === pastMonthKey) return;
-
-    await commit(d => {
-        const item = d.find(x => x.id === id);
-        if (!item) return;
-
-        if (item.recurring) {
-            // Remove o mês de origem (foi transferido, não pago).
-            // skipMonths evita que ele continue aparecendo lá como quitado.
-            if (!item.skipMonths) item.skipMonths = [];
-            if (!item.skipMonths.includes(pastMonthKey)) item.skipMonths.push(pastMonthKey);
-            // Cria uma cópia avulsa no mês de destino
-            d.push({
-                id: Date.now().toString() + '_mv',
-                type: item.type,
-                description: item.description + ' (movido)',
-                category: item.category,
-                value: saldoEm(item, pastMonthKey) || item.value,   // com parcial, só o saldo vai para o novo mês
-                baseMonthKey: targetMk,
-                recurring: false,
-                paidMonths: [],
-                dueDate: vencMovido(item, targetMk),
-                ...(item.starred ? { starred: true } : {})
-            });
-        } else {
-            // Item avulso: apenas reatribui o mês (os parciais acompanham)
-            item.baseMonthKey = targetMk;
-            item.dueDate = vencMovido(item, targetMk);
-            if (item.partials && item.partials[pastMonthKey]) {
-                item.partials[targetMk] = item.partials[pastMonthKey];
-                delete item.partials[pastMonthKey];
-            }
-        }
-    });
-    toast('Lançamento movido para o novo mês.', 'success');
-}
-
 let excluirCtx = null;
 async function deleteEntry(id) {
     const item = financialData.find(x => x.id === id); if (!item) return;
@@ -2031,13 +2229,13 @@ function renderListaFixa(k){
         const aLoc = k === 'fixar' && cfg.destino(cat) === 'locacao' ? ' · Locações' : '';
         return `<tr class="cat-row" onclick="toggleRows('${cls}',this)">
                 <td colspan="2"><strong>▾ ${escH(cat)}</strong> <span>(${g.length})${aLoc}</span></td>
-                <td class="num-cell"><strong>${fmt(sub)}</strong></td><td class="num-cell col-pct">${pct(sub)}</td><td></td></tr>`
+                <td class="num-cell" data-label="Total"><strong>${fmt(sub)}</strong></td><td class="num-cell col-pct" data-label="%">${pct(sub)}</td><td></td></tr>`
             + g.map(i => `<tr class="${cls}">
-                <td>${escH(i.description)}</td>
-                <td style="white-space:nowrap;">${i.dia ? `dia ${i.dia}` : '—'}</td>
-                <td class="num-cell"><strong>${fmt(i.value)}</strong></td>
+                <td class="fx-desc">${escH(i.description)}</td>
+                <td class="fx-dia" style="white-space:nowrap;">${i.dia ? `dia ${i.dia}` : 'sem dia'}</td>
+                <td class="fx-val num-cell"><strong>${fmt(i.value)}</strong></td>
                 <td class="num-cell col-pct">${pct(Number(i.value||0))}</td>
-                <td><div style="display:flex;gap:4px;">
+                <td class="fx-acoes"><div style="display:flex;gap:4px;">
                     <button class="btn btn-warning btn-sm" onclick="editarFixo('${k}','${i.id}')" title="Editar">✎</button>
                     <button class="btn btn-danger btn-sm" onclick="excluirFixo('${k}','${i.id}')" title="Excluir">×</button>
                 </div></td></tr>`).join('');
@@ -2187,16 +2385,16 @@ function renderPatrimonio(){
         const cls = `pat-g${gi}`;
         return `<tr class="cat-row" onclick="toggleRows('${cls}',this)">
                 <td><strong>▾ ${escH(cat)}</strong> <span style="font-weight:500;color:var(--text-muted);">(${g.length})</span></td>
-                <td class="num-cell"><strong>${fmt(gv)}</strong></td><td></td>
-                <td class="num-cell"><strong>${gr ? fmt(gr) : '—'}</strong></td>
-                <td class="num-cell"><strong>${gv > 0 && gr ? fmtTaxa(gr/gv*100) : '—'}</strong></td><td></td></tr>`
+                <td class="num-cell" data-label="Patrimônio"><strong>${fmt(gv)}</strong></td><td></td>
+                <td class="num-cell" data-label="Rende/mês"><strong>${gr ? fmt(gr) : '—'}</strong></td>
+                <td class="num-cell" data-label="Taxa a.m."><strong>${gv > 0 && gr ? fmtTaxa(gr/gv*100) : '—'}</strong></td><td></td></tr>`
             + g.map(i => { const r = rendPat(i); return `<tr class="${cls}">
-                <td>${escH(i.description)}</td>
-                <td class="num-cell">${fmt(Number(i.value)||0)}</td>
-                <td class="num-cell">${r.tem ? r.txt : '<span class="pat-sem">não rende</span>'}</td>
-                <td class="num-cell"><strong>${r.tem ? fmt(r.mensal) : '—'}</strong></td>
-                <td class="num-cell">${r.tem ? fmtTaxa(r.taxa) : '—'}</td>
-                <td><div style="display:flex;gap:4px;">
+                <td class="pat-desc">${escH(i.description)}</td>
+                <td class="num-cell" data-label="Valor">${fmt(Number(i.value)||0)}</td>
+                <td class="num-cell" data-label="Rendimento">${r.tem ? r.txt : '<span class="pat-sem">não rende</span>'}</td>
+                <td class="num-cell" data-label="Rende/mês"><strong>${r.tem ? fmt(r.mensal) : '—'}</strong></td>
+                <td class="num-cell" data-label="Taxa a.m.">${r.tem ? fmtTaxa(r.taxa) : '—'}</td>
+                <td class="pat-acoes"><div style="display:flex;gap:4px;">
                     <button class="btn btn-warning btn-sm" onclick="editarPatrimonio('${i.id}')" title="Editar">✎</button>
                     <button class="btn btn-danger btn-sm" onclick="excluirPatrimonio('${i.id}')" title="Excluir">×</button>
                 </div></td></tr>`; }).join('');
@@ -2580,84 +2778,6 @@ function updateView() {
     const tb=$('total-banks');
     if(tb){tb.textContent=fmt(totalBank);tb.className=totalBank>=0?'c-primary':'c-danger';}
 
-    // ATRASADAS
-    let atrasadas=[], totReceber=0, totPagar=0;
-    financialData.forEach(item=>{
-        if(item.type==='conta'||item.type==='patrimonio'||item.type==='nota'||item.type==='fixa'||item.type==='fixar')return;
-        const isIncome=item.type==='receita'||item.type==='locacao';
-        if(item.type==='divida'){
-            // Dívida não tem mês: fica "atrasada" pela data de vencimento (se houver) e não paga.
-            if(item.paid || !item.dueDate) return;
-            const [dy,dm]=item.dueDate.split('-').map(Number);
-            if(dy<y||(dy===y&&(dm-1)<m)){
-                const sd=saldoEm(item,'global');
-                atrasadas.push({...item,pastMonthKey:`${dy}-${dm-1}`,isIncome:false,isGlobal:true,saldo:sd});
-                totPagar+=sd;
-            }
-            return;
-        }
-        if(!item.baseMonthKey)return;
-        const[by,bm]=item.baseMonthKey.split('-').map(Number);
-        if(item.recurring){
-            let cy=by,cm=bm;
-            while(cy<y||(cy===y&&cm<m)){
-                const pmk=`${cy}-${cm}`;
-                if(item.endMonthKey && mkIdx(pmk) > mkIdx(item.endMonthKey)) break;   // recorrência encerrada
-                if(!item.paidMonths?.includes(pmk) && !item.skipMonths?.includes(pmk)){
-                    const sd=saldoEm(item,pmk);
-                    atrasadas.push({...item,pastMonthKey:pmk,isIncome,saldo:sd});
-                    isIncome?totReceber+=sd:totPagar+=sd;
-                }
-                cm++;if(cm>11){cy++;cm=0;}
-            }
-        } else if(by<y||(by===y&&bm<m)){
-            if(!item.paidMonths?.includes(item.baseMonthKey) && !item.skipMonths?.includes(item.baseMonthKey)){
-                const sd=saldoEm(item,item.baseMonthKey);
-                atrasadas.push({...item,pastMonthKey:item.baseMonthKey,isIncome,saldo:sd});
-                isIncome?totReceber+=sd:totPagar+=sd;
-            }
-        }
-    });
-    atrasadas.sort((a,b)=>{const[ay,am]=a.pastMonthKey.split('-').map(Number),[by2,bm2]=b.pastMonthKey.split('-').map(Number);return(ay-by2)||(am-bm2);});
-    const badge=$('badge-atrasadas'); if(badge) badge.style.display=atrasadas.length?'inline-flex':'none';
-    const sar=$('sum-atr-rec'),sap=$('sum-atr-pag');
-    if(sar)sar.textContent=fmt(totReceber); if(sap)sap.textContent=fmt(totPagar);
-    const tba=$('tbody-atrasadas');
-    if(tba) tba.innerHTML=atrasadas.length===0
-        ?`<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--success);">Nenhuma pendência! 🎉</td></tr>`
-        :atrasadas.map(item=>{
-            const[ay,am]=item.pastMonthKey.split('-').map(Number);
-            // Dívida: mostra a data de vencimento real. Demais: o mês/ano do lançamento.
-            const ms = item.isGlobal ? item.dueDate.split('-').reverse().join('/')
-                : (t => t.charAt(0).toUpperCase()+t.slice(1))(new Date(ay,am,1).toLocaleDateString('pt-BR',{month:'short',year:'numeric'}));
-            const selId = `move-${item.id}-${item.pastMonthKey}`;
-            const moveCell = item.isGlobal
-                ? `<span style="color:var(--text-muted);font-size:11px;">vencida</span>`
-                : `<div style="display:flex;gap:4px;align-items:center;">
-                        <select id="${selId}" style="padding:4px 6px;font-size:11px;"></select>
-                        <button class="btn btn-warning btn-sm" onclick="moveOverdueItem('${item.id}','${item.pastMonthKey}','${selId}')">→</button>
-                    </div>`;
-            return`<tr><td><input type="checkbox" onchange="togglePaid('${item.id}','${item.pastMonthKey}')"></td>
-                <td>${ms}</td>
-                <td>${({despesa:'Despesa',receita:'Receita',locacao:'Locação',divida:'Dívida'})[item.type]||item.type} · ${escH(item.category)}</td>
-                <td>${escH(item.description)}${item.recurring?' 🔄':''}${item.saldo<item.value?`<span class="parcial-tag">parcial</span>`:''}</td>
-                <td class="num-cell ${item.isIncome?'c-success':'c-danger'}"><strong>${item.isIncome?'+':'-'} ${fmt(item.saldo)}</strong>${item.saldo<item.value?`<div style="font-size:11px;font-weight:600;color:var(--mut);">saldo de ${fmt(item.value)}</div>`:''}</td>
-                <td>${moveCell}</td></tr>`;}).join('');
-    // Popula os seletores de mês para cada linha (mês atual + 11 seguintes) — não se aplica a dívidas
-    atrasadas.forEach(item=>{
-        if(item.isGlobal)return;
-        const sel=$(`move-${item.id}-${item.pastMonthKey}`);
-        if(!sel)return;
-        let opts='';
-        for(let i=0;i<12;i++){
-            const oy=y, om=m+i;
-            const realY=oy+Math.floor(om/12), realM=((om%12)+12)%12;
-            const label=new Date(realY,realM,1).toLocaleDateString('pt-BR',{month:'short',year:'numeric'});
-            opts+=`<option value="${realY}-${realM}" ${i===0?'selected':''}>${label}</option>`;
-        }
-        sel.innerHTML=opts;
-    });
-
     renderFixos();
     renderPatrimonio();
 
@@ -2721,9 +2841,9 @@ function updateView() {
                 const cc=`cat-${tab.type}-${cat.replace(/[^a-zA-Z0-9]/g,'')}`;
                 tbody.innerHTML+=`<tr class="cat-row" onclick="toggleRows('${cc}',this)">
                     <td colspan="3"><strong>▾ ${escH(cat)}</strong></td>
-                    <td class="num-cell"><strong>${fmt(g.total)}</strong></td>
-                    <td class="num-cell"><strong>${fmt(g.pago)}</strong></td>
-                    <td class="num-cell"><strong>${fmt(g.aPagar)}</strong></td>
+                    <td class="num-cell" data-label="Total"><strong>${fmt(g.total)}</strong></td>
+                    <td class="num-cell" data-label="Pago/Rec."><strong>${fmt(g.pago)}</strong></td>
+                    <td class="num-cell" data-label="A Pagar/Rec."><strong>${fmt(g.aPagar)}</strong></td>
                     <td></td></tr>`;
                 g.items.forEach(item=>{
                     if(!matchesFilter(item,filter)) return;
@@ -2879,7 +2999,7 @@ function renderTabs() {
                         <div class="form-field" style="flex:2;min-width:150px;"><label>Descrição</label><input id="desc-${tab.type}" placeholder="Ex: Conta de luz" required></div>
                         <div class="form-field" style="max-width:150px;min-width:130px;"><label>Vencimento</label><input type="date" id="venc-${tab.type}" onchange="this.dataset.auto='0'"></div>
                         <div class="form-field"><label>Categoria</label><select id="cat-${tab.type}" required></select></div>
-                        <div class="form-field"><label>Valor (R$)</label><input id="val-${tab.type}" placeholder="0,00" required></div>
+                        <div class="form-field"><label>Valor (R$)</label><input id="val-${tab.type}" inputmode="decimal" placeholder="0,00" required></div>
                         <label class="check-field"><input type="checkbox" id="rec-${tab.type}" onchange="toggleParcelas('${tab.type}')"> Recorrente</label>
                         <div class="form-field" id="parcelas-wrap-${tab.type}" style="display:none;min-width:90px;max-width:120px;">
                             <label>Parcelas</label>
@@ -2906,7 +3026,7 @@ function renderTabs() {
                 </div>
             </div>
             <div class="card" style="padding:0;">
-                <table id="table-${tab.type}">
+                <table id="table-${tab.type}" class="tbl-lanc">
                     <thead><tr><th width="5%">✔</th><th width="30%">Descrição</th><th width="10%">Venc.</th><th class="num-cell">Total</th><th class="num-cell">Pago/Rec.</th><th class="num-cell">A Pagar/Rec.</th><th width="10%">Ações</th></tr></thead>
                     <tbody></tbody>
                 </table>
@@ -2917,12 +3037,47 @@ function renderTabs() {
 // ══════════════════════════════════════════════════════
 //  NAVEGAÇÃO
 // ══════════════════════════════════════════════════════
+let activeTabName = 'Dashboard';
+const MOB_MAIN_TABS = ['Dashboard','Despesas','Receitas','Locacoes'];
+const FAB_TAB_MAP = { Despesas:'despesa', Receitas:'receita', Locacoes:'locacao', Dividas:'divida', Patrimonio:'patrimonio', DespesasFixas:'fixa' };
+
+function toggleMoreSheet(forcar){
+    const s = $('mobile-more-sheet'); if (!s) return;
+    const abrir = forcar === undefined ? !s.classList.contains('open') : !!forcar;
+    s.classList.toggle('open', abrir);
+}
+
+function updateFab(){
+    const fab = $('fab-lancar'); if (!fab) return;
+    fab.classList.toggle('hidden', !FAB_TAB_MAP[activeTabName]);
+}
+
+function fabAcao(){
+    const tipo = FAB_TAB_MAP[activeTabName];
+    if (!tipo) return;
+    if (tipo === 'fixa') {
+        fxPainel('fixa', true);
+        const box = $('box-fixa'); if (box) box.scrollIntoView({ behavior:'smooth', block:'start' });
+        setTimeout(() => $('desc-fixa')?.focus({ preventScroll:true }), 250);
+        return;
+    }
+    const card = $(`form-card-${tipo}`);
+    if (card && card.classList.contains('min')) minForm(tipo, false);
+    if (card) card.scrollIntoView({ behavior:'smooth', block:'start' });
+    setTimeout(() => $(`desc-${tipo}`)?.focus({ preventScroll:true }), 250);
+}
+
 function openTab(e, name) {
+    activeTabName = name;
     document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
-    document.querySelectorAll('.tab-link').forEach(t=>t.classList.remove('active'));
+    document.querySelectorAll('.tab-link, #mobile-nav button, #mobile-more-sheet .more-item').forEach(t=>t.classList.remove('active'));
     $(name)?.classList.add('active');
-    e.currentTarget.classList.add('active');
+    document.querySelectorAll(`[data-tab="${name}"]`).forEach(b=>b.classList.add('active'));
+    if (!MOB_MAIN_TABS.includes(name)) $('mob-btn-mais')?.classList.add('active');
+    toggleMoreSheet(false);
+    updateFab();
     if(editModeId) cancelEdit();
+    if (window.innerWidth <= 720) window.scrollTo({ top: 0, behavior: 'instant' });
 }
 // ══════════════════════════════════════════════════════
 //  MÊS DE TRABALHO (v1.4.0)
@@ -3003,7 +3158,7 @@ async function encerrarMes(){
     const abertos = abertosAte(mk);
     if (abertos.length) {
         const lista = abertos.slice(0, 6).map(a => `• ${a.i.description} — ${fmt(a.sd)}${a.m !== mk ? ` (${nomeMes(a.m)})` : ''}`).join('\n');
-        alert(`Ainda não dá para encerrar ${mes}.\n\nHá ${abertos.length} ${abertos.length===1?'lançamento em aberto':'lançamentos em aberto'}:\n${lista}${abertos.length > 6 ? `\n… e mais ${abertos.length - 6}` : ''}\n\nQuite, exclua ou mova para o mês seguinte (aba Atrasadas ou botão de editar) e tente de novo.`);
+        alert(`Ainda não dá para encerrar ${mes}.\n\nHá ${abertos.length} ${abertos.length===1?'lançamento em aberto':'lançamentos em aberto'}:\n${lista}${abertos.length > 6 ? `\n… e mais ${abertos.length - 6}` : ''}\n\nQuite ou exclua os lançamentos em aberto e tente de novo.`);
         return;
     }
     // Conta o que vai sumir, para mostrar antes
@@ -3085,7 +3240,7 @@ function toggleGrouping(type){
     updateView();
 }
 
-function toggleRows(cls,hdr){let fechou=false;document.querySelectorAll(`.${cls}`).forEach(r=>{fechou=r.style.display!=='none';r.style.display=fechou?'none':'table-row';});const s=hdr&&hdr.querySelector('strong');if(s)s.textContent=s.textContent.replace(/^[▾▸]/,fechou?'▸':'▾');}
+function toggleRows(cls,hdr){let fechou=false;document.querySelectorAll(`.${cls}`).forEach(r=>{fechou=r.style.display!=='none';r.style.display=fechou?'none':'';});const s=hdr&&hdr.querySelector('strong');if(s)s.textContent=s.textContent.replace(/^[▾▸]/,fechou?'▸':'▾');}
 
 // ══════════════════════════════════════════════════════
 //  TEMA
@@ -3117,22 +3272,20 @@ function renderEstilos(){
             ${e.prev[3] ? '<u><s></s><s></s><s></s><s></s><s></s><s></s></u>' : `<b style="background:#fff;height:18px;border-radius:${e.id === 'grafite' ? '3px' : '5px'};border:1px solid #dde2ea;"></b>`}</span>
         <strong>${e.id === atual ? '✓ ' : ''}${e.nome}</strong><small>${e.desc}</small></button>`).join('');
 }
-function toggleTheme(){const d=document.body.getAttribute('data-theme')==='dark';document.body.setAttribute('data-theme',d?'':'dark');localStorage.setItem('theme',d?'light':'dark');}
-function applyTheme(){if(localStorage.getItem('theme')==='dark')document.body.setAttribute('data-theme','dark');aplicarEstilo(localStorage.getItem('estilo')||'padrao');}
+function syncThemeColor(){const m=document.querySelector('meta[name="theme-color"]');if(m)m.content=document.body.getAttribute('data-theme')==='dark'?'#172554':'#1e3a8a';}
+function toggleTheme(){const d=document.body.getAttribute('data-theme')==='dark';document.body.setAttribute('data-theme',d?'':'dark');localStorage.setItem('theme',d?'light':'dark');syncThemeColor();}
+function applyTheme(){if(localStorage.getItem('theme')==='dark')document.body.setAttribute('data-theme','dark');aplicarEstilo(localStorage.getItem('estilo')||'padrao');syncThemeColor();}
 
 // ── VISIBILIDADE DAS ABAS ──
 // Usa localStorage apenas para preferência de UI (não dados financeiros)
 function toggleTabVisibility(tabId, visible) {
-    const navBtn = $(`nav-${tabId}`);
+    const navBtn = $(`nav-${tabId}`), mobBtn = $(`mob-nav-${tabId}`);
     if (navBtn) navBtn.style.display = visible ? '' : 'none';
+    if (mobBtn) mobBtn.style.display = visible ? '' : 'none';
     // Se a aba oculta está ativa, redireciona para Dashboard
     if (!visible) {
         const section = $(tabId);
-        if (section && section.classList.contains('active')) {
-            section.classList.remove('active');
-            $('Dashboard')?.classList.add('active');
-            document.querySelector('.tab-link')?.classList.add('active');
-        }
+        if (section && section.classList.contains('active')) openTab(null, 'Dashboard');
     }
     // Salva preferência no localStorage (só preferência de UI, não dados)
     const prefs = JSON.parse(localStorage.getItem('tabVisibility') || '{}');
@@ -3144,9 +3297,10 @@ function applyTabVisibility() {
     const prefs = JSON.parse(localStorage.getItem('tabVisibility') || '{}');
     ['DespesasFixas','Dividas','Patrimonio'].forEach(tabId => {
         const visible = prefs[tabId] !== false; // padrão: visível
-        const navBtn  = $(`nav-${tabId}`);
+        const navBtn  = $(`nav-${tabId}`), mobBtn = $(`mob-nav-${tabId}`);
         const checkbox = $(`vis-${tabId}`);
         if (navBtn)   navBtn.style.display   = visible ? '' : 'none';
+        if (mobBtn)   mobBtn.style.display   = visible ? '' : 'none';
         if (checkbox) checkbox.checked        = visible;
     });
 }
