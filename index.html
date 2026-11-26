@@ -173,6 +173,93 @@ main{max-width:1280px;margin:0 auto;padding:22px 24px 80px}
 .c-success{color:var(--prio-txt)}
 .c-danger{color:var(--neg)}
 .c-warning{color:var(--mut)}
+.kpi-prog{margin-top:8px}
+.kpi-prog-bar{height:5px;border-radius:999px;background:var(--bor);overflow:hidden}
+.kpi-prog-bar>i{display:block;height:100%;background:var(--acc);border-radius:999px;transition:width .35s ease}
+.kpi-prog-txt{display:flex;justify-content:space-between;font-size:10.5px;color:var(--mut);font-weight:600;margin-top:3px}
+
+/* ── Dashboard Analítico (v1.19.0): gráficos, tendências e radar ── */
+.dash-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-top:4px}
+.dash-card{display:flex;flex-direction:column;margin-bottom:0!important;padding:18px 20px}
+.dash-card-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.dash-card-head h2{margin:0!important;border:none!important;padding:0!important;display:flex;align-items:center;gap:6px}
+.dash-sub{font-size:12px;color:var(--mut);font-weight:500}
+.dash-body{display:flex;flex-direction:column;gap:12px;flex:1}
+.dash-empty{text-align:center;padding:28px 12px;color:var(--mut);font-size:13px}
+
+/* Saúde & Fluxo */
+.saude-row{display:flex;flex-direction:column;gap:5px}
+.saude-lbl{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:12.5px}
+.saude-lbl span{color:var(--mut);font-weight:600}
+.saude-lbl strong{font-variant-numeric:tabular-nums}
+.saude-bar{height:10px;border-radius:999px;background:var(--bor);overflow:hidden;position:relative}
+.saude-bar>i{display:block;height:100%;border-radius:999px;transition:width .35s ease}
+.saude-bar .b-acc{background:var(--acc)}
+.saude-bar .b-slate{background:var(--prio)}
+.saude-bar .b-neg{background:var(--neg)}
+.dash-insights{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:auto;padding-top:6px}
+.ins-box{background:var(--sup2);border:1px solid var(--bor);border-radius:10px;padding:9px 10px}
+.ins-box span{display:block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--mut);margin-bottom:3px}
+.ins-box strong{display:block;font-size:14.5px;font-variant-numeric:tabular-nums;line-height:1.2}
+.ins-box small{display:block;font-size:11px;color:var(--mut);margin-top:2px;line-height:1.3}
+
+/* Donut de Categorias */
+.donut-wrap{display:grid;grid-template-columns:156px minmax(0,1fr);gap:16px;align-items:center}
+.donut-svg-box{position:relative;width:156px;height:156px;margin:0 auto}
+.donut-svg-box svg{width:100%;height:100%;transform:rotate(-90deg)}
+.donut-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;pointer-events:none;padding:18px}
+.donut-center small{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--mut)}
+.donut-center strong{font-size:14px;font-weight:800;font-variant-numeric:tabular-nums;margin-top:1px}
+.donut-center span{font-size:10.5px;color:var(--mut)}
+.donut-leg{display:flex;flex-direction:column;gap:7px;min-width:0}
+.donut-item{display:flex;flex-direction:column;gap:3px;padding:3px 5px;border-radius:7px;transition:background .15s}
+.donut-item:hover{background:var(--sup2)}
+.donut-item-top{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12.5px}
+.donut-name{display:flex;align-items:center;gap:6px;min-width:0;font-weight:600}
+.donut-name span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.donut-dot{width:9px;height:9px;border-radius:3px;flex:none}
+.donut-val{font-variant-numeric:tabular-nums;white-space:nowrap;font-weight:700}
+.donut-val small{font-weight:500;color:var(--mut);margin-left:4px;font-size:11px}
+.donut-mini{height:3px;border-radius:999px;background:var(--bor);overflow:hidden}
+.donut-mini>i{display:block;height:100%;border-radius:999px}
+
+/* Gráfico de Tendência (6 meses) */
+.trend-svg{width:100%;height:auto;display:block;overflow:visible}
+.trend-leg{display:flex;gap:14px;flex-wrap:wrap;font-size:11.5px;color:var(--mut);font-weight:600;align-items:center}
+.trend-leg span{display:inline-flex;align-items:center;gap:5px}
+.trend-leg i{display:inline-block;width:10px;height:10px;border-radius:3px}
+.trend-leg i.ln{width:14px;height:3px;border-radius:2px}
+.trend-foot{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:auto}
+
+/* Radar (Vencimentos / Top Gastos / Patrimônio) */
+.radar-pills{display:inline-flex;gap:3px;background:var(--sup2);border:1px solid var(--bor);border-radius:9px;padding:2px}
+.radar-pills button{border:none;background:none;color:var(--mut);font-size:11.5px;font-weight:700;padding:4px 9px;border-radius:7px;transition:all .15s}
+.radar-pills button.active{background:var(--acc);color:var(--acc-txt)}
+.radar-list{display:flex;flex-direction:column;gap:6px}
+.radar-row{display:flex;align-items:center;gap:8px;padding:6px 8px;border:1px solid var(--bor);border-radius:9px;background:var(--sup2);font-size:12.5px}
+.radar-row-main{flex:1;min-width:0}
+.radar-row-title{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.radar-row-meta{font-size:11px;color:var(--mut);display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:1px}
+.radar-tag{display:inline-block;padding:1px 6px;border-radius:999px;font-size:10px;font-weight:700;border:1px solid var(--bor);background:var(--sup);color:var(--mut)}
+.radar-tag.urg{border-color:var(--neg);color:var(--neg)}
+.radar-tag.soon{border-color:var(--acc);color:var(--acc)}
+.radar-val{font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap;text-align:right}
+.top-bar{height:4px;border-radius:999px;background:var(--bor);overflow:hidden;margin-top:4px}
+.top-bar>i{display:block;height:100%;background:var(--acc);border-radius:999px}
+.pat-dash-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.pat-dash-box{background:var(--sup2);border:1px solid var(--bor);border-radius:10px;padding:10px 12px}
+.pat-dash-box span{display:block;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--mut);margin-bottom:3px}
+.pat-dash-box strong{font-size:16px;font-variant-numeric:tabular-nums}
+.pat-dash-box small{display:block;font-size:11px;color:var(--mut);margin-top:2px}
+
+@media (max-width:960px){
+  .dash-grid{grid-template-columns:minmax(0,1fr)}
+}
+@media (max-width:520px){
+  .donut-wrap{grid-template-columns:minmax(0,1fr)}
+  .dash-insights,.trend-foot{grid-template-columns:minmax(0,1fr)}
+  .pat-dash-grid{grid-template-columns:minmax(0,1fr)}
+}
 
 /* ── Tabelas ── */
 table{width:100%;border-collapse:collapse;font-size:13.5px;line-height:1.3}
@@ -866,6 +953,7 @@ body[data-estilo="grafite"] nav button.tab-link.active{ border-bottom-color:var(
         </div>
         <div class="mes-box" id="mes-card"></div>
         <div class="kpi-grid" id="kpi-grid"></div>
+        <div class="dash-grid" id="dash-analytics"></div>
     </section>
 
     <!-- TABS DINÂMICAS -->
@@ -1178,6 +1266,7 @@ const TABS = [
 //   1.1.0 (31/10/2026) Missão: Programação de recebimentos (+ Efetivar em Receitas); versão visível no app
 //   1.2.0 (07/11/2026) Pagamento/recebimento parcial (botão ½), com histórico e quitação automática
 //   1.3.0 (07/11/2026) Aba Missão retirada (vive no app próprio); dados dela preservados no Sheets
+//   1.19.0 (26/11/2026) Dashboard Analítico: barras de progresso nos KPIs, Saúde Financeira, gráfico de rosca por categoria, tendência de 6 meses e Radar (vencimentos, top gastos e patrimônio)
 //   1.18.0 (25/11/2026) Dashboard com botões ◀ ▶ para reordenar as caixas (salvo por aparelho) e botão ↺ Ordem padrão
 //   1.17.1 (25/11/2026) Card Saldos Bancários compactado no Dashboard para manter todas as caixas proporcionais
 //   1.17.0 (25/11/2026) Remoção da aba Locações com migração automática para Receitas; Contas Bancárias integradas ao card Saldos Bancários no Dashboard
@@ -1205,8 +1294,8 @@ const TABS = [
 //   1.5.0 (20/11/2026) Aparência: 4 estilos visuais (Padrão, Planilha, Windows, Grafite) — Config. ou botão 🎨
 //   1.4.0 (20/11/2026) Mês único de trabalho: sem setas de mês; o mês fica salvo no Sheets e só muda ao "Encerrar o mês"
 // ══════════════════════════════════════════════════════
-const APP_VERSAO = '1.18.0';
-const APP_VERSAO_DATA = '25/11/2026';
+const APP_VERSAO = '1.19.0';
+const APP_VERSAO_DATA = '26/11/2026';
 document.querySelectorAll('[data-versao]').forEach(el => {
     el.textContent = el.dataset.versao === 'longa'
         ? `Controle Financeiro · versão ${APP_VERSAO} · ${APP_VERSAO_DATA}`
@@ -2957,6 +3046,7 @@ function updateView() {
 
     const kg=$('kpi-grid');
     if(kg) kg.innerHTML = order.map((id, idx) => kpiCards[id](idx)).join('');
+    renderDashAnalytics({ metrics, monthData, totalBank, dr, dl, prev, saldo, y, m, mk });
 }
 
 // ── Soma um tipo num mês específico (respeita recorrência e encerramento) ──
@@ -3010,12 +3100,367 @@ function kpi(label,m,l1,l2,c1,c2,mainColor,isExpense,mvHtml=''){
     // Valor principal = o que ainda falta (aPagar/A Receber), cor fixa por tipo
     // Despesas mostram sinal de menos pois representam saída de dinheiro
     const mainVal = isExpense ? `- ${fmt(m.aPagar)}` : fmt(m.aPagar);
+    const pct = m.total > 0 ? Math.min(100, Math.max(0, Math.round(m.pago / m.total * 100))) : 0;
     return`<div class="kpi"><div class="kpi-label kpi-head-row"><span>${label}</span><span class="kpi-head-ctrl">${mvHtml}</span></div>
         <div class="kpi-value ${mainColor}">${mainVal}</div>
+        <div class="kpi-prog">
+            <div class="kpi-prog-bar"><i style="width:${pct}%"></i></div>
+            <div class="kpi-prog-txt"><span>${pct}% ${l1.toLowerCase()}</span><span>${100-pct}% aberto</span></div>
+        </div>
         <div class="kpi-sub">
             <div class="kpi-sub-row"><span>${l1}</span><strong class="${c1}">${fmt(m.pago)}</strong></div>
             <div class="kpi-sub-row"><span>Total</span><strong>${fmt(m.total)}</strong></div>
         </div></div>`;
+}
+
+
+// ══════════════════════════════════════════════════════
+//  DASHBOARD ANALÍTICO (v1.19.0)
+//  Paleta acessível para deuteranopia (azuis + grafite; vermelho só
+//  em déficit/vencido), zero dependências externas, SVG puro.
+// ══════════════════════════════════════════════════════
+let dashRadarTab = 'venc';
+const CHART_COLORS = ['#2563eb', '#1e3a8a', '#0284c7', '#475569', '#6366f1', '#64748b', '#93c5fd'];
+
+function setDashRadar(tab) {
+    dashRadarTab = tab;
+    updateView();
+}
+
+function fmtShortBRL(v) {
+    const abs = Math.abs(v), s = v < 0 ? '-' : '';
+    if (abs >= 1000000) return `${s}R$ ${(abs/1000000).toFixed(1).replace('.',',')}M`;
+    if (abs >= 1000)    return `${s}R$ ${(abs/1000).toFixed(abs>=10000?0:1).replace('.',',')}k`;
+    return `${s}R$ ${Math.round(abs)}`;
+}
+
+function renderDashAnalytics({ metrics, monthData, totalBank, dr, dl, prev, saldo, y, m, mk }) {
+    const el = $('dash-analytics');
+    if (!el) return;
+
+    const recTot = metrics.receita.total, recPag = metrics.receita.pago;
+    const despTot = metrics.despesa.total, despPag = metrics.despesa.pago;
+    const saidasTot = despTot + prev;
+    const pctComp = recTot > 0 ? (saidasTot / recTot * 100) : (saidasTot > 0 ? 100 : 0);
+    const pctRec  = recTot > 0 ? Math.min(100, recPag / recTot * 100) : 0;
+    const pctDesp = despTot > 0 ? Math.min(100, despPag / despTot * 100) : 0;
+    const tetoDiario = dl > 0 ? (saldo + prev) / dl : null;
+    const margemPct = recTot > 0 ? (saldo / recTot * 100) : null;
+
+    // ── 1. SAÚDE FINANCEIRA & EXECUÇÃO DO MÊS ──
+    const cardSaude = `
+    <div class="card dash-card">
+        <div class="dash-card-head">
+            <h2>📈 Saúde Financeira do Mês</h2>
+            <span class="dash-sub">${mesExtenso()}</span>
+        </div>
+        <div class="dash-body">
+            <div class="saude-row">
+                <div class="saude-lbl">
+                    <span>Comprometimento (Despesas + Diários / Receitas)</span>
+                    <strong class="${pctComp > 100 ? 'c-danger' : 'c-primary'}">${recTot > 0 ? fmtN(pctComp, 1) + '%' : '—'}</strong>
+                </div>
+                <div class="saude-bar"><i class="${pctComp > 100 ? 'b-neg' : 'b-acc'}" style="width:${Math.min(100, Math.max(0, pctComp)).toFixed(1)}%"></i></div>
+            </div>
+            <div class="saude-row">
+                <div class="saude-lbl">
+                    <span>Receitas recebidas (${fmt(recPag)} de ${fmt(recTot)})</span>
+                    <strong>${fmtN(pctRec, 0)}%</strong>
+                </div>
+                <div class="saude-bar"><i class="b-acc" style="width:${pctRec.toFixed(1)}%"></i></div>
+            </div>
+            <div class="saude-row">
+                <div class="saude-lbl">
+                    <span>Despesas pagas (${fmt(despPag)} de ${fmt(despTot)})</span>
+                    <strong>${fmtN(pctDesp, 0)}%</strong>
+                </div>
+                <div class="saude-bar"><i class="b-slate" style="width:${pctDesp.toFixed(1)}%"></i></div>
+            </div>
+            <div class="dash-insights">
+                <div class="ins-box">
+                    <span>Teto seguro / dia</span>
+                    <strong class="${tetoDiario !== null && tetoDiario < dr ? 'c-danger' : 'c-primary'}">${tetoDiario === null ? '—' : fmtSigned(Math.max(0, tetoDiario))}</strong>
+                    <small>${tetoDiario === null ? 'Mês encerrado' : tetoDiario >= dr ? `Folga de ${fmt(tetoDiario - dr)}/dia` : `Meta ${fmt(dr)} está apertada`}</small>
+                </div>
+                <div class="ins-box">
+                    <span>Margem projetada</span>
+                    <strong class="${margemPct !== null && margemPct < 0 ? 'c-danger' : 'c-primary'}">${margemPct === null ? '—' : fmtN(margemPct, 1) + '%'}</strong>
+                    <small>${saldo >= 0 ? 'Sobra sobre receitas' : 'Déficit projetado'}</small>
+                </div>
+                <div class="ins-box">
+                    <span>Fluxo em aberto</span>
+                    <strong class="${(metrics.receita.aPagar - metrics.despesa.aPagar) < 0 ? 'c-danger' : ''}">${fmtSigned(metrics.receita.aPagar - metrics.despesa.aPagar)}</strong>
+                    <small>A receber − a pagar</small>
+                </div>
+            </div>
+        </div>
+    </div>`;
+
+    // ── 2. DESPESAS POR CATEGORIA (DONUT SVG) ──
+    const despMes = monthData.filter(i => i.type === 'despesa');
+    const catMap = {};
+    despMes.forEach(i => {
+        const c = i.category || 'Outros';
+        if (!catMap[c]) catMap[c] = { name: c, total: 0, pago: 0, count: 0 };
+        const st = calcPago(i, mk);
+        catMap[c].total += Number(i.value) || 0;
+        catMap[c].pago  += st.vPaid;
+        catMap[c].count++;
+    });
+    let catList = Object.values(catMap).sort((a, b) => b.total - a.total);
+    if (catList.length > 6) {
+        const top = catList.slice(0, 5);
+        const rest = catList.slice(5).reduce((acc, x) => ({ name: 'Outras', total: acc.total + x.total, pago: acc.pago + x.pago, count: acc.count + x.count }), { name: 'Outras', total: 0, pago: 0, count: 0 });
+        catList = [...top, rest];
+    }
+    const R = 64, C = 2 * Math.PI * R;
+    let offset = 0;
+    const slicesSvg = catList.map((c, idx) => {
+        const frac = despTot > 0 ? c.total / despTot : 0;
+        const len = frac * C;
+        const cor = CHART_COLORS[idx % CHART_COLORS.length];
+        const seg = `<circle cx="90" cy="90" r="${R}" fill="none" stroke="${cor}" stroke-width="24" stroke-dasharray="${len.toFixed(2)} ${(C - len).toFixed(2)}" stroke-dashoffset="${(-offset).toFixed(2)}"><title>${escH(c.name)}: ${fmt(c.total)} (${fmtN(frac*100,1)}%)</title></circle>`;
+        offset += len;
+        return seg;
+    }).join('');
+
+    const cardDonut = `
+    <div class="card dash-card">
+        <div class="dash-card-head">
+            <h2>🍩 Despesas por Categoria</h2>
+            <span class="dash-sub">${despMes.length} ${despMes.length === 1 ? 'lançamento' : 'lançamentos'}</span>
+        </div>
+        <div class="dash-body">
+            ${catList.length === 0
+                ? `<div class="dash-empty">Nenhuma despesa lançada neste mês.</div>`
+                : `<div class="donut-wrap">
+                    <div class="donut-svg-box">
+                        <svg viewBox="0 0 180 180" aria-label="Gráfico de despesas por categoria">
+                            <circle cx="90" cy="90" r="${R}" fill="none" stroke="var(--bor)" stroke-width="24"></circle>
+                            ${slicesSvg}
+                        </svg>
+                        <div class="donut-center">
+                            <small>Total</small>
+                            <strong>${fmt(despTot)}</strong>
+                            <span>${catList.length} ${catList.length === 1 ? 'categ.' : 'categs.'}</span>
+                        </div>
+                    </div>
+                    <div class="donut-leg">
+                        ${catList.map((c, idx) => {
+                            const pct = despTot > 0 ? (c.total / despTot * 100) : 0;
+                            const pctPg = c.total > 0 ? Math.min(100, c.pago / c.total * 100) : 0;
+                            const cor = CHART_COLORS[idx % CHART_COLORS.length];
+                            return `<div class="donut-item" title="${escH(c.name)}: ${fmt(c.pago)} pago de ${fmt(c.total)}">
+                                <div class="donut-item-top">
+                                    <span class="donut-name"><i class="donut-dot" style="background:${cor}"></i><span>${escH(c.name)}</span></span>
+                                    <span class="donut-val">${fmt(c.total)}<small>${fmtN(pct,0)}%</small></span>
+                                </div>
+                                <div class="donut-mini"><i style="width:${pctPg.toFixed(1)}%;background:${cor}"></i></div>
+                            </div>`;
+                        }).join('')}
+                    </div>
+                </div>`}
+        </div>
+    </div>`;
+
+    // ── 3. TENDÊNCIA E PROJEÇÃO (PRÓXIMOS 6 MESES) ──
+    const trendMonths = [];
+    for (let k = 0; k < 6; k++) {
+        const tm = m + k;
+        const ry = y + Math.floor(tm / 12), rm = ((tm % 12) + 12) % 12;
+        const rec = r2(sumTypeInMonth('receita', ry, rm));
+        const desp = r2(sumTypeInMonth('despesa', ry, rm));
+        trendMonths.push({ label: `${MESES_ABREV[rm]}/${String(ry).slice(2)}`, rec, desp, sal: r2(rec - desp) });
+    }
+    const maxBar = Math.max(1, ...trendMonths.map(t => Math.max(t.rec, t.desp)));
+    const minSal = Math.min(0, ...trendMonths.map(t => t.sal));
+    const maxY = maxBar * 1.12;
+    const minY = minSal < 0 ? minSal * 1.15 : 0;
+    const spanY = Math.max(1, maxY - minY);
+    const W = 520, H = 195, padL = 56, padR = 14, padT = 16, padB = 30;
+    const plotW = W - padL - padR, plotH = H - padT - padB;
+    const yPos = v => padT + ((maxY - v) / spanY) * plotH;
+    const zeroY = yPos(0);
+
+    const gridTicks = [maxY, maxY * 0.5, 0];
+    if (minY < 0) gridTicks.push(minY);
+    const gridSvg = gridTicks.map(tv => {
+        const yy = yPos(tv).toFixed(1);
+        return `<line x1="${padL}" y1="${yy}" x2="${W - padR}" y2="${yy}" stroke="var(--bor)" stroke-width="${tv === 0 ? 1.5 : 1}" stroke-dasharray="${tv === 0 ? '' : '3 3'}"/>
+                <text x="${padL - 6}" y="${(Number(yy) + 3.5).toFixed(1)}" text-anchor="end" font-size="10" fill="var(--mut)" font-weight="600">${fmtShortBRL(tv)}</text>`;
+    }).join('');
+
+    const stepX = plotW / trendMonths.length;
+    const barW = Math.min(20, stepX * 0.28);
+    const linePts = [];
+    const barsSvg = trendMonths.map((t, idx) => {
+        const cx = padL + stepX * idx + stepX / 2;
+        const recH = Math.max(0, zeroY - yPos(t.rec));
+        const despH = Math.max(0, zeroY - yPos(t.desp));
+        const sy = yPos(t.sal);
+        linePts.push(`${cx.toFixed(1)},${sy.toFixed(1)}`);
+        return `
+            <rect x="${(cx - barW - 2).toFixed(1)}" y="${(zeroY - recH).toFixed(1)}" width="${barW.toFixed(1)}" height="${recH.toFixed(1)}" rx="3" fill="var(--acc)" opacity=".88">
+                <title>${t.label} · Receitas: ${fmt(t.rec)}</title>
+            </rect>
+            <rect x="${(cx + 2).toFixed(1)}" y="${(zeroY - despH).toFixed(1)}" width="${barW.toFixed(1)}" height="${despH.toFixed(1)}" rx="3" fill="var(--prio)" opacity=".65">
+                <title>${t.label} · Despesas: ${fmt(t.desp)}</title>
+            </rect>
+            <text x="${cx.toFixed(1)}" y="${H - 8}" text-anchor="middle" font-size="10.5" fill="${idx === 0 ? 'var(--tit)' : 'var(--mut)'}" font-weight="${idx === 0 ? '800' : '600'}">${t.label}</text>`;
+    }).join('');
+
+    const dotsSvg = trendMonths.map((t, idx) => {
+        const cx = padL + stepX * idx + stepX / 2;
+        const sy = yPos(t.sal);
+        const cor = t.sal < 0 ? 'var(--neg)' : 'var(--tit)';
+        return `<circle cx="${cx.toFixed(1)}" cy="${sy.toFixed(1)}" r="4.2" fill="${cor}" stroke="var(--sup)" stroke-width="2">
+            <title>${t.label} · Saldo (Rec − Desp): ${fmtSigned(t.sal)}</title>
+        </circle>`;
+    }).join('');
+
+    const medSal = r2(trendMonths.reduce((s, t) => s + t.sal, 0) / trendMonths.length);
+    const melhor = trendMonths.reduce((a, b) => b.sal > a.sal ? b : a, trendMonths[0]);
+    const mesesNeg = trendMonths.filter(t => t.sal < 0).length;
+
+    const cardTrend = `
+    <div class="card dash-card">
+        <div class="dash-card-head">
+            <h2>📊 Tendência · Próximos 6 Meses</h2>
+            <div class="trend-leg">
+                <span><i style="background:var(--acc)"></i>Receitas</span>
+                <span><i style="background:var(--prio);opacity:.65"></i>Despesas</span>
+                <span><i class="ln" style="background:var(--tit)"></i>Saldo</span>
+            </div>
+        </div>
+        <div class="dash-body">
+            <svg class="trend-svg" viewBox="0 0 ${W} ${H}" aria-label="Tendência dos próximos 6 meses">
+                ${gridSvg}
+                ${barsSvg}
+                <polyline fill="none" stroke="var(--tit)" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round" points="${linePts.join(' ')}"/>
+                ${dotsSvg}
+            </svg>
+            <div class="trend-foot">
+                <div class="ins-box">
+                    <span>Média de saldo</span>
+                    <strong class="${medSal < 0 ? 'c-danger' : 'c-primary'}">${fmtSigned(medSal)}</strong>
+                    <small>Rec. − Desp. / mês</small>
+                </div>
+                <div class="ins-box">
+                    <span>Melhor mês</span>
+                    <strong class="c-primary">${melhor.label}</strong>
+                    <small>${fmtSigned(melhor.sal)}</small>
+                </div>
+                <div class="ins-box">
+                    <span>Alerta de caixa</span>
+                    <strong class="${mesesNeg > 0 ? 'c-danger' : ''}">${mesesNeg === 0 ? '✓ Estável' : `${mesesNeg} ${mesesNeg===1?'mês':'meses'}`}</strong>
+                    <small>${mesesNeg === 0 ? 'Nenhum mês no vermelho' : 'Previsto no vermelho'}</small>
+                </div>
+            </div>
+        </div>
+    </div>`;
+
+    // ── 4. RADAR DO MÊS (VENCIMENTOS | MAIORES GASTOS | PATRIMÔNIO) ──
+    let radarBody = '';
+    if (dashRadarTab === 'venc') {
+        const hojeMs = Date.UTC(new Date().getFullYear(), new Date().getMonth(), new Date().getDate());
+        const abertos = monthData
+            .filter(i => (i.type === 'despesa' || i.type === 'receita'))
+            .map(i => {
+                const st = calcPago(i, mk);
+                if (st.paid || st.vOpen <= 0) return null;
+                const iso = vencNoMes(i, y, m);
+                const [vy, vm, vd] = iso.split('-').map(Number);
+                const diff = Math.round((Date.UTC(vy, vm - 1, vd) - hojeMs) / 86400000);
+                return { ...i, vOpen: st.vOpen, iso, diff };
+            })
+            .filter(Boolean)
+            .sort((a, b) => a.iso.localeCompare(b.iso) || b.vOpen - a.vOpen);
+
+        radarBody = abertos.length === 0
+            ? `<div class="dash-empty">✓ Tudo quitado em ${mesExtenso()}!</div>`
+            : `<div class="radar-list">${abertos.slice(0, 6).map(it => {
+                const tag = it.diff < 0 ? `<span class="radar-tag urg">Venceu há ${Math.abs(it.diff)}d</span>`
+                          : it.diff === 0 ? `<span class="radar-tag urg">Vence hoje</span>`
+                          : it.diff <= 7  ? `<span class="radar-tag soon">Em ${it.diff}d · ${fmtVenc(it.iso)}</span>`
+                          : `<span class="radar-tag">${fmtVenc(it.iso)}</span>`;
+                const isRec = it.type === 'receita';
+                return `<div class="radar-row">
+                    <input type="checkbox" onchange="togglePaid('${it.id}','${mk}')" title="Marcar como ${isRec?'recebido':'pago'}">
+                    <div class="radar-row-main">
+                        <div class="radar-row-title">${escH(it.description)}</div>
+                        <div class="radar-row-meta">${tag}<span>${escH(it.category)}</span></div>
+                    </div>
+                    <div class="radar-val ${isRec ? 'c-primary' : 'c-danger'}">${isRec ? '+' : '−'} ${fmt(it.vOpen)}</div>
+                </div>`;
+            }).join('')}${abertos.length > 6 ? `<div class="dash-sub" style="text-align:right;">+ ${abertos.length - 6} lançamentos em aberto</div>` : ''}</div>`;
+    } else if (dashRadarTab === 'top') {
+        const topDesp = despMes.slice().sort((a, b) => b.value - a.value).slice(0, 6);
+        const maior = topDesp[0]?.value || 1;
+        radarBody = topDesp.length === 0
+            ? `<div class="dash-empty">Nenhuma despesa lançada neste mês.</div>`
+            : `<div class="radar-list">${topDesp.map(it => {
+                const st = calcPago(it, mk);
+                const pct = despTot > 0 ? (it.value / despTot * 100) : 0;
+                const wBar = Math.max(4, it.value / maior * 100);
+                return `<div class="radar-row">
+                    <span class="status-mark ${st.paid ? 'mark-paid' : 'mark-open'}" title="${st.paid ? 'Pago' : 'Em aberto'}">${st.paid ? '✓' : '○'}</span>
+                    <div class="radar-row-main">
+                        <div class="radar-row-title">${escH(it.description)}</div>
+                        <div class="radar-row-meta"><span>${escH(it.category)}</span><span>· ${fmtN(pct, 1)}% das despesas</span></div>
+                        <div class="top-bar"><i style="width:${wBar.toFixed(1)}%"></i></div>
+                    </div>
+                    <div class="radar-val">${fmt(it.value)}</div>
+                </div>`;
+            }).join('')}</div>`;
+    } else {
+        const pats = financialData.filter(i => i.type === 'patrimonio');
+        const patTot = r2(pats.reduce((s, i) => s + (Number(i.value) || 0), 0));
+        const patRend = r2(pats.reduce((s, i) => s + rendPat(i).mensal, 0));
+        const divs = financialData.filter(i => i.type === 'divida');
+        const divAberto = r2(divs.reduce((s, i) => s + saldoEm(i, 'global'), 0));
+        const patLiq = r2(patTot + totalBank - divAberto);
+        const fixasTot = r2(financialData.filter(i => i.type === 'fixa').reduce((s, i) => s + (Number(i.value) || 0), 0));
+        const cobFixas = fixasTot > 0 ? (patRend / fixasTot * 100) : null;
+
+        radarBody = `
+        <div class="pat-dash-grid">
+            <div class="pat-dash-box">
+                <span>Patrimônio Líquido</span>
+                <strong class="${patLiq < 0 ? 'c-danger' : 'c-primary'}">${fmtSigned(patLiq)}</strong>
+                <small>Bens + Bancos − Dívidas</small>
+            </div>
+            <div class="pat-dash-box">
+                <span>Renda Passiva / Mês</span>
+                <strong class="c-primary">${fmt(patRend)}</strong>
+                <small>${fmt(r2(patRend * 12))} por ano</small>
+            </div>
+            <div class="pat-dash-box">
+                <span>Patrimônio Bruto</span>
+                <strong>${fmt(patTot)}</strong>
+                <small>${pats.length} ${pats.length === 1 ? 'bem cadastrado' : 'bens cadastrados'}</small>
+            </div>
+            <div class="pat-dash-box">
+                <span>Dívidas em Aberto</span>
+                <strong class="${divAberto > 0 ? 'c-danger' : ''}">${fmt(divAberto)}</strong>
+                <small>${cobFixas !== null ? `Renda passiva cobre ${fmtN(cobFixas, 0)}% dos fixos` : `${divs.filter(d => !d.paid).length} pendentes`}</small>
+            </div>
+        </div>`;
+    }
+
+    const cardRadar = `
+    <div class="card dash-card">
+        <div class="dash-card-head">
+            <h2>🎯 Radar Financeiro</h2>
+            <div class="radar-pills">
+                <button type="button" class="${dashRadarTab==='venc'?'active':''}" onclick="setDashRadar('venc')">Vencimentos</button>
+                <button type="button" class="${dashRadarTab==='top'?'active':''}" onclick="setDashRadar('top')">Top Gastos</button>
+                <button type="button" class="${dashRadarTab==='pat'?'active':''}" onclick="setDashRadar('pat')">Patrimônio</button>
+            </div>
+        </div>
+        <div class="dash-body">${radarBody}</div>
+    </div>`;
+
+    el.innerHTML = cardSaude + cardDonut + cardTrend + cardRadar;
 }
 
 // ══════════════════════════════════════════════════════
