@@ -296,6 +296,21 @@ td select{padding:3px 6px;font-size:12px}
 .parcial-tag{display:inline-block;margin-left:6px;padding:1px 7px;border:1.5px solid currentColor;border-radius:999px;font-size:10.5px;font-weight:700;letter-spacing:.02em;white-space:nowrap;color:var(--acc);vertical-align:1px}
 .parc-badge{display:inline-block;margin-left:5px;padding:1px 6px;border-radius:999px;font-size:10.5px;font-weight:700;letter-spacing:.01em;white-space:nowrap;background:var(--acc-soft);color:var(--acc);vertical-align:1px}
 .parc-badge.ultima{border:1.5px solid var(--acc)}
+/* ── Edição direta na célula (v1.21.0) ── */
+.cell-edit{cursor:pointer;border-radius:6px;transition:background .12s,box-shadow .12s}
+.cell-edit:hover{background:var(--acc-soft);box-shadow:inset 0 0 0 1px var(--acc)}
+span.cell-edit{display:inline-block;padding:1px 5px;margin:-1px -5px}
+.inline-ed{width:100%;min-width:72px;height:28px;padding:2px 7px!important;font-size:13px!important;border:1.5px solid var(--acc)!important;border-radius:7px!important;background:var(--sup)!important;color:var(--txt)!important;box-shadow:0 0 0 2px var(--acc-soft)!important}
+.inline-ed-num{text-align:right;max-width:128px;font-weight:700;font-variant-numeric:tabular-nums}
+.inline-ed-date{max-width:138px;min-width:122px}
+.inline-ed-dia{max-width:68px;min-width:56px;text-align:center}
+.inline-ed-rend{display:inline-flex;align-items:center;gap:3px;max-width:180px}
+.inline-ed-rend select{width:76px;min-width:70px;height:28px;padding:1px 4px!important;font-size:12px!important}
+.inline-ed-rend input{width:82px;min-width:66px;height:28px;padding:2px 6px!important;font-size:12.5px!important;text-align:right}
+@media (max-width:720px){
+  .inline-ed,.inline-ed-rend select,.inline-ed-rend input{height:38px!important;min-height:38px!important;font-size:15px!important}
+  .inline-ed-num,.inline-ed-date{max-width:100%}
+}
 .parc-info{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:4px 0 14px}
 .parc-info div{background:var(--sup2);border:1px solid var(--bor);border-radius:10px;padding:8px 10px}
 .parc-info span{display:block;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--mut)}
@@ -1276,6 +1291,7 @@ const TABS = [
 //   1.1.0 (31/10/2026) Missão: Programação de recebimentos (+ Efetivar em Receitas); versão visível no app
 //   1.2.0 (07/11/2026) Pagamento/recebimento parcial (botão ½), com histórico e quitação automática
 //   1.3.0 (07/11/2026) Aba Missão retirada (vive no app próprio); dados dela preservados no Sheets
+//   1.21.0 (27/11/2026) Edição direta na célula (inline): clique em Descrição, Vencimento ou Total para editar sem subir ao formulário (com suporte a recorrentes); clique em Pago/A Pagar abre parcial; edição inline também em Fixos e Patrimônio
 //   1.20.0 (27/11/2026) Zero localStorage (tudo sincronizado no Google Sheets: meta diária, senha, tema, estilo, letra, ordem do Dashboard e abas); contador de parcelas (3/12 e última); ordenação por vencimento nas tabelas; histórico mensal salvo ao encerrar o mês com gráfico no Dashboard; grade de 5 colunas no topo e correção do modo privado nos gráficos
 //   1.19.1 (27/11/2026) Gastos Diários integrados às Despesas no Dashboard: card unificado (com dias restantes e meta diária), fatia no gráfico de rosca, tendência de 6 meses e fluxo em aberto
 //   1.19.0 (26/11/2026) Dashboard Analítico: barras de progresso nos KPIs, Saúde Financeira, gráfico de rosca por categoria, tendência de 6 meses e Radar (vencimentos, top gastos e patrimônio)
@@ -1306,7 +1322,7 @@ const TABS = [
 //   1.5.0 (20/11/2026) Aparência: 4 estilos visuais (Padrão, Planilha, Windows, Grafite) — Config. ou botão 🎨
 //   1.4.0 (20/11/2026) Mês único de trabalho: sem setas de mês; o mês fica salvo no Sheets e só muda ao "Encerrar o mês"
 // ══════════════════════════════════════════════════════
-const APP_VERSAO = '1.20.0';
+const APP_VERSAO = '1.21.0';
 const APP_VERSAO_DATA = '27/11/2026';
 document.querySelectorAll('[data-versao]').forEach(el => {
     el.textContent = el.dataset.versao === 'longa'
@@ -1516,17 +1532,19 @@ function itemRow(item, cc, mk, tipo){
     const pct      = parcial && item.value > 0 ? Math.min(99, Math.max(1, Math.round(item.parc / item.value * 100))) : 0;
     const mark     = item.paid ? ['mark-paid','✓','Quitado'] : parcial ? ['mark-parc','½','Parcial'] : ['mark-open','○','Em aberto'];
     const temParc  = PARC_TYPES.includes(item.type) && (!item.paid || parcList(item, mk).length > 0);
+    const parcClick = temParc ? ` class="num-cell col-pago cell-edit" onclick="abrirParcial('${item.id}','${mk}')" title="Clique para registrar ${inc?'recebimento':'pagamento'} parcial"` : ` class="num-cell col-pago"`;
+    const openClick = temParc ? ` class="num-cell col-aberto cell-edit" onclick="abrirParcial('${item.id}','${mk}')" title="Clique para registrar ${inc?'recebimento':'pagamento'} parcial"` : ` class="num-cell col-aberto"`;
     return `<tr class="${rowClass}">
         <td class="col-chk"><input type="checkbox" ${item.paid?'checked':''} onchange="togglePaid('${item.id}','${mk}')"></td>
         <td class="col-desc">
             <span class="status-mark ${mark[0]}" title="${mark[2]}">${mark[1]}</span>
             <button class="star-btn ${item.starred?'active':''}" onclick="toggleStar('${item.id}')" title="${item.starred?'Remover destaque':'Destacar'}">◈</button>
-            ${escH(item.description)}${parcelaBadge(item, mk)}${parcial?`<span class="parcial-tag" title="Já ${inc?'recebido':'pago'}: ${fmt(item.parc)}">parcial ${pct}%</span>`:''}
+            <span class="cell-edit" onclick="editInline(this,'${item.id}','desc','${mk}')" title="Clique para editar a descrição">${escH(item.description)}</span>${parcelaBadge(item, mk)}${parcial?`<span class="parcial-tag" title="Já ${inc?'recebido':'pago'}: ${fmt(item.parc)}">parcial ${pct}%</span>`:''}
         </td>
-        <td class="col-venc" style="white-space:nowrap;" data-label="Venc.">${fmtVenc(venc)}</td>
-        <td class="num-cell col-tot" data-label="Total">${fmt(item.value)}</td>
-        <td class="num-cell col-pago" data-label="${inc?'Recebido':'Pago'}">${fmt(item.vPaid)}</td>
-        <td class="num-cell col-aberto" data-label="${inc?'A Receber':'A Pagar'}">${fmt(item.vOpen)}</td>
+        <td class="col-venc cell-edit" style="white-space:nowrap;" data-label="Venc." onclick="editInline(this,'${item.id}','venc','${mk}')" title="Clique para editar o vencimento">${fmtVenc(venc)}</td>
+        <td class="num-cell col-tot cell-edit" data-label="Total" onclick="editInline(this,'${item.id}','val','${mk}')" title="Clique para editar o valor">${fmt(item.value)}</td>
+        <td${parcClick} data-label="${inc?'Recebido':'Pago'}">${fmt(item.vPaid)}</td>
+        <td${openClick} data-label="${inc?'A Receber':'A Pagar'}">${fmt(item.vOpen)}</td>
         <td class="col-acoes"><div style="display:flex;gap:4px;">
             ${temParc?`<button class="btn btn-warning btn-sm" onclick="abrirParcial('${item.id}','${mk}')" title="${inc?'Receber parte':'Pagar parte'} / histórico de parciais">½</button>`:''}
             <button class="btn btn-warning btn-sm" onclick="editEntry('${item.id}','${tipo}')" title="Editar">✎</button>
@@ -2049,6 +2067,258 @@ async function handleSubmit(e, type) {
 function closeModalRecorrente() {
     $('modal-recorrente').classList.add('hidden');
     window._pendingEdit = null;
+    updateView();
+}
+
+// ══════════════════════════════════════════════════════
+//  EDIÇÃO DIRETA NA CÉLULA (INLINE — v1.21.0)
+//  Clique em Descrição, Vencimento ou Total (e também em Fixos
+//  e Patrimônio) para editar no próprio lugar. Enter ou sair
+//  do campo salva; Esc cancela. Itens recorrentes abrem o modal
+//  "só este mês / este e os seguintes" automaticamente.
+// ══════════════════════════════════════════════════════
+function editInline(el, id, field, mk) {
+    if (!dataLoaded) return toast('Aguarde os dados do Sheets carregarem.', 'error');
+    if (el.dataset.editing === '1') return;
+    const item = financialData.find(x => x.id === id);
+    if (!item) return;
+    el.dataset.editing = '1';
+    const [vy, vm] = mk.split('-').map(Number);
+    const curVenc = vencNoMes(item, vy, vm);
+
+    const inp = document.createElement('input');
+    inp.className = 'inline-ed' + (field === 'val' ? ' inline-ed-num' : field === 'venc' ? ' inline-ed-date' : '');
+    if (field === 'desc') {
+        inp.type = 'text';
+        inp.value = item.description;
+    } else if (field === 'venc') {
+        inp.type = 'date';
+        inp.value = curVenc;
+    } else if (field === 'val') {
+        inp.type = 'text';
+        inp.inputMode = 'decimal';
+        inp.value = fmtN(Number(item.value) || 0);
+    }
+
+    el.innerHTML = '';
+    el.appendChild(inp);
+    inp.focus();
+    if (field !== 'venc') inp.select();
+
+    let done = false;
+    const cancelar = () => {
+        if (done) return;
+        done = true;
+        updateView();
+    };
+    const salvar = async () => {
+        if (done) return;
+        done = true;
+        let desc = item.description, val = Number(item.value), venc = curVenc;
+        let mudou = false;
+
+        if (field === 'desc') {
+            const novo = inp.value.trim();
+            if (!novo) { toast('A descrição não pode ficar vazia.', 'error'); updateView(); return; }
+            mudou = novo !== item.description;
+            desc = novo;
+        } else if (field === 'venc') {
+            const novo = inp.value;
+            if (!/^\d{4}-\d{2}-\d{2}$/.test(novo || '')) { updateView(); return; }
+            mudou = novo !== curVenc;
+            venc = novo;
+        } else if (field === 'val') {
+            const bruto = parseBR(inp.value);
+            const novo = isNaN(bruto) ? NaN : r2(bruto);
+            if (isNaN(novo) || novo <= 0) { toast('Informe um valor maior que zero.', 'error'); updateView(); return; }
+            mudou = novo !== r2(item.value);
+            val = novo;
+        }
+
+        if (!mudou) { updateView(); return; }
+
+        if (item.recurring && !GLOBAL_TYPES.includes(item.type)) {
+            let parcelas = null;
+            if (item.endMonthKey) {
+                const startMk = item.origStartKey || item.baseMonthKey;
+                parcelas = mkIdx(item.endMonthKey) - mkIdx(startMk) + 1;
+            }
+            window._pendingEdit = { id, desc, cat: item.category, val, rec: true, mk, parcelas, venc };
+            $('modal-recorrente').classList.remove('hidden');
+            return;
+        }
+
+        const ok = await commit(d => {
+            const i = d.find(x => x.id === id); if (!i) return;
+            if (field === 'desc') i.description = desc;
+            if (field === 'venc') i.dueDate = venc;
+            if (field === 'val') {
+                i.value = val;
+                if (!i.recurring && parcList(i, i.baseMonthKey).length && parcSoma(i, i.baseMonthKey) >= r2(i.value)) {
+                    quitarItem(i, i.baseMonthKey);
+                }
+            }
+        });
+        if (ok) toast('Alteração salva.', 'success', 2000);
+    };
+
+    inp.onclick = e => e.stopPropagation();
+    inp.onkeydown = e => {
+        if (e.key === 'Enter') { e.preventDefault(); salvar(); }
+        else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); cancelar(); }
+    };
+    if (field === 'venc') inp.onchange = salvar;
+    inp.onblur = salvar;
+}
+
+function editInlineFixo(el, k, id, field) {
+    if (!dataLoaded) return toast('Aguarde os dados do Sheets carregarem.', 'error');
+    if (el.dataset.editing === '1') return;
+    const cfg = FX[k];
+    const item = financialData.find(x => x.id === id && x.type === cfg.tipo);
+    if (!item) return;
+    el.dataset.editing = '1';
+
+    const inp = document.createElement('input');
+    inp.className = 'inline-ed' + (field === 'val' ? ' inline-ed-num' : field === 'dia' ? ' inline-ed-dia' : '');
+    if (field === 'desc') {
+        inp.type = 'text'; inp.value = item.description;
+    } else if (field === 'dia') {
+        inp.type = 'number'; inp.min = '1'; inp.max = '31'; inp.step = '1'; inp.placeholder = '—';
+        inp.value = item.dia || '';
+    } else if (field === 'val') {
+        inp.type = 'text'; inp.inputMode = 'decimal'; inp.value = fmtN(Number(item.value) || 0);
+    }
+
+    el.innerHTML = '';
+    el.appendChild(inp);
+    inp.focus();
+    inp.select();
+
+    let done = false;
+    const cancelar = () => { if (done) return; done = true; updateView(); };
+    const salvar = async () => {
+        if (done) return;
+        done = true;
+        if (field === 'desc') {
+            const novo = inp.value.trim();
+            if (!novo) { toast('A descrição não pode ficar vazia.', 'error'); updateView(); return; }
+            if (novo === item.description) { updateView(); return; }
+            const ok = await commit(d => { const i = d.find(x => x.id === id && x.type === cfg.tipo); if (i) i.description = novo; });
+            if (ok) toast('Alteração salva.', 'success', 2000);
+        } else if (field === 'dia') {
+            const raw = inp.value.trim();
+            const novo = raw ? diaFixa(raw) : null;
+            if (raw && !novo) { toast('Dia deve ser de 1 a 31 (ou vazio).', 'error'); updateView(); return; }
+            if ((item.dia || null) === novo) { updateView(); return; }
+            const ok = await commit(d => { const i = d.find(x => x.id === id && x.type === cfg.tipo); if (!i) return; if (novo) i.dia = novo; else delete i.dia; });
+            if (ok) toast('Dia atualizado.', 'success', 2000);
+        } else if (field === 'val') {
+            const bruto = parseBR(inp.value), novo = isNaN(bruto) ? NaN : r2(bruto);
+            if (isNaN(novo) || novo <= 0) { toast('Informe um valor maior que zero.', 'error'); updateView(); return; }
+            if (novo === r2(item.value)) { updateView(); return; }
+            const ok = await commit(d => { const i = d.find(x => x.id === id && x.type === cfg.tipo); if (i) i.value = novo; });
+            if (ok) toast('Valor atualizado.', 'success', 2000);
+        }
+    };
+
+    inp.onclick = e => e.stopPropagation();
+    inp.onkeydown = e => {
+        if (e.key === 'Enter') { e.preventDefault(); salvar(); }
+        else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); cancelar(); }
+    };
+    inp.onblur = salvar;
+}
+
+function editInlinePat(el, id, field) {
+    if (!dataLoaded) return toast('Aguarde os dados do Sheets carregarem.', 'error');
+    if (el.dataset.editing === '1') return;
+    const item = financialData.find(x => x.id === id && x.type === 'patrimonio');
+    if (!item) return;
+    el.dataset.editing = '1';
+
+    if (field === 'rend') {
+        const wrap = document.createElement('span');
+        wrap.className = 'inline-ed-rend';
+        wrap.onclick = e => e.stopPropagation();
+        const sel = document.createElement('select');
+        sel.innerHTML = '<option value="pct">% a.m.</option><option value="valor">R$ /mês</option>';
+        sel.value = item.rendTipo === 'valor' ? 'valor' : 'pct';
+        const inp = document.createElement('input');
+        inp.type = 'text'; inp.inputMode = 'decimal'; inp.placeholder = '0,00';
+        inp.value = item.rendTipo && Number(item.rendValor) ? fmtN(Number(item.rendValor), 2) : '';
+        wrap.append(sel, inp);
+        el.innerHTML = '';
+        el.appendChild(wrap);
+        inp.focus();
+        inp.select();
+
+        let done = false;
+        const cancelar = () => { if (done) return; done = true; updateView(); };
+        const salvar = async () => {
+            if (done) return;
+            done = true;
+            const tipo = sel.value;
+            const rTxt = inp.value.trim();
+            const rv = rTxt ? parseBR(rTxt) : 0;
+            if (rTxt && (isNaN(rv) || rv < 0)) { toast('Rendimento inválido.', 'error'); updateView(); return; }
+            const novoVal = rv > 0 ? (tipo === 'pct' ? Math.round(rv * 10000) / 10000 : r2(rv)) : 0;
+            const mesmo = (!item.rendTipo && novoVal === 0) || (item.rendTipo === tipo && Number(item.rendValor || 0) === novoVal);
+            if (mesmo) { updateView(); return; }
+            const ok = await commit(d => {
+                const i = d.find(x => x.id === id && x.type === 'patrimonio'); if (!i) return;
+                if (novoVal > 0) { i.rendTipo = tipo; i.rendValor = novoVal; }
+                else { delete i.rendTipo; delete i.rendValor; }
+            });
+            if (ok) toast('Rendimento atualizado.', 'success', 2000);
+        };
+        const onBlur = () => setTimeout(() => { if (!wrap.contains(document.activeElement)) salvar(); }, 80);
+        sel.onblur = onBlur;
+        inp.onblur = onBlur;
+        inp.onkeydown = sel.onkeydown = e => {
+            if (e.key === 'Enter') { e.preventDefault(); salvar(); }
+            else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); cancelar(); }
+        };
+        return;
+    }
+
+    const inp = document.createElement('input');
+    inp.className = 'inline-ed' + (field === 'val' ? ' inline-ed-num' : '');
+    inp.type = 'text';
+    if (field === 'val') { inp.inputMode = 'decimal'; inp.value = fmtN(Number(item.value) || 0); }
+    else { inp.value = item.description; }
+
+    el.innerHTML = '';
+    el.appendChild(inp);
+    inp.focus();
+    inp.select();
+
+    let done = false;
+    const cancelar = () => { if (done) return; done = true; updateView(); };
+    const salvar = async () => {
+        if (done) return;
+        done = true;
+        if (field === 'desc') {
+            const novo = inp.value.trim();
+            if (!novo) { toast('A descrição não pode ficar vazia.', 'error'); updateView(); return; }
+            if (novo === item.description) { updateView(); return; }
+            const ok = await commit(d => { const i = d.find(x => x.id === id && x.type === 'patrimonio'); if (i) i.description = novo; });
+            if (ok) toast('Descrição atualizada.', 'success', 2000);
+        } else {
+            const bruto = parseBR(inp.value), novo = isNaN(bruto) ? NaN : r2(bruto);
+            if (isNaN(novo) || novo <= 0) { toast('Informe um valor maior que zero.', 'error'); updateView(); return; }
+            if (novo === r2(item.value)) { updateView(); return; }
+            const ok = await commit(d => { const i = d.find(x => x.id === id && x.type === 'patrimonio'); if (i) i.value = novo; });
+            if (ok) toast('Valor atualizado.', 'success', 2000);
+        }
+    };
+
+    inp.onclick = e => e.stopPropagation();
+    inp.onkeydown = e => {
+        if (e.key === 'Enter') { e.preventDefault(); salvar(); }
+        else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); cancelar(); }
+    };
+    inp.onblur = salvar;
 }
 
 async function confirmEditRecorrente(mode) {
@@ -2435,9 +2705,9 @@ function renderListaFixa(k){
                 <td colspan="2"><strong>▾ ${escH(cat)}</strong> <span>(${g.length})</span></td>
                 <td class="num-cell" data-label="Total"><strong>${fmt(sub)}</strong></td><td class="num-cell col-pct" data-label="%">${pct(sub)}</td><td></td></tr>`
             + g.map(i => `<tr class="${cls}">
-                <td class="fx-desc">${escH(i.description)}</td>
-                <td class="fx-dia" style="white-space:nowrap;">${i.dia ? `dia ${i.dia}` : 'sem dia'}</td>
-                <td class="fx-val num-cell"><strong>${fmt(i.value)}</strong></td>
+                <td class="fx-desc cell-edit" onclick="editInlineFixo(this,'${k}','${i.id}','desc')" title="Clique para editar a descrição">${escH(i.description)}</td>
+                <td class="fx-dia cell-edit" style="white-space:nowrap;" onclick="editInlineFixo(this,'${k}','${i.id}','dia')" title="Clique para editar o dia">${i.dia ? `dia ${i.dia}` : 'sem dia'}</td>
+                <td class="fx-val num-cell cell-edit" onclick="editInlineFixo(this,'${k}','${i.id}','val')" title="Clique para editar o valor"><strong>${fmt(i.value)}</strong></td>
                 <td class="num-cell col-pct">${pct(Number(i.value||0))}</td>
                 <td class="fx-acoes"><div style="display:flex;gap:4px;">
                     <button class="btn btn-warning btn-sm" onclick="editarFixo('${k}','${i.id}')" title="Editar">✎</button>
@@ -2593,9 +2863,9 @@ function renderPatrimonio(){
                 <td class="num-cell" data-label="Rende/mês"><strong>${gr ? fmt(gr) : '—'}</strong></td>
                 <td class="num-cell" data-label="Taxa a.m."><strong>${gv > 0 && gr ? fmtTaxa(gr/gv*100) : '—'}</strong></td><td></td></tr>`
             + g.map(i => { const r = rendPat(i); return `<tr class="${cls}">
-                <td class="pat-desc">${escH(i.description)}</td>
-                <td class="num-cell" data-label="Valor">${fmt(Number(i.value)||0)}</td>
-                <td class="num-cell" data-label="Rendimento">${r.tem ? r.txt : '<span class="pat-sem">não rende</span>'}</td>
+                <td class="pat-desc cell-edit" onclick="editInlinePat(this,'${i.id}','desc')" title="Clique para editar a descrição">${escH(i.description)}</td>
+                <td class="num-cell cell-edit" data-label="Valor" onclick="editInlinePat(this,'${i.id}','val')" title="Clique para editar o valor">${fmt(Number(i.value)||0)}</td>
+                <td class="num-cell cell-edit" data-label="Rendimento" onclick="editInlinePat(this,'${i.id}','rend')" title="Clique para editar o rendimento">${r.tem ? r.txt : '<span class="pat-sem">não rende</span>'}</td>
                 <td class="num-cell" data-label="Rende/mês"><strong>${r.tem ? fmt(r.mensal) : '—'}</strong></td>
                 <td class="num-cell" data-label="Taxa a.m.">${r.tem ? fmtTaxa(r.taxa) : '—'}</td>
                 <td class="pat-acoes"><div style="display:flex;gap:4px;">
