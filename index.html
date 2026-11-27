@@ -123,18 +123,18 @@ header{position:sticky;top:0;z-index:100;background:var(--nav);color:var(--nav-t
 .icon-btn[aria-pressed="true"]{background:var(--nav-txt);color:var(--nav);border-color:var(--nav-txt)}
 .icon-btn[aria-pressed="true"]:hover{background:var(--nav-txt);filter:brightness(.92)}
 body.privado main .kpi > :not(.kpi-label),
-body.privado main section:not(#Configuracoes) .card:not(:has(> form)) > :not(h2):not(table),
+body.privado main section:not(#Configuracoes) .card:not(:has(> form)) > :not(h2):not(.dash-card-head):not(table),
 body.privado main section:not(#Configuracoes) .card:not(:has(> form)) > table > tbody,
 body.privado main .summary-strip strong{transition:filter .2s,opacity .2s}
 @media (hover:hover){
 body.privado main .kpi:not(:hover):not(.revelado) > :not(.kpi-label),
-body.privado main section:not(#Configuracoes) .card:not(:has(> form)):not(:hover):not(.revelado) > :not(h2):not(table),
+body.privado main section:not(#Configuracoes) .card:not(:has(> form)):not(:hover):not(.revelado) > :not(h2):not(.dash-card-head):not(table),
 body.privado main section:not(#Configuracoes) .card:not(:has(> form)):not(:hover):not(.revelado) > table > tbody,
 body.privado main .summary-strip:not(:hover):not(.revelado) strong{filter:blur(7px);opacity:.7;user-select:none;pointer-events:none}
 }
 @media (hover:none){
 body.privado main .kpi:not(.revelado) > :not(.kpi-label),
-body.privado main section:not(#Configuracoes) .card:not(:has(> form)):not(.revelado) > :not(h2):not(table),
+body.privado main section:not(#Configuracoes) .card:not(:has(> form)):not(.revelado) > :not(h2):not(.dash-card-head):not(table),
 body.privado main section:not(#Configuracoes) .card:not(:has(> form)):not(.revelado) > table > tbody,
 body.privado main .summary-strip:not(.revelado) strong{filter:blur(7px);opacity:.7;user-select:none;pointer-events:none}
 }
@@ -158,7 +158,8 @@ main{max-width:1280px;margin:0 auto;padding:22px 24px 80px}
 .flex-col{flex:1;min-width:290px}
 
 /* ── Indicadores ── */
-.kpi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px;margin-bottom:16px;align-items:stretch}
+.kpi-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:14px;margin-bottom:16px;align-items:stretch}
+@media (max-width:980px){.kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.kpi-banks{grid-column:1/-1}}
 .kpi{display:flex;flex-direction:column}
 .kpi-sub{margin-top:auto}
 .kpi{background:var(--sup);border:1px solid var(--bor);border-radius:var(--r);padding:16px;box-shadow:var(--sombra)}
@@ -293,6 +294,8 @@ td select{padding:3px 6px;font-size:12px}
 .mark-parc{color:var(--acc)}
 /* Parcial: linha continua ativa (sem esmaecer); o selo escrito e o ½ dizem que é parcial, sem depender de cor */
 .parcial-tag{display:inline-block;margin-left:6px;padding:1px 7px;border:1.5px solid currentColor;border-radius:999px;font-size:10.5px;font-weight:700;letter-spacing:.02em;white-space:nowrap;color:var(--acc);vertical-align:1px}
+.parc-badge{display:inline-block;margin-left:5px;padding:1px 6px;border-radius:999px;font-size:10.5px;font-weight:700;letter-spacing:.01em;white-space:nowrap;background:var(--acc-soft);color:var(--acc);vertical-align:1px}
+.parc-badge.ultima{border:1.5px solid var(--acc)}
 .parc-info{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:4px 0 14px}
 .parc-info div{background:var(--sup2);border:1px solid var(--bor);border-radius:10px;padding:8px 10px}
 .parc-info span{display:block;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--mut)}
@@ -1116,7 +1119,7 @@ body[data-estilo="grafite"] nav button.tab-link.active{ border-bottom-color:var(
 
         <div class="card">
             <h2>Aparência</h2>
-            <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">Escolha o estilo visual. Vale só para este aparelho e não mexe em nenhum dado. Dá para trocar rápido pelo botão 🎨 no topo; o 🌓 continua alternando claro e escuro.</p>
+            <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">Escolha o estilo visual. Salvo automaticamente no Google Sheets para todos os seus aparelhos. Dá para trocar rápido pelo botão 🎨 no topo; o 🌓 continua alternando claro e escuro.</p>
             <div class="estilo-grid" id="estilo-grid"></div>
             <h4 style="margin:18px 0 8px;font-size:13px;">Tamanho da letra</h4>
             <div class="fonte-cfg">
@@ -1125,7 +1128,7 @@ body[data-estilo="grafite"] nav button.tab-link.active{ border-bottom-color:var(
                 <button class="btn btn-ghost btn-sm" onclick="mudarFonte(1)">A+ Aumentar</button>
                 <button class="btn btn-ghost btn-sm" onclick="mudarFonte(0)">Voltar ao normal</button>
             </div>
-            <p style="font-size:12px;color:var(--text-muted);margin-top:8px;">Aumenta ou diminui tudo na tela, letras e caixas juntas. Também pelos botões A− e A+ no topo, ou pelas teclas − e +. Vale só para este aparelho.</p>
+            <p style="font-size:12px;color:var(--text-muted);margin-top:8px;">Aumenta ou diminui tudo na tela, letras e caixas juntas. Também pelos botões A− e A+ no topo, ou pelas teclas − e +. Salvo automaticamente no Google Sheets.</p>
         </div>
 
         <div class="card">
@@ -1243,7 +1246,14 @@ let isSaving      = false;
 // Sem isso, uma falha de leitura deixa financialData vazia e o primeiro
 // lançamento sobrescreve toda a planilha.
 let dataLoaded    = false;
-let appPassword   = localStorage.getItem('appPassword') || '123';
+let appPassword   = '123';
+let appDailyRate  = 400;
+let appFonte      = 100;
+let appEstilo     = 'padrao';
+let appTheme      = 'light';
+let appDashOrder  = null;
+let appFormMin    = {};
+let appTabVis     = {};
 
 // Dívidas e Patrimônio não são vinculados a mês: aparecem sempre e o "pago"
 // é um flag único por lançamento (item.paid), não por mês (paidMonths).
@@ -1266,6 +1276,7 @@ const TABS = [
 //   1.1.0 (31/10/2026) Missão: Programação de recebimentos (+ Efetivar em Receitas); versão visível no app
 //   1.2.0 (07/11/2026) Pagamento/recebimento parcial (botão ½), com histórico e quitação automática
 //   1.3.0 (07/11/2026) Aba Missão retirada (vive no app próprio); dados dela preservados no Sheets
+//   1.20.0 (27/11/2026) Zero localStorage (tudo sincronizado no Google Sheets: meta diária, senha, tema, estilo, letra, ordem do Dashboard e abas); contador de parcelas (3/12 e última); ordenação por vencimento nas tabelas; histórico mensal salvo ao encerrar o mês com gráfico no Dashboard; grade de 5 colunas no topo e correção do modo privado nos gráficos
 //   1.19.1 (27/11/2026) Gastos Diários integrados às Despesas no Dashboard: card unificado (com dias restantes e meta diária), fatia no gráfico de rosca, tendência de 6 meses e fluxo em aberto
 //   1.19.0 (26/11/2026) Dashboard Analítico: barras de progresso nos KPIs, Saúde Financeira, gráfico de rosca por categoria, tendência de 6 meses e Radar (vencimentos, top gastos e patrimônio)
 //   1.18.0 (25/11/2026) Dashboard com botões ◀ ▶ para reordenar as caixas (salvo por aparelho) e botão ↺ Ordem padrão
@@ -1295,7 +1306,7 @@ const TABS = [
 //   1.5.0 (20/11/2026) Aparência: 4 estilos visuais (Padrão, Planilha, Windows, Grafite) — Config. ou botão 🎨
 //   1.4.0 (20/11/2026) Mês único de trabalho: sem setas de mês; o mês fica salvo no Sheets e só muda ao "Encerrar o mês"
 // ══════════════════════════════════════════════════════
-const APP_VERSAO = '1.19.1';
+const APP_VERSAO = '1.20.0';
 const APP_VERSAO_DATA = '27/11/2026';
 document.querySelectorAll('[data-versao]').forEach(el => {
     el.textContent = el.dataset.versao === 'longa'
@@ -1308,12 +1319,49 @@ const fmt     = v => Number(v||0).toLocaleString('pt-BR',{style:'currency',curre
 const fmtSigned = v => { const n=Number(v||0); return n<0 ? `- ${fmt(Math.abs(n))}` : fmt(n); };
 // ⚙️ CONFIGURAÇÃO — altere aqui se mudar o Apps Script
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx5ccP8JL2Wn_szIQai0yOP2900XTOpBwmCdAJzfn_Prxwqnbi1ZqiyKOCXskAcpboNUw/exec';
-// URL customizada (colada na aba Config./wizard) persiste no localStorage — sem
-// isso, fechar e abrir o app perdia a URL nova e voltava pro SCRIPT_URL fixo.
-window._runtimeUrl = localStorage.getItem('scriptUrl') || null;
+// URL de sessão (se alterada em Config./wizard; para mudança permanente, altere SCRIPT_URL acima)
+window._runtimeUrl = null;
 const url = () => window._runtimeUrl || SCRIPT_URL;
 const LIMITE_CELULA = 50000;   // máximo de caracteres numa célula do Google Sheets (agora vale por lançamento, não pelo total)
-const daily   = () => parseFloat(localStorage.getItem('dailyRate')) || 400;
+const daily   = () => Number(appDailyRate) || 400;
+
+// Grava preferências no registro único {id:'config', type:'config'} no Google Sheets
+// (sem usar localStorage). Cliques rápidos em UI (A+, ◀▶, 🎨, 🌓) são agrupados em 500 ms.
+let _cfgTimer = null;
+let _cfgPending = {};
+function agendarSalvarConfig(patch){
+    Object.assign(_cfgPending, patch);
+    if (!dataLoaded) return;
+    clearTimeout(_cfgTimer);
+    _cfgTimer = setTimeout(async () => {
+        const toSave = { ..._cfgPending };
+        _cfgPending = {};
+        await commit(d => {
+            let cfg = d.find(i => i.type === 'config');
+            if (!cfg) { cfg = { id:'config', type:'config' }; d.push(cfg); }
+            Object.assign(cfg, toSave);
+        });
+    }, 500);
+}
+function aplicarConfigDoSheets(){
+    const cfg = cfgGet() || {};
+    appPassword  = cfg.password ? String(cfg.password) : '123';
+    appDailyRate = Number(cfg.dailyRate) > 0 ? Number(cfg.dailyRate) : 400;
+    appFonte     = FONTE_NIVEIS.includes(Number(cfg.fonte)) ? Number(cfg.fonte) : 100;
+    appEstilo    = ESTILOS.some(x => x.id === cfg.estilo) ? cfg.estilo : 'padrao';
+    appTheme     = cfg.theme === 'dark' ? 'dark' : 'light';
+    appDashOrder = Array.isArray(cfg.dashOrder) ? cfg.dashOrder.slice() : null;
+    appFormMin   = (cfg.formMin && typeof cfg.formMin === 'object') ? { ...cfg.formMin } : {};
+    appTabVis    = (cfg.tabVisibility && typeof cfg.tabVisibility === 'object') ? { ...cfg.tabVisibility } : {};
+    modoPrivado  = !!cfg.privado;
+    const di = $('daily-rate'); if (di) di.value = daily();
+    aplicarFonte(appFonte);
+    applyTheme();
+    aplicarFormMin();
+    applyTabVisibility();
+    aplicarMesTrabalho();
+    aplicarPrivado();
+}
 const $ = id  => document.getElementById(id);
 
 // ══════════════════════════════════════════════════════
@@ -1385,28 +1433,28 @@ window.addEventListener('blur', esconderRevelados);
 document.addEventListener('visibilitychange', () => { if (document.hidden) esconderRevelados(); });
 
 // ══════════════════════════════════════════════════════
-//  TAMANHO DA LETRA  (v1.12.0)
+//  TAMANHO DA LETRA  (v1.12.0 → sincronizado no Sheets v1.20.0)
 //  Escala a tela inteira (zoom), de 80% a 150%, de 10 em 10.
-//  Preferência de tela, guardada só neste aparelho (localStorage).
 // ══════════════════════════════════════════════════════
 const FONTE_NIVEIS = [80, 90, 100, 110, 120, 130, 140, 150];
-const fonteAtual = () => { const v = Number(localStorage.getItem('fonteApp')); return FONTE_NIVEIS.includes(v) ? v : 100; };
+const fonteAtual = () => FONTE_NIVEIS.includes(appFonte) ? appFonte : 100;
 function aplicarFonte(v){
-    const z = v / 100;
+    appFonte = FONTE_NIVEIS.includes(v) ? v : 100;
+    const z = appFonte / 100;
     document.documentElement.style.zoom = z === 1 ? '' : String(z);
     document.documentElement.style.setProperty('--zoom-app', String(z));
-    const k = FONTE_NIVEIS.indexOf(v);
+    const k = FONTE_NIVEIS.indexOf(appFonte);
     const menos = $('btnFonteMenos'), mais = $('btnFonteMais'), at = $('fonte-atual');
     if (menos) menos.disabled = k <= 0;
     if (mais)  mais.disabled  = k >= FONTE_NIVEIS.length - 1;
-    if (at) at.textContent = `${v}%`;
+    if (at) at.textContent = `${appFonte}%`;
 }
 function mudarFonte(dir){
     const atual = fonteAtual();
     let v = 100;
     if (dir) { const k = FONTE_NIVEIS.indexOf(atual) + dir; if (k < 0 || k >= FONTE_NIVEIS.length) return; v = FONTE_NIVEIS[k]; }
-    localStorage.setItem('fonteApp', String(v));
     aplicarFonte(v);
+    agendarSalvarConfig({ fonte: v });
     toast(`Tamanho da letra: ${v}%`, 'info', 1500);
 }
 aplicarFonte(fonteAtual());
@@ -1440,6 +1488,22 @@ function daysLeft() {
 }
 // Decide se um item aparece sob o filtro atual (usada pelo somatorio e pela tabela)
 // Monta a linha de um lançamento. cc = classe da categoria (vazia na lista simples)
+// Calcula parcela atual / total para lançamentos recorrentes com fim definido
+function parcelaInfo(item, mk){
+    if (!item || !item.recurring || !item.endMonthKey || GLOBAL_TYPES.includes(item.type)) return null;
+    const startMk = item.origStartKey || item.baseMonthKey;
+    if (!/^\d{4}-\d{1,2}$/.test(startMk || '') || !/^\d{4}-\d{1,2}$/.test(item.endMonthKey || '')) return null;
+    const total = mkIdx(item.endMonthKey) - mkIdx(startMk) + 1;
+    const atual = mkIdx(mk) - mkIdx(startMk) + 1;
+    if (total < 1 || atual < 1 || atual > total) return null;
+    return { atual, total, ultima: atual === total };
+}
+function parcelaBadge(item, mk){
+    const pi = parcelaInfo(item, mk);
+    if (!pi) return item.recurring ? ' 🔄' : '';
+    const txt = pi.ultima ? `${pi.atual}/${pi.total} · última` : `${pi.atual}/${pi.total}`;
+    return ` <span class="parc-badge${pi.ultima?' ultima':''}" title="Parcela ${pi.atual} de ${pi.total}${pi.ultima?' (última parcela!)':''}">${txt}</span>`;
+}
 function itemRow(item, cc, mk, tipo){
     const [vy, vm] = mk.split('-').map(Number);
     const venc = vencNoMes(item, vy, vm);
@@ -1457,7 +1521,7 @@ function itemRow(item, cc, mk, tipo){
         <td class="col-desc">
             <span class="status-mark ${mark[0]}" title="${mark[2]}">${mark[1]}</span>
             <button class="star-btn ${item.starred?'active':''}" onclick="toggleStar('${item.id}')" title="${item.starred?'Remover destaque':'Destacar'}">◈</button>
-            ${escH(item.description)}${item.recurring?' 🔄':''}${parcial?`<span class="parcial-tag" title="Já ${inc?'recebido':'pago'}: ${fmt(item.parc)}">parcial ${pct}%</span>`:''}
+            ${escH(item.description)}${parcelaBadge(item, mk)}${parcial?`<span class="parcial-tag" title="Já ${inc?'recebido':'pago'}: ${fmt(item.parc)}">parcial ${pct}%</span>`:''}
         </td>
         <td class="col-venc" style="white-space:nowrap;" data-label="Venc.">${fmtVenc(venc)}</td>
         <td class="num-cell col-tot" data-label="Total">${fmt(item.value)}</td>
@@ -1657,9 +1721,9 @@ async function sheetsRequest(params) {
     catch(e) { throw new Error('Resposta inválida do Sheets: ' + text.slice(0, 120)); }
 }
 
-async function loadFromSheets() {
-    if (!url()) { setStatus('offline'); updateView(); return; }
-    showLoading('Buscando dados no Google Sheets...');
+async function loadFromSheets(opts = {}) {
+    if (!url()) { setStatus('offline'); updateView(); return false; }
+    showLoading(opts.fromLogin ? 'Verificando acesso no Google Sheets...' : 'Buscando dados no Google Sheets...');
     setStatus('syncing');
     try {
         const res = await sheetsRequest({ action: 'read' });
@@ -1667,9 +1731,7 @@ async function loadFromSheets() {
         financialData = Array.isArray(res.data) ? res.data : [];
         if (res.categories) categories = { ...categories, ...res.categories };
         const mig = migrateLegacy();
-        modoPrivado = !!(cfgGet() || {}).privado;   // preferência salva no Sheets
-        aplicarMesTrabalho();                         // mês de trabalho salvo no Sheets
-        aplicarPrivado();
+        aplicarConfigDoSheets();
         dataLoaded = true;   // libera gravações
         showBlockedBanner(false);
         setStatus('online');
@@ -1684,9 +1746,10 @@ async function loadFromSheets() {
                     : 'Categorias de Locações unificadas em Receitas e salvas no Sheets.';
                 toast(msg, 'success', 7000);
             }
-        } else {
+        } else if (!opts.silent) {
             toast('Dados carregados.', 'success');
         }
+        return true;
     } catch(e) {
         console.error('loadFromSheets:', e);
         dataLoaded = false;  // mantém gravações bloqueadas
@@ -1840,16 +1903,22 @@ function migrateLegacy() {
 }
 
 // ══════════════════════════════════════════════════════
-//  LOGIN
+//  LOGIN (senha sincronizada no Google Sheets)
 // ══════════════════════════════════════════════════════
-function checkLogin() {
-    if ($('login-pass').value === appPassword) {
+let _checkingLogin = false;
+async function checkLogin() {
+    if (_checkingLogin) return;
+    const digitada = $('login-pass').value;
+    if (!dataLoaded && url()) {
+        _checkingLogin = true;
+        await loadFromSheets({ fromLogin: true, silent: true });
+        _checkingLogin = false;
+    }
+    if (digitada === appPassword) {
         $('login-screen').classList.add('hidden');
         $('login-pass').value = '';
         $('login-error').style.display = 'none';
-        // Conecta ao Sheets somente após login bem-sucedido
-        // URL já embutida no código — conecta direto
-        loadFromSheets();
+        if (dataLoaded) toast('Dados carregados.', 'success');
     } else {
         $('login-error').style.display = 'block';
     }
@@ -1858,12 +1927,20 @@ let _esc = 0;
 document.addEventListener('keydown', e => {
     if(e.key==='Escape'){const n=Date.now();if(n-_esc<400)$('login-screen').classList.remove('hidden');_esc=n;}
 });
-function changePassword() {
-    const v = $('new-pass').value;
-    if(!v.trim()) return;
-    appPassword = v; localStorage.setItem('appPassword', v);
-    $('new-pass').value = '';
-    toast('Senha alterada.','success');
+async function changePassword() {
+    const v = $('new-pass').value.trim();
+    if(!v) return;
+    if(!dataLoaded) return toast('Aguarde os dados do Sheets carregarem para alterar a senha.','error');
+    const ok = await commit(d => {
+        let cfg = d.find(i => i.type === 'config');
+        if (!cfg) { cfg = { id:'config', type:'config' }; d.push(cfg); }
+        cfg.password = v;
+    });
+    if (ok) {
+        appPassword = v;
+        $('new-pass').value = '';
+        toast('Senha alterada e salva no Sheets.','success');
+    }
 }
 
 // ══════════════════════════════════════════════════════
@@ -1875,18 +1952,25 @@ function saveUrl() {
     const configInput = $('config-url');
     const u = (wizardInput?.value.trim()) || (configInput?.value.trim()) || '';
     if(!u) return toast('Cole a URL primeiro.','error');
-    // Grava no localStorage — sem isso, a URL nova sumia ao fechar o app
     window._runtimeUrl = u;
-    localStorage.setItem('scriptUrl', u);
     if(wizardInput) wizardInput.value = u;
     if(configInput) configInput.value = u;
     $('setup-wizard').classList.add('hidden');
-    toast('URL atualizada. Conectando...','info');
+    toast('URL atualizada nesta sessão. Conectando...','info');
     loadFromSheets();
 }
-function saveDailyRate() {
+async function saveDailyRate() {
     const v = parseBR($('daily-rate').value);
-    if(!isNaN(v)) { localStorage.setItem('dailyRate', v); updateView(); }
+    if (isNaN(v) || v <= 0) return toast('Informe um valor diário maior que zero.','error');
+    appDailyRate = r2(v);
+    updateView();
+    if (!dataLoaded) return;
+    const ok = await commit(d => {
+        let cfg = d.find(i => i.type === 'config');
+        if (!cfg) { cfg = { id:'config', type:'config' }; d.push(cfg); }
+        cfg.dailyRate = appDailyRate;
+    });
+    if (ok) toast(`Meta diária atualizada para ${fmt(appDailyRate)} no Sheets.`,'success',2500);
 }
 
 // ══════════════════════════════════════════════════════
@@ -1948,7 +2032,7 @@ async function handleSubmit(e, type) {
         const item = { id:Date.now().toString(), type, description:desc, category:cat, value:val, baseMonthKey: isGlobal ? 'global' : mk, recurring:rec, paidMonths:[] };
         if (isGlobal) item.paid = false;   // flag único, independente do mês
         if (venc) item.dueDate = venc;
-        if (endKey) item.endMonthKey = endKey;
+        if (endKey) { item.endMonthKey = endKey; item.origStartKey = mk; }
         await commit(d => d.push(item));
         const label = parcelas ? `Lançamento adicionado (${parcelas}x).` : 'Lançamento adicionado.';
         toast(label,'success');
@@ -2019,7 +2103,8 @@ async function confirmEditRecorrente(mode) {
             const fimOriginal = orig.endMonthKey;
             orig.endMonthKey = `${prevY}-${prevM}`;
             // Parcelas: o fim continua contado a partir do início original
-            let fim = rec && parcelas ? calcEndMonthKey(orig.baseMonthKey, parcelas) : (rec ? fimOriginal : null);
+            const startOrig = orig.origStartKey || orig.baseMonthKey;
+            let fim = rec && parcelas ? calcEndMonthKey(startOrig, parcelas) : (rec ? fimOriginal : null);
             if (fim && mkIdx(fim) < mkIdx(mk)) fim = mk;
             // Cria nova recorrência a partir deste mês
             d.push({
@@ -2032,7 +2117,7 @@ async function confirmEditRecorrente(mode) {
                 recurring: rec,
                 paidMonths: pagoNoMes(orig),
                 dueDate: venc,
-                ...(fim ? { endMonthKey: fim } : {}),
+                ...(fim ? { endMonthKey: fim, origStartKey: startOrig } : {}),
                 ...(orig.starred ? { starred: true } : {}),
                 ...(orig.fixaId ? { fixaId: orig.fixaId } : {}),
                 ...copiarParciais(orig, mk)
@@ -2268,8 +2353,8 @@ function editEntry(id, type) {
     const pi=$(`parcelas-${type}`);
     if(item.recurring && item.endMonthKey && pw && pi) {
         pw.style.display='';
-        // Calcula quantas parcelas restam do baseMonthKey ao endMonthKey
-        const[by,bm]=item.baseMonthKey.split('-').map(Number);
+        // Calcula o total de parcelas do início original ao endMonthKey
+        const[by,bm]=(item.origStartKey || item.baseMonthKey).split('-').map(Number);
         const[ey,em]=item.endMonthKey.split('-').map(Number);
         const total=(ey*12+em)-(by*12+bm)+1;
         pi.value=total>0?total:'';
@@ -2789,7 +2874,7 @@ async function deleteBank(id) {
 // ══════════════════════════════════════════════════════
 function syncCategories() {
     financialData.forEach(i => {
-        if(i.type&&i.category&&i.type!=='conta'&&i.type!=='nota'){
+        if(i.type&&i.category&&i.type!=='conta'&&i.type!=='nota'&&i.type!=='historico'&&i.type!=='config'){
             // Fixos usam as categorias das abas do mês: despesa fixa → Despesas; receita fixa → Receitas ou Locações
             const t = i.type==='fixa' ? 'despesa' : i.type==='fixar' ? 'receita' : i.type;
             if(!categories[t]) categories[t]=[];
@@ -2894,7 +2979,7 @@ function updateView() {
 
     // MÉTRICAS
     const monthData=financialData.filter(i=>{
-        if(i.type==='conta' || i.type==='nota' || i.type==='fixa' || i.type==='fixar') return false;
+        if(i.type==='conta' || i.type==='nota' || i.type==='fixa' || i.type==='fixar' || i.type==='historico' || i.type==='config') return false;
         if(GLOBAL_TYPES.includes(i.type)) return true;
         // skipMonths: meses substituídos por uma edição pontual — não devem aparecer
         if(i.skipMonths && i.skipMonths.includes(mk)) return false;
@@ -2935,6 +3020,7 @@ function updateView() {
         if(el(`sum-aberto-${tab.type}`))el(`sum-aberto-${tab.type}`).textContent=fmt(visible.aPagar);
 
         const agrupado = tabGrouping[tab.type];
+        const cmpVenc = (a, b) => vencNoMes(a, y, m).localeCompare(vencNoMes(b, y, m)) || String(a.description).localeCompare(String(b.description));
 
         if (agrupado) {
             // Ordem definida pelo usuário em Configurações.
@@ -2944,7 +3030,7 @@ function updateView() {
             const restantes = Object.keys(groups).filter(cat => !definidas.includes(cat)).sort();
             const ordem     = [...definidas, ...restantes];
 
-            // Modo agrupado: cabeçalho de categoria + itens
+            // Modo agrupado: cabeçalho de categoria + itens ordenados por vencimento
             for(const cat of ordem){
                 const g=groups[cat];
                 const hasVisible=g.items.some(i=>matchesFilter(i,filter));
@@ -2956,14 +3042,14 @@ function updateView() {
                     <td class="num-cell" data-label="Pago/Rec."><strong>${fmt(g.pago)}</strong></td>
                     <td class="num-cell" data-label="A Pagar/Rec."><strong>${fmt(g.aPagar)}</strong></td>
                     <td></td></tr>`;
-                g.items.forEach(item=>{
+                g.items.slice().sort(cmpVenc).forEach(item=>{
                     if(!matchesFilter(item,filter)) return;
                     tbody.innerHTML += itemRow(item, cc, mk, tab.type);
                 });
             }
         } else {
-            // Modo lista simples: só os lançamentos, sem linhas de categoria
-            typeData.forEach(item=>{
+            // Modo lista simples: só os lançamentos ordenados por vencimento
+            typeData.slice().sort(cmpVenc).forEach(item=>{
                 const {paid,vOpen,vPaid,parc} = calcPago(item, mk);
                 const full  = {...item, paid, vOpen, vPaid, parc};
                 if(!matchesFilter(full,filter)) return;
@@ -3065,17 +3151,14 @@ function sumTypeInMonth(type, y, m) {
     return total;
 }
 
-// ── Ordem personalizável das caixas do Dashboard (v1.18.0) ──
+// ── Ordem personalizável das caixas do Dashboard (v1.18.0 → Sheets v1.20.0) ──
 const DASH_DEFAULT_ORDER = ['receitas', 'despesas', 'bancos', 'resultado'];
 function getDashOrder() {
-    try {
-        const saved = JSON.parse(localStorage.getItem('dashOrder') || 'null');
-        if (Array.isArray(saved)) {
-            const valid = saved.filter(id => DASH_DEFAULT_ORDER.includes(id));
-            const missing = DASH_DEFAULT_ORDER.filter(id => !valid.includes(id));
-            return [...valid, ...missing];
-        }
-    } catch (e) {}
+    if (Array.isArray(appDashOrder)) {
+        const valid = appDashOrder.filter(id => DASH_DEFAULT_ORDER.includes(id));
+        const missing = DASH_DEFAULT_ORDER.filter(id => !valid.includes(id));
+        return [...valid, ...missing];
+    }
     return [...DASH_DEFAULT_ORDER];
 }
 function isDashCustomOrder(order) {
@@ -3087,11 +3170,13 @@ function moveDashCard(id, dir) {
     const target = idx + dir;
     if (idx < 0 || target < 0 || target >= order.length) return;
     [order[idx], order[target]] = [order[target], order[idx]];
-    localStorage.setItem('dashOrder', JSON.stringify(order));
+    appDashOrder = order;
+    agendarSalvarConfig({ dashOrder: order });
     updateView();
 }
 function resetDashOrder() {
-    localStorage.removeItem('dashOrder');
+    appDashOrder = null;
+    agendarSalvarConfig({ dashOrder: null });
     updateView();
     toast('Ordem padrão das caixas restaurada.', 'info', 2000);
 }
@@ -3121,6 +3206,8 @@ function kpi(label,m,l1,l2,c1,c2,mainColor,isExpense,mvHtml='',extraSubHtml=''){
 //  em déficit/vencido), zero dependências externas, SVG puro.
 // ══════════════════════════════════════════════════════
 let dashRadarTab = 'venc';
+let dashTrendTab = 'proj';
+function setDashTrend(tab) { dashTrendTab = tab; updateView(); }
 const CHART_COLORS = ['#2563eb', '#1e3a8a', '#0284c7', '#475569', '#6366f1', '#64748b', '#93c5fd'];
 
 function setDashRadar(tab) {
@@ -3271,83 +3358,98 @@ function renderDashAnalytics({ metrics, monthData, totalBank, dr, dl, prev, sald
         </div>
     </div>`;
 
-    // ── 3. TENDÊNCIA E PROJEÇÃO (PRÓXIMOS 6 MESES) ──
-    const trendMonths = [];
-    for (let k = 0; k < 6; k++) {
-        const tm = m + k;
-        const ry = y + Math.floor(tm / 12), rm = ((tm % 12) + 12) % 12;
-        const rec = r2(sumTypeInMonth('receita', ry, rm));
-        const despLanc = r2(sumTypeInMonth('despesa', ry, rm));
-        const diasMes = k === 0 ? dl : new Date(ry, rm + 1, 0).getDate();
-        const diariosMes = r2(diasMes * dr);
-        const desp = r2(despLanc + diariosMes);
-        trendMonths.push({ label: `${MESES_ABREV[rm]}/${String(ry).slice(2)}`, rec, desp, diarios: diariosMes, sal: r2(rec - desp) });
+    // ── 3. TENDÊNCIA (PROJEÇÃO 6 MESES | HISTÓRICO ENCERRADO) ──
+    const histItems = financialData
+        .filter(i => i.type === 'historico' && /^\d{4}-\d{1,2}$/.test(i.baseMonthKey || ''))
+        .sort((a, b) => mkIdx(a.baseMonthKey) - mkIdx(b.baseMonthKey));
+    const isHist = dashTrendTab === 'hist';
+    let trendMonths = [];
+    if (isHist) {
+        trendMonths = histItems.slice(-6).map(h => {
+            const [hy, hm] = h.baseMonthKey.split('-').map(Number);
+            const rec = r2(h.rec || 0);
+            const diar = r2(h.diarios || 0);
+            const desp = r2((h.desp || 0) + diar);
+            const sal = h.saldo !== undefined ? r2(h.saldo) : r2(rec - desp);
+            return { label: `${MESES_ABREV[hm]}/${String(hy).slice(2)}`, rec, desp, diarios: diar, sal };
+        });
+    } else {
+        for (let k = 0; k < 6; k++) {
+            const tm = m + k;
+            const ry = y + Math.floor(tm / 12), rm = ((tm % 12) + 12) % 12;
+            const rec = r2(sumTypeInMonth('receita', ry, rm));
+            const despLanc = r2(sumTypeInMonth('despesa', ry, rm));
+            const diasMes = k === 0 ? dl : new Date(ry, rm + 1, 0).getDate();
+            const diariosMes = r2(diasMes * dr);
+            const desp = r2(despLanc + diariosMes);
+            trendMonths.push({ label: `${MESES_ABREV[rm]}/${String(ry).slice(2)}`, rec, desp, diarios: diariosMes, sal: r2(rec - desp) });
+        }
     }
-    const maxBar = Math.max(1, ...trendMonths.map(t => Math.max(t.rec, t.desp)));
-    const minSal = Math.min(0, ...trendMonths.map(t => t.sal));
-    const maxY = maxBar * 1.12;
-    const minY = minSal < 0 ? minSal * 1.15 : 0;
-    const spanY = Math.max(1, maxY - minY);
-    const W = 520, H = 195, padL = 56, padR = 14, padT = 16, padB = 30;
-    const plotW = W - padL - padR, plotH = H - padT - padB;
-    const yPos = v => padT + ((maxY - v) / spanY) * plotH;
-    const zeroY = yPos(0);
 
-    const gridTicks = [maxY, maxY * 0.5, 0];
-    if (minY < 0) gridTicks.push(minY);
-    const gridSvg = gridTicks.map(tv => {
-        const yy = yPos(tv).toFixed(1);
-        return `<line x1="${padL}" y1="${yy}" x2="${W - padR}" y2="${yy}" stroke="var(--bor)" stroke-width="${tv === 0 ? 1.5 : 1}" stroke-dasharray="${tv === 0 ? '' : '3 3'}"/>
-                <text x="${padL - 6}" y="${(Number(yy) + 3.5).toFixed(1)}" text-anchor="end" font-size="10" fill="var(--mut)" font-weight="600">${fmtShortBRL(tv)}</text>`;
-    }).join('');
+    let trendBodyHtml = '';
+    if (isHist && trendMonths.length === 0) {
+        trendBodyHtml = `<div class="dash-empty">Nenhum mês encerrado registrado ainda.<br>Ao encerrar <strong>${mesExtenso()}</strong>, o resumo mensal passa a ser salvo aqui automaticamente.</div>`;
+    } else {
+        const maxBar = Math.max(1, ...trendMonths.map(t => Math.max(t.rec, t.desp)));
+        const minSal = Math.min(0, ...trendMonths.map(t => t.sal));
+        const maxY = maxBar * 1.12;
+        const minY = minSal < 0 ? minSal * 1.15 : 0;
+        const spanY = Math.max(1, maxY - minY);
+        const W = 520, H = 195, padL = 56, padR = 14, padT = 16, padB = 30;
+        const plotW = W - padL - padR, plotH = H - padT - padB;
+        const yPos = v => padT + ((maxY - v) / spanY) * plotH;
+        const zeroY = yPos(0);
 
-    const stepX = plotW / trendMonths.length;
-    const barW = Math.min(20, stepX * 0.28);
-    const linePts = [];
-    const barsSvg = trendMonths.map((t, idx) => {
-        const cx = padL + stepX * idx + stepX / 2;
-        const recH = Math.max(0, zeroY - yPos(t.rec));
-        const despH = Math.max(0, zeroY - yPos(t.desp));
-        const sy = yPos(t.sal);
-        linePts.push(`${cx.toFixed(1)},${sy.toFixed(1)}`);
-        return `
-            <rect x="${(cx - barW - 2).toFixed(1)}" y="${(zeroY - recH).toFixed(1)}" width="${barW.toFixed(1)}" height="${recH.toFixed(1)}" rx="3" fill="var(--acc)" opacity=".88">
-                <title>${t.label} · Receitas: ${fmt(t.rec)}</title>
-            </rect>
-            <rect x="${(cx + 2).toFixed(1)}" y="${(zeroY - despH).toFixed(1)}" width="${barW.toFixed(1)}" height="${despH.toFixed(1)}" rx="3" fill="var(--prio)" opacity=".65">
-                <title>${t.label} · Despesas: ${fmt(t.desp)} (incl. ${fmt(t.diarios)} diários)</title>
-            </rect>
-            <text x="${cx.toFixed(1)}" y="${H - 8}" text-anchor="middle" font-size="10.5" fill="${idx === 0 ? 'var(--tit)' : 'var(--mut)'}" font-weight="${idx === 0 ? '800' : '600'}">${t.label}</text>`;
-    }).join('');
+        const gridTicks = [maxY, maxY * 0.5, 0];
+        if (minY < 0) gridTicks.push(minY);
+        const gridSvg = gridTicks.map(tv => {
+            const yy = yPos(tv).toFixed(1);
+            return `<line x1="${padL}" y1="${yy}" x2="${W - padR}" y2="${yy}" stroke="var(--bor)" stroke-width="${tv === 0 ? 1.5 : 1}" stroke-dasharray="${tv === 0 ? '' : '3 3'}"/>
+                    <text x="${padL - 6}" y="${(Number(yy) + 3.5).toFixed(1)}" text-anchor="end" font-size="10" fill="var(--mut)" font-weight="600">${fmtShortBRL(tv)}</text>`;
+        }).join('');
 
-    const dotsSvg = trendMonths.map((t, idx) => {
-        const cx = padL + stepX * idx + stepX / 2;
-        const sy = yPos(t.sal);
-        const cor = t.sal < 0 ? 'var(--neg)' : 'var(--tit)';
-        return `<circle cx="${cx.toFixed(1)}" cy="${sy.toFixed(1)}" r="4.2" fill="${cor}" stroke="var(--sup)" stroke-width="2">
-            <title>${t.label} · Saldo (Rec − Desp): ${fmtSigned(t.sal)}</title>
-        </circle>`;
-    }).join('');
+        const stepX = plotW / trendMonths.length;
+        const barW = Math.min(20, stepX * 0.28);
+        const linePts = [];
+        const barsSvg = trendMonths.map((t, idx) => {
+            const cx = padL + stepX * idx + stepX / 2;
+            const recH = Math.max(0, zeroY - yPos(t.rec));
+            const despH = Math.max(0, zeroY - yPos(t.desp));
+            const sy = yPos(t.sal);
+            linePts.push(`${cx.toFixed(1)},${sy.toFixed(1)}`);
+            return `
+                <rect x="${(cx - barW - 2).toFixed(1)}" y="${(zeroY - recH).toFixed(1)}" width="${barW.toFixed(1)}" height="${recH.toFixed(1)}" rx="3" fill="var(--acc)" opacity=".88">
+                    <title>${t.label} · Receitas: ${fmt(t.rec)}</title>
+                </rect>
+                <rect x="${(cx + 2).toFixed(1)}" y="${(zeroY - despH).toFixed(1)}" width="${barW.toFixed(1)}" height="${despH.toFixed(1)}" rx="3" fill="var(--prio)" opacity=".65">
+                    <title>${t.label} · Despesas: ${fmt(t.desp)} (incl. ${fmt(t.diarios)} diários)</title>
+                </rect>
+                <text x="${cx.toFixed(1)}" y="${H - 8}" text-anchor="middle" font-size="10.5" fill="${(!isHist && idx === 0) ? 'var(--tit)' : 'var(--mut)'}" font-weight="${(!isHist && idx === 0) ? '800' : '600'}">${t.label}</text>`;
+        }).join('');
 
-    const medSal = r2(trendMonths.reduce((s, t) => s + t.sal, 0) / trendMonths.length);
-    const melhor = trendMonths.reduce((a, b) => b.sal > a.sal ? b : a, trendMonths[0]);
-    const mesesNeg = trendMonths.filter(t => t.sal < 0).length;
+        const dotsSvg = trendMonths.map((t, idx) => {
+            const cx = padL + stepX * idx + stepX / 2;
+            const sy = yPos(t.sal);
+            const cor = t.sal < 0 ? 'var(--neg)' : 'var(--tit)';
+            return `<circle cx="${cx.toFixed(1)}" cy="${sy.toFixed(1)}" r="4.2" fill="${cor}" stroke="var(--sup)" stroke-width="2">
+                <title>${t.label} · Saldo (Rec − Desp): ${fmtSigned(t.sal)}</title>
+            </circle>`;
+        }).join('');
 
-    const cardTrend = `
-    <div class="card dash-card">
-        <div class="dash-card-head">
-            <h2>📊 Tendência · Próximos 6 Meses</h2>
+        const medSal = r2(trendMonths.reduce((s, t) => s + t.sal, 0) / trendMonths.length);
+        const melhor = trendMonths.reduce((a, b) => b.sal > a.sal ? b : a, trendMonths[0]);
+        const mesesNeg = trendMonths.filter(t => t.sal < 0).length;
+
+        trendBodyHtml = `
             <div class="trend-leg">
                 <span><i style="background:var(--acc)"></i>Receitas</span>
                 <span><i style="background:var(--prio);opacity:.65"></i>Despesas</span>
                 <span><i class="ln" style="background:var(--tit)"></i>Saldo</span>
             </div>
-        </div>
-        <div class="dash-body">
-            <svg class="trend-svg" viewBox="0 0 ${W} ${H}" aria-label="Tendência dos próximos 6 meses">
+            <svg class="trend-svg" viewBox="0 0 ${W} ${H}" aria-label="${isHist ? 'Histórico de meses encerrados' : 'Tendência dos próximos 6 meses'}">
                 ${gridSvg}
                 ${barsSvg}
-                <polyline fill="none" stroke="var(--tit)" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round" points="${linePts.join(' ')}"/>
+                ${linePts.length > 1 ? `<polyline fill="none" stroke="var(--tit)" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round" points="${linePts.join(' ')}"/>` : ''}
                 ${dotsSvg}
             </svg>
             <div class="trend-foot">
@@ -3362,12 +3464,23 @@ function renderDashAnalytics({ metrics, monthData, totalBank, dr, dl, prev, sald
                     <small>${fmtSigned(melhor.sal)}</small>
                 </div>
                 <div class="ins-box">
-                    <span>Alerta de caixa</span>
-                    <strong class="${mesesNeg > 0 ? 'c-danger' : ''}">${mesesNeg === 0 ? '✓ Estável' : `${mesesNeg} ${mesesNeg===1?'mês':'meses'}`}</strong>
-                    <small>${mesesNeg === 0 ? 'Nenhum mês no vermelho' : 'Previsto no vermelho'}</small>
+                    <span>${isHist ? 'Meses salvos' : 'Alerta de caixa'}</span>
+                    <strong class="${!isHist && mesesNeg > 0 ? 'c-danger' : ''}">${isHist ? histItems.length : (mesesNeg === 0 ? '✓ Estável' : `${mesesNeg} ${mesesNeg===1?'mês':'meses'}`)}</strong>
+                    <small>${isHist ? (histItems.length === 1 ? 'mês encerrado' : 'meses encerrados') : (mesesNeg === 0 ? 'Nenhum mês no vermelho' : 'Previsto no vermelho')}</small>
                 </div>
+            </div>`;
+    }
+
+    const cardTrend = `
+    <div class="card dash-card">
+        <div class="dash-card-head">
+            <h2>📊 ${isHist ? 'Histórico Mensal' : 'Tendência · 6 Meses'}</h2>
+            <div class="radar-pills">
+                <button type="button" class="${!isHist?'active':''}" onclick="setDashTrend('proj')">Projeção 6m</button>
+                <button type="button" class="${isHist?'active':''}" onclick="setDashTrend('hist')">Histórico${histItems.length ? ` (${histItems.length})` : ''}</button>
             </div>
         </div>
+        <div class="dash-body">${trendBodyHtml}</div>
     </div>`;
 
     // ── 4. RADAR DO MÊS (VENCIMENTOS | MAIORES GASTOS | PATRIMÔNIO) ──
@@ -3398,7 +3511,7 @@ function renderDashAnalytics({ metrics, monthData, totalBank, dr, dl, prev, sald
                 return `<div class="radar-row">
                     <input type="checkbox" onchange="togglePaid('${it.id}','${mk}')" title="Marcar como ${isRec?'recebido':'pago'}">
                     <div class="radar-row-main">
-                        <div class="radar-row-title">${escH(it.description)}</div>
+                        <div class="radar-row-title">${escH(it.description)}${parcelaBadge(it, mk)}</div>
                         <div class="radar-row-meta">${tag}<span>${escH(it.category)}</span></div>
                     </div>
                     <div class="radar-val ${isRec ? 'c-primary' : 'c-danger'}">${isRec ? '+' : '−'} ${fmt(it.vOpen)}</div>
@@ -3416,7 +3529,7 @@ function renderDashAnalytics({ metrics, monthData, totalBank, dr, dl, prev, sald
                 return `<div class="radar-row">
                     <span class="status-mark ${st.paid ? 'mark-paid' : 'mark-open'}" title="${st.paid ? 'Pago' : 'Em aberto'}">${st.paid ? '✓' : '○'}</span>
                     <div class="radar-row-main">
-                        <div class="radar-row-title">${escH(it.description)}</div>
+                        <div class="radar-row-title">${escH(it.description)}${parcelaBadge(it, mk)}</div>
                         <div class="radar-row-meta"><span>${escH(it.category)}</span><span>· ${fmtN(pct, 1)}% das despesas</span></div>
                         <div class="top-bar"><i style="width:${wBar.toFixed(1)}%"></i></div>
                     </div>
@@ -3520,14 +3633,14 @@ function renderUso(){
 // ══════════════════════════════════════════════════════
 //  TABS DINÂMICAS
 // ══════════════════════════════════════════════════════
-// Recolher/abrir a caixa de lançamento de cada aba (preferência deste aparelho)
-const formMinPref = () => { try { return JSON.parse(localStorage.getItem('formMin') || '{}'); } catch(e) { return {}; } };
-function minForm(type, recolher){
+// Recolher/abrir a caixa de lançamento de cada aba (sincronizado no Sheets)
+function minForm(type, recolher, silencioso){
     const card = $(`form-card-${type}`), b = $(`btn-min-${type}`); if (!card) return;
     const min = recolher === undefined ? !card.classList.contains('min') : !!recolher;
     card.classList.toggle('min', min);
     rotuloMin(type);
-    const pref = formMinPref(); pref[type] = min; localStorage.setItem('formMin', JSON.stringify(pref));
+    appFormMin[type] = min;
+    if (!silencioso) agendarSalvarConfig({ formMin: { ...appFormMin } });
     if (!min && recolher === undefined) setTimeout(() => $(`desc-${type}`)?.focus(), 50);
 }
 function rotuloMin(type){
@@ -3535,7 +3648,7 @@ function rotuloMin(type){
     const min = card.classList.contains('min');
     { b.textContent = min ? '▾ Abrir' : '▴ Recolher'; b.setAttribute('aria-expanded', String(!min)); b.title = min ? 'Abrir a caixa de lançamento' : 'Recolher a caixa de lançamento'; }
 }
-function aplicarFormMin(){ const pref = formMinPref(); TABS.forEach(t => { if (pref[t.type]) minForm(t.type, true); }); if (pref.patrimonio) minForm('patrimonio', true); }
+function aplicarFormMin(){ TABS.forEach(t => minForm(t.type, !!appFormMin[t.type], true)); minForm('patrimonio', !!appFormMin.patrimonio, true); }
 
 function renderTabs() {
     $('dynamic-tabs').innerHTML=TABS.map(tab=>`
@@ -3694,6 +3807,7 @@ function limparAte(d, mk, prox){
         if (i.type === 'nota') { if (antigo(i.baseMonthKey)) d.splice(n, 1); continue; }
         if (!['despesa','receita'].includes(i.type) || !antigo(i.baseMonthKey)) continue;
         if (!i.recurring || (i.endMonthKey && mkIdx(i.endMonthKey) <= lim)) { d.splice(n, 1); continue; }
+        if (i.endMonthKey && !i.origStartKey) i.origStartKey = i.baseMonthKey;
         i.baseMonthKey = prox;
         i.paidMonths = (i.paidMonths || []).filter(x => !antigo(x));
         if (i.skipMonths) { i.skipMonths = i.skipMonths.filter(x => !antigo(x)); if (!i.skipMonths.length) delete i.skipMonths; }
@@ -3733,7 +3847,17 @@ async function encerrarMes(){
     const anterior = currentDate;
     currentDate = new Date(py, pm, 1);
     showLoading(`Encerrando ${mes}...`);
+    const [cy, cm] = mk.split('-').map(Number);
+    const recH = r2(sumTypeInMonth('receita', cy, cm));
+    const despH = r2(sumTypeInMonth('despesa', cy, cm));
+    const diarH = r2(new Date(cy, cm + 1, 0).getDate() * daily());
+    const salH = r2(recH - (despH + diarH));
+    const bancosH = r2(financialData.filter(i => i.type === 'conta').reduce((s, i) => s + (Number(i.value) || 0), 0));
     const ok = await commit(d => {
+        // Guarda 1 linha-resumo compacta do mês encerrado para o gráfico de histórico
+        const hIdx = d.findIndex(i => i.type === 'historico' && i.baseMonthKey === mk);
+        const hItem = { id: `hist_${mk}`, type: 'historico', baseMonthKey: mk, description: nomeMes(mk), rec: recH, desp: despH, diarios: diarH, saldo: salH, bancos: bancosH };
+        if (hIdx > -1) d[hIdx] = hItem; else d.push(hItem);
         limparAte(d, mk, prox);
         let cfg = d.find(i => i.type === 'config');
         if (!cfg) { cfg = { id:'config', type:'config' }; d.push(cfg); }
@@ -3802,33 +3926,41 @@ const ESTILOS = [
     { id:'windows',  nome:'Windows',  desc:'Claro e limpo, barra de cima branca, como os apps do Windows 11.', prev:['#ffffff','#005fb8','#f3f3f3',false] },
     { id:'grafite',  nome:'Grafite',  desc:'Sóbrio, sem bordas, números maiores e mais espaço.', prev:['#232a33','#3366cc','#e9ecf0',false] },
 ];
-function aplicarEstilo(id){
+function aplicarEstilo(id, salvar = true){
     const e = ESTILOS.find(x => x.id === id) || ESTILOS[0];
+    appEstilo = e.id;
     if (e.id === 'padrao') document.body.removeAttribute('data-estilo'); else document.body.setAttribute('data-estilo', e.id);
-    localStorage.setItem('estilo', e.id);
+    if (salvar) agendarSalvarConfig({ estilo: e.id });
     renderEstilos();
     return e;
 }
 function proximoEstilo(){
-    const atual = localStorage.getItem('estilo') || 'padrao';
-    const k = (ESTILOS.findIndex(x => x.id === atual) + 1) % ESTILOS.length;
-    const e = aplicarEstilo(ESTILOS[k].id);
+    const k = (ESTILOS.findIndex(x => x.id === appEstilo) + 1) % ESTILOS.length;
+    const e = aplicarEstilo(ESTILOS[k].id, true);
     toast(`Estilo: ${e.nome}`, 'info', 2000);
 }
 function renderEstilos(){
     const g = $('estilo-grid'); if (!g) return;
-    const atual = localStorage.getItem('estilo') || 'padrao';
-    g.innerHTML = ESTILOS.map(e => `<button class="estilo-op ${e.id === atual ? 'ativo' : ''}" onclick="aplicarEstilo('${e.id}')" aria-pressed="${e.id === atual}">
+    g.innerHTML = ESTILOS.map(e => `<button class="estilo-op ${e.id === appEstilo ? 'ativo' : ''}" onclick="aplicarEstilo('${e.id}',true)" aria-pressed="${e.id === appEstilo}">
         <span class="estilo-prev" style="background:${e.prev[2]};"><i style="background:${e.prev[0]};${e.prev[0] === '#ffffff' ? 'border-bottom:1px solid #d6d6d6;' : ''}"></i><b style="background:${e.prev[1]};width:45%;"></b>
             ${e.prev[3] ? '<u><s></s><s></s><s></s><s></s><s></s><s></s></u>' : `<b style="background:#fff;height:18px;border-radius:${e.id === 'grafite' ? '3px' : '5px'};border:1px solid #dde2ea;"></b>`}</span>
-        <strong>${e.id === atual ? '✓ ' : ''}${e.nome}</strong><small>${e.desc}</small></button>`).join('');
+        <strong>${e.id === appEstilo ? '✓ ' : ''}${e.nome}</strong><small>${e.desc}</small></button>`).join('');
 }
 function syncThemeColor(){const m=document.querySelector('meta[name="theme-color"]');if(m)m.content=document.body.getAttribute('data-theme')==='dark'?'#172554':'#1e3a8a';}
-function toggleTheme(){const d=document.body.getAttribute('data-theme')==='dark';document.body.setAttribute('data-theme',d?'':'dark');localStorage.setItem('theme',d?'light':'dark');syncThemeColor();}
-function applyTheme(){if(localStorage.getItem('theme')==='dark')document.body.setAttribute('data-theme','dark');aplicarEstilo(localStorage.getItem('estilo')||'padrao');syncThemeColor();}
+function toggleTheme(){
+    const d = document.body.getAttribute('data-theme') === 'dark';
+    appTheme = d ? 'light' : 'dark';
+    document.body.setAttribute('data-theme', d ? '' : 'dark');
+    agendarSalvarConfig({ theme: appTheme });
+    syncThemeColor();
+}
+function applyTheme(){
+    document.body.setAttribute('data-theme', appTheme === 'dark' ? 'dark' : '');
+    aplicarEstilo(appEstilo || 'padrao', false);
+    syncThemeColor();
+}
 
-// ── VISIBILIDADE DAS ABAS ──
-// Usa localStorage apenas para preferência de UI (não dados financeiros)
+// ── VISIBILIDADE DAS ABAS (sincronizado no Sheets) ──
 function toggleTabVisibility(tabId, visible) {
     const navBtn = $(`nav-${tabId}`), mobBtn = $(`mob-nav-${tabId}`);
     if (navBtn) navBtn.style.display = visible ? '' : 'none';
@@ -3838,16 +3970,13 @@ function toggleTabVisibility(tabId, visible) {
         const section = $(tabId);
         if (section && section.classList.contains('active')) openTab(null, 'Dashboard');
     }
-    // Salva preferência no localStorage (só preferência de UI, não dados)
-    const prefs = JSON.parse(localStorage.getItem('tabVisibility') || '{}');
-    prefs[tabId] = visible;
-    localStorage.setItem('tabVisibility', JSON.stringify(prefs));
+    appTabVis[tabId] = visible;
+    agendarSalvarConfig({ tabVisibility: { ...appTabVis } });
 }
 
 function applyTabVisibility() {
-    const prefs = JSON.parse(localStorage.getItem('tabVisibility') || '{}');
     ['DespesasFixas','Dividas','Patrimonio'].forEach(tabId => {
-        const visible = prefs[tabId] !== false; // padrão: visível
+        const visible = appTabVis[tabId] !== false; // padrão: visível
         const navBtn  = $(`nav-${tabId}`), mobBtn = $(`mob-nav-${tabId}`);
         const checkbox = $(`vis-${tabId}`);
         if (navBtn)   navBtn.style.display   = visible ? '' : 'none';
@@ -3985,11 +4114,20 @@ function exportExcel() {
     if (idxs.length) { const fim = Math.max(...idxs, mkIdx(mkDe(currentDate))); for (let k = Math.min(...idxs); k <= fim; k++) sortedMonths.push(`${Math.floor(k/12)}-${k%12}`); }
 
     const resumoRows = [['Mês', 'Receitas (R$)', 'Despesas (R$)', 'Resultado (R$)']];
-    sortedMonths.forEach(mk => {
+    const histMap = {};
+    financialData.filter(i => i.type === 'historico' && /^\d{4}-\d{1,2}$/.test(i.baseMonthKey || '')).forEach(h => { histMap[h.baseMonthKey] = h; });
+    const allMks = Array.from(new Set([...Object.keys(histMap), ...sortedMonths])).sort((a, b) => mkIdx(a) - mkIdx(b));
+    allMks.forEach(mk => {
         const [y, m] = mk.split('-').map(Number);
         const label = `${meses[m]}/${y}`;
-        const rec = sumTypeInMonth('receita', y, m), desp = sumTypeInMonth('despesa', y, m);
-        resumoRows.push([label, rec, desp, rec - desp]);
+        if (histMap[mk]) {
+            const h = histMap[mk];
+            const despT = r2((h.desp || 0) + (h.diarios || 0));
+            resumoRows.push([label + ' (encerrado)', r2(h.rec || 0), despT, r2((h.rec || 0) - despT)]);
+        } else {
+            const rec = sumTypeInMonth('receita', y, m), desp = sumTypeInMonth('despesa', y, m);
+            resumoRows.push([label, rec, desp, rec - desp]);
+        }
     });
 
     const wsResumo = XLSX.utils.aoa_to_sheet(resumoRows);
@@ -4015,10 +4153,16 @@ function importBackup(e){
             const p=JSON.parse(ev.target.result);
             let d=p.financialData||p; if(!Array.isArray(d))return toast('Arquivo inválido.','error');
             if(!confirm(`Restaurar este backup (${d.length} registros) e SOBRESCREVER os dados no Sheets?`)){e.target.value='';return;}
-            if(p.categories) categories={...categories,...p.categories};
-            if(p.metaDiaria){localStorage.setItem('dailyRate',p.metaDiaria);const di=$('daily-rate');if(di)di.value=p.metaDiaria;}
-            await commit(data=>{data.length=0;d.forEach(i=>data.push(i));});
-            toast('Backup restaurado.','success');
+            const ok = await commit(data=>{
+                data.length=0; d.forEach(i=>data.push(i));
+                if(p.categories) categories={...categories,...p.categories};
+                if(p.metaDiaria && Number(p.metaDiaria) > 0){
+                    let cfg = data.find(i => i.type === 'config');
+                    if (!cfg) { cfg = { id:'config', type:'config' }; data.push(cfg); }
+                    cfg.dailyRate = r2(Number(p.metaDiaria));
+                }
+            });
+            if (ok) { aplicarConfigDoSheets(); toast('Backup restaurado.','success'); }
         }catch{toast('Erro ao ler arquivo.','error');}
         e.target.value='';
     };
